@@ -4,10 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Chấm Công QR</title>
-
-  <!-- Thư viện QR Scanner -->
-  <script src="https://cdn.jsdelivr.net/npm/qr-scanner/qr-scanner.min.js"></script>
-
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -25,7 +21,6 @@
     #video-container {
       margin: 20px auto;
       width: 300px;
-      height: auto;
       border: 2px solid #007bff;
       border-radius: 10px;
       overflow: hidden;
@@ -53,93 +48,48 @@
 <body>
   <h1>📸 Chấm Công QR</h1>
   <div id="video-container">
-    <video id="qr-video"></video>
+    <video id="qr-video" muted></video>
   </div>
-  <div id="result">Đang chờ quét mã...</div>
+  <div id="result">Đang chờ quét QR...</div>
   <div id="error"></div>
   <button id="restartBtn" style="display:none;">Quét lại</button>
 
-  <script>
+  <script type="module">
+    import QrScanner from 'https://cdn.jsdelivr.net/npm/qr-scanner@1.4.2/qr-scanner.min.js';
+
     const videoElem = document.getElementById('qr-video');
-    let scanner;
+    const resultDiv = document.getElementById('result');
+    const errorDiv = document.getElementById('error');
+    const restartBtn = document.getElementById('restartBtn');
 
-    // Đường dẫn tới worker
-    QrScanner.WORKER_PATH = 'https://unpkg.com/qr-scanner/qr-scanner-worker.min.js';
+    // Tạo scanner 1 lần
+    const scanner = new QrScanner(videoElem, qrResult => {
+      // Hiển thị kết quả QR
+      resultDiv.textContent = `✅ Nội dung QR: ${qrResult}`;
+      alert(`Đã quét QR! Nội dung: ${qrResult}`);
+      scanner.stop();
+      restartBtn.style.display = 'inline-block';
+    });
 
+    // Hàm bắt đầu quét
     function startScanner() {
-      scanner = new QrScanner(videoElem, result => {
-        scanner.stop();
-        
-        document.getElementById('result').innerText = '✅ Mã QR: ' + result;
-        document.getElementById('restartBtn').style.display = 'inline-block';
-
-        const scanner = new QrScanner(videoElem, qrResult => {
-    // qrResult là chuỗi ký tự đọc được từ QR
-    resultDiv.textContent = `✅ Nội dung QR: ${qrResult}`;
-    alert(`Đã quét QR! Nội dung: ${qrResult}`);
-    scanner.stop(); // dừng quét sau khi đọc
-        alert('Đã quét được mã: ' + result);
-        // TODO: Lưu vào Firebase tại đây
-      }, {
-        highlightScanRegion: true,
-        highlightCodeOutline: true,
-      });
-
+      resultDiv.textContent = 'Đang chờ quét QR...';
+      errorDiv.textContent = '';
+      restartBtn.style.display = 'none';
       scanner.start().catch(err => {
-        document.getElementById('error').innerText = '❌ Không thể mở camera: ' + err;
+        errorDiv.textContent = '❌ Không thể mở camera: ' + err;
       });
     }
 
-    document.getElementById('restartBtn').addEventListener('click', () => {
-      document.getElementById('result').innerText = 'Đang chờ quét mã...';
-      document.getElementById('restartBtn').style.display = 'none';
-      scanner.start();
+    // Bắt đầu khi người dùng nhấn nút
+    restartBtn.addEventListener('click', () => {
+      startScanner();
     });
 
+    // Tự động hiển thị nút bắt đầu quét cho Safari/Chrome
     window.addEventListener('load', () => {
       startScanner();
     });
   </script>
-  <button id="startBtn">Bắt đầu quét QR</button>
-<video id="qr-video" muted></video>
-
-<script>
-  const videoElem = document.getElementById('qr-video');
-  const startBtn = document.getElementById('startBtn');
-
-  QrScanner.WORKER_PATH = 'https://cdn.jsdelivr.net/npm/qr-scanner/qr-scanner-worker.min.js';
-  let scanner = new QrScanner(videoElem, result => {
-      alert('Mã QR: ' + result);
-      scanner.stop();
-  });
-
-  startBtn.addEventListener('click', () => {
-      scanner.start();
-  });
-</script>
- <script type="module">
-import QrScanner from 'https://cdn.jsdelivr.net/npm/qr-scanner@1.4.2/qr-scanner.min.js';
-
-const videoElem = document.getElementById('qr-video'); // khai báo 1 lần
-const startBtn = document.getElementById('startBtn');
-
-// Tạo scanner
-const scanner = new QrScanner(videoElem, result => {
-    alert('Mã QR: ' + result);
-    scanner.stop();
-}, {
-    returnDetailedScanResult: true
-});
-
-// Bắt đầu quét khi người dùng nhấn nút
-startBtn.addEventListener('click', () => {
-    scanner.start();
-});
-</script>
 </body>
 </html>
-
-
-
-
-
