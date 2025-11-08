@@ -1,224 +1,97 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>QR Code Scanner - html5-qrcode</title>
-    <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-            margin: 0;
-            background-color: #eef2f7;
-            color: #333;
-            padding: 20px;
-            box-sizing: border-box;
-        }
-        h1 {
-            color: #2c3e50;
-            margin-bottom: 25px;
-            font-size: 1.8em;
-            text-align: center;
-        }
-        #reader-container {
-            width: 100%;
-            max-width: 400px; /* Giới hạn chiều rộng trên màn hình lớn */
-            background-color: #ffffff;
-            border-radius: 10px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-            padding: 20px;
-            box-sizing: border-box;
-        }
-        #reader {
-            width: 100% !important; /* Đảm bảo khung quét thích ứng */
-            height: auto !important; /* Chiều cao tự động */
-            min-height: 250px; /* Chiều cao tối thiểu */
-            max-height: 400px; /* Chiều cao tối đa */
-            border: 2px solid #3498db;
-            border-radius: 8px;
-            overflow: hidden;
-            background-color: #ecf0f1;
-            margin: 0 auto 20px auto;
-            display: block;
-        }
-        #result {
-            font-size: 1.2em;
-            color: #27ae60;
-            word-break: break-all;
-            text-align: center;
-            margin-top: 15px;
-            padding: 0 10px;
-            font-weight: 500;
-        }
-        #error-message {
-            color: #e74c3c;
-            margin-top: 10px;
-            font-weight: bold;
-            text-align: center;
-            padding: 0 10px;
-        }
-        .button-container {
-            margin-top: 25px;
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap; /* Cho phép các nút xuống dòng trên màn hình nhỏ */
-            justify-content: center;
-        }
-        button {
-            padding: 12px 25px;
-            font-size: 1em;
-            cursor: pointer;
-            border: none;
-            border-radius: 25px; /* Nút bo tròn hơn */
-            background-color: #3498db;
-            color: white;
-            transition: background-color 0.3s ease, transform 0.2s ease;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-        }
-        button:hover {
-            background-color: #2980b9;
-            transform: translateY(-2px);
-        }
-        button:disabled {
-            background-color: #bdc3c7;
-            cursor: not-allowed;
-            transform: translateY(0);
-            box-shadow: none;
-        }
-        @media (max-width: 600px) {
-            h1 {
-                font-size: 1.5em;
-            }
-            #reader-container {
-                padding: 15px;
-            }
-            button {
-                width: 100%; /* Nút chiếm toàn bộ chiều rộng trên màn hình rất nhỏ */
-            }
-        }
-    </style>
-    <!-- Thư viện html5-qrcode từ CDN của UNPKG -->
-    <!-- UNPKG thường là lựa chọn tốt cho các gói NPM như html5-qrcode -->
-   <script src="https://unpkg.com/html5‑qrcode/minified/html5‑qrcode.min.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chấm Công QR</title>
+
+  <!-- Thư viện QR Scanner -->
+  <script src="https://unpkg.com/qr-scanner/qr-scanner.min.js"></script>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      background-color: #f0f2f5;
+      margin: 0;
+      padding: 0;
+    }
+    h1 {
+      background-color: #007bff;
+      color: white;
+      padding: 15px;
+      margin: 0;
+    }
+    #video-container {
+      margin: 20px auto;
+      width: 300px;
+      height: auto;
+      border: 2px solid #007bff;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    video {
+      width: 100%;
+      height: auto;
+    }
+    #result {
+      font-weight: bold;
+      color: green;
+      margin-top: 20px;
+    }
+    #error {
+      color: red;
+      margin-top: 10px;
+    }
+    button {
+      margin-top: 10px;
+      padding: 10px 20px;
+      font-size: 16px;
+    }
+  </style>
 </head>
 <body>
-    <h1>Quét Mã QR Chấm Công</h1>
-    <div id="reader-container">
-        <div id="reader"></div>
-        <p id="result">Kết quả quét sẽ hiển thị ở đây.</p>
-        <p id="error-message" style="display: none;"></p>
+  <h1>📸 Chấm Công QR</h1>
+  <div id="video-container">
+    <video id="qr-video"></video>
+  </div>
+  <div id="result">Đang chờ quét mã...</div>
+  <div id="error"></div>
+  <button id="restartBtn" style="display:none;">Quét lại</button>
 
-        <div class="button-container">
-            <button id="startScanButton">Bắt đầu quét</button>
-            <button id="stopScanButton" style="display: none;">Dừng quét</button>
-        </div>
-    </div>
+  <script>
+    const videoElem = document.getElementById('qr-video');
+    let scanner;
 
-    <script>
-        let html5QrCode; // Biến để lưu đối tượng Html5Qrcode
-        let isScanning = false; // Biến trạng thái để biết đang quét hay không
-        const resultElement = document.getElementById('result');
-        const errorMessageElement = document.getElementById('error-message');
-        const startButton = document.getElementById('startScanButton');
-        const stopButton = document.getElementById('stopScanButton');
+    // Đường dẫn tới worker
+    QrScanner.WORKER_PATH = 'https://unpkg.com/qr-scanner/qr-scanner-worker.min.js';
 
-        // Hàm xử lý khi quét thành công một mã QR
-        function onScanSuccess(decodedText, decodedResult) {
-            console.log(`Mã QR quét được: ${decodedText}`, decodedResult);
-            resultElement.textContent = 'Kết quả: ' + decodedText; // Hiển thị kết quả lên màn hình
-            errorMessageElement.style.display = 'none'; // Ẩn thông báo lỗi nếu có
+    function startScanner() {
+      scanner = new QrScanner(videoElem, result => {
+        scanner.stop();
+        document.getElementById('result').innerText = '✅ Mã QR: ' + result;
+        document.getElementById('restartBtn').style.display = 'inline-block';
+        alert('Đã quét được mã: ' + result);
+        // TODO: Lưu vào Firebase tại đây
+      }, {
+        highlightScanRegion: true,
+        highlightCodeOutline: true,
+      });
 
-            // Tùy chọn: Dừng quét sau khi phát hiện thành công một mã
-            // Nếu bạn muốn quét liên tục, hãy bỏ comment dòng dưới để nó tiếp tục quét
-            // stopScanning();
-        }
+      scanner.start().catch(err => {
+        document.getElementById('error').innerText = '❌ Không thể mở camera: ' + err;
+      });
+    }
 
-        // Hàm xử lý khi quét thất bại hoặc không tìm thấy mã
-        function onScanFailure(error) {
-            // console.warn(`Lỗi quét: ${error}`); // Có thể in lỗi ra console để debug
-            // Lỗi này xảy ra liên tục khi không có mã QR, nên không hiển thị ra người dùng
-        }
+    document.getElementById('restartBtn').addEventListener('click', () => {
+      document.getElementById('result').innerText = 'Đang chờ quét mã...';
+      document.getElementById('restartBtn').style.display = 'none';
+      scanner.start();
+    });
 
-        // Hàm khởi động quá trình quét QR
-        async function startScanning() {
-            if (isScanning) return; // Không làm gì nếu đã đang quét
-
-            // Khởi tạo đối tượng Html5Qrcode với ID của phần tử div chứa video
-            html5QrCode = new Html5Qrcode("reader");
-
-            const config = { 
-                fps: 10, // Số khung hình mỗi giây để quét
-                qrbox: { width: 250, height: 250 }, // Kích thước khung quét QR hiển thị
-                rememberLastUsedCamera: true, // Ghi nhớ camera đã dùng lần trước
-                supportedScanFormats: [ // Chỉ quét mã QR
-                    Html5QrcodeSupportedFormats.QR_CODE
-                ]
-            };
-
-            resultElement.textContent = 'Đang tìm kiếm camera và bắt đầu quét...';
-            errorMessageElement.style.display = 'none';
-            startButton.disabled = true; // Vô hiệu hóa nút Bắt đầu khi đang khởi động
-
-            try {
-                // Bắt đầu quét từ camera, ưu tiên camera sau ("environment")
-                await html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess, onScanFailure);
-                isScanning = true;
-                resultElement.textContent = 'Di chuyển mã QR vào khung để quét.';
-                // Cập nhật trạng thái nút
-                startButton.style.display = 'none';
-                stopButton.style.display = 'inline-block';
-                stopButton.disabled = false;
-            } catch (err) {
-                console.error("Lỗi khi khởi động camera: ", err);
-                isScanning = false;
-                resultElement.textContent = 'Không thể khởi động camera.';
-                // Hiển thị thông báo lỗi chi tiết hơn
-                errorMessageElement.textContent = `Lỗi: ${err.message}. Vui lòng kiểm tra quyền camera cho trình duyệt/ứng dụng của bạn và đảm bảo không có ứng dụng nào khác đang sử dụng camera.`;
-                errorMessageElement.style.display = 'block';
-                // Cập nhật trạng thái nút
-                startButton.disabled = false;
-                startButton.style.display = 'inline-block';
-                stopButton.style.display = 'none';
-            }
-        }
-
-        // Hàm dừng quá trình quét QR
-        async function stopScanning() {
-            if (!isScanning) return; // Không làm gì nếu không đang quét
-
-            resultElement.textContent = 'Đang dừng quét...';
-            stopButton.disabled = true; // Vô hiệu hóa nút Dừng khi đang dừng
-
-            try {
-                await html5QrCode.stop(); // Dừng quét
-                isScanning = false;
-                resultElement.textContent = 'Kết quả quét sẽ hiển thị ở đây.';
-                // Cập nhật trạng thái nút
-                startButton.style.display = 'inline-block';
-                startButton.disabled = false;
-                stopButton.style.display = 'none';
-            } catch (err) {
-                console.error("Lỗi khi dừng quét: ", err);
-                errorMessageElement.textContent = 'Lỗi khi dừng quét: ' + err.message;
-                errorMessageElement.style.display = 'block';
-                stopButton.disabled = false; // Vẫn cho phép thử lại dừng nếu lỗi
-            }
-        }
-
-        // Gán sự kiện click cho các nút
-        startButton.addEventListener('click', startScanning);
-        stopButton.addEventListener('click', stopScanning);
-
-        // Tùy chọn: Tự động bắt đầu quét khi trang tải xong
-        // Bỏ comment dòng dưới nếu bạn muốn tự động bắt đầu thay vì phải nhấn nút
-        // window.addEventListener('load', startScanning); 
-    </script>
+    window.addEventListener('load', () => {
+      startScanner();
+    });
+  </script>
 </body>
 </html>
-
-
-
