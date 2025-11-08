@@ -1,4 +1,3 @@
-
 // Cấu hình Firebase của bạn
  const firebaseConfig = {
   apiKey: "AIzaSyAb5AZOBvEVY3a_9ioEKTW-wuVMXdnRZGQ",
@@ -16,4 +15,5 @@ if (!firebase.apps.length) {
 }
 
 const db = firebase.database();
+
 
