@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Chấm Công QR - Kiểm Tra Camera</title>
+  <title>Chấm Công QR</title>
 
   <!-- Thư viện quét QR -->
   <script src="https://unpkg.com/html5-qrcode/minified/html5-qrcode.min.js"></script>
@@ -28,7 +28,6 @@
       border: 2px solid #007bff;
       border-radius: 10px;
       overflow: hidden;
-      display: none;
     }
     #result {
       font-weight: bold;
@@ -38,15 +37,6 @@
     #error {
       color: red;
       margin-top: 10px;
-    }
-    #instructions {
-      color: #333;
-      margin-top: 20px;
-      padding: 10px;
-      background: #fff3cd;
-      border: 1px solid #ffeeba;
-      border-radius: 5px;
-      display: none;
     }
     button {
       margin-top: 10px;
@@ -60,49 +50,23 @@
   <div id="reader"></div>
   <div id="result">Đang chờ quét mã...</div>
   <div id="error"></div>
-  <div id="instructions">
-    ❌ Không thể mở camera.<br>
-    Vui lòng kiểm tra: <br>
-    1. Trình duyệt hỗ trợ camera và dùng HTTPS.<br>
-    2. Đã cho phép quyền camera cho trang web.<br>
-    3. Thiết bị có camera hoạt động.
-  </div>
-  <button id="restartBtn">Quét lại</button>
+  <button id="restartBtn" style="display:none;">Quét lại</button>
 
   <script>
     let html5QrCode;
 
-    // Kiểm tra quyền camera và có camera không
-    async function checkCameraAndStart() {
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-        if (stream) {
-          // Camera được phép, dừng tạm thời
-          stream.getTracks().forEach(track => track.stop());
-          startQRScanner();
-        }
-      } catch (err) {
-        // Nếu không có quyền hoặc không có camera
-        document.getElementById("reader").style.display = "none";
-        document.getElementById("instructions").style.display = "block";
-        document.getElementById("error").innerText = "❌ Lỗi mở camera: " + err.message;
-      }
-    }
-
     function startQRScanner() {
-      document.getElementById("reader").style.display = "block";
       html5QrCode = new Html5Qrcode("reader");
-     html5QrCode.start(
-  {}, // dùng camera mặc định
-  { fps: 10, qrbox: 250 },
-  qrCodeMessage => { ... }
-)
+
+      html5QrCode.start(
+        {}, // dùng camera mặc định
+        { fps: 10, qrbox: 250 },
         qrCodeMessage => {
           html5QrCode.stop().then(() => {
             document.getElementById("result").innerText = "✅ Mã QR: " + qrCodeMessage;
             document.getElementById("restartBtn").style.display = "inline-block";
             alert("Đã quét được mã: " + qrCodeMessage);
-            // TODO: lưu vào Firebase tại đây
+            // TODO: lưu vào Firebase ở đây
           });
         },
         errorMessage => {
@@ -110,7 +74,6 @@
         }
       ).catch(err => {
         document.getElementById("error").innerText = "❌ Không thể mở camera: " + err.message;
-        document.getElementById("instructions").style.display = "block";
       });
     }
 
@@ -120,9 +83,10 @@
       startQRScanner();
     });
 
-    // Khi tải trang, kiểm tra camera
-    checkCameraAndStart();
+    // Khi trang load, tự mở camera và quét QR
+    window.addEventListener("load", () => {
+      startQRScanner();
+    });
   </script>
 </body>
 </html>
-
