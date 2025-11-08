@@ -5,187 +5,91 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Chấm Công QR</title>
   <style>
-    body { font-family: Arial; text-align: center; background: #f0f2f5; }
-    h1 { background: #007bff; color: white; padding: 15px; margin:0; }
-    #video-container { margin:20px auto; width:300px; border:2px solid #007bff; border-radius:10px; overflow:hidden;}
-    video { width:100%; height:auto; }
-    #result { font-weight:bold; color:green; margin-top:20px; }
-    #error { color:red; margin-top:10px; }
-    input, button { padding:8px; margin:5px; font-size:16px; }
-    #logout { margin-top:10px; }
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      background-color: #f0f2f5;
+      margin: 0;
+      padding: 0;
+    }
+    h1 {
+      background-color: #007bff;
+      color: white;
+      padding: 15px;
+      margin: 0;
+    }
+    #video-container {
+      margin: 20px auto;
+      width: 300px;
+      border: 2px solid #007bff;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    video {
+      width: 100%;
+      height: auto;
+    }
+    #result {
+      font-weight: bold;
+      color: green;
+      margin-top: 20px;
+    }
+    #error {
+      color: red;
+      margin-top: 10px;
+    }
+    button {
+      margin-top: 10px;
+      padding: 10px 20px;
+      font-size: 16px;
+    }
   </style>
 </head>
 <body>
-
-<h1>📸 Chấm Công QR</h1>
-
-<div id="login-section">
-  <h2>Đăng nhập nhân viên</h2>
-  <input type="email" id="email" placeholder="Email"><br>
-  <input type="password" id="password" placeholder="Mật khẩu"><br>
-  <button id="loginBtn">Đăng nhập</button>
-  <div id="loginError" style="color:red;"></div>
-</div>
-
-<div id="scanner-section" style="display:none;">
-  <button id="logout">Đăng xuất</button>
+  <h1>📸 Chấm Công QR</h1>
   <div id="video-container">
     <video id="qr-video" muted></video>
   </div>
   <div id="result">Đang chờ quét QR...</div>
   <div id="error"></div>
   <button id="restartBtn" style="display:none;">Quét lại</button>
-</div>
 
-<!-- Firebase -->
-<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+  <script type="module">
+    import QrScanner from 'https://cdn.jsdelivr.net/npm/qr-scanner@1.4.2/qr-scanner.min.js';
 
-<!-- QR Scanner -->
-<script type="module">
-import QrScanner from 'https://cdn.jsdelivr.net/npm/qr-scanner@1.4.2/qr-scanner.min.js';
+    const videoElem = document.getElementById('qr-video');
+    const resultDiv = document.getElementById('result');
+    const errorDiv = document.getElementById('error');
+    const restartBtn = document.getElementById('restartBtn');
 
-// =================== Cấu hình Firebase ===================
-const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_PROJECT_ID.appspot.com",
-  messagingSenderId: "SENDER_ID",
-  appId: "APP_ID"
-};
+    // Tạo scanner 1 lần
+    const scanner = new QrScanner(videoElem, qrResult => {
+      // Hiển thị kết quả QR
+      resultDiv.textContent = `✅ Nội dung QR: ${qrResult}`;
+      alert(`Đã quét QR! Nội dung: ${qrResult}`);
+      scanner.stop();
+      restartBtn.style.display = 'inline-block';
+    });
 
-firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
-const db = firebase.firestore();
+    // Hàm bắt đầu quét
+    function startScanner() {
+      resultDiv.textContent = 'Đang chờ quét QR...';
+      errorDiv.textContent = '';
+      restartBtn.style.display = 'none';
+      scanner.start().catch(err => {
+        errorDiv.textContent = '❌ Không thể mở camera: ' + err;
+      });
+    }
 
-// =================== Đăng nhập ===================
-const loginSection = document.getElementById('login-section');
-const scannerSection = document.getElementById('scanner-section');
-const loginBtn = document.getElementById('loginBtn');
-const loginError = document.getElementById('loginError');
-
-loginBtn.addEventListener('click', () => {
-  const email = document.getElementById('email').value;
-  const password = document.getElementById('password').value;
-
-  //auth.signInWithEmailAndPassword(email, password)
-  //  .then(userCredential => {
-  //    loginSection.style.display = 'none';
-  //    scannerSection.style.display = 'block';
-  //    startScanner();
-  //  })
-  //  .catch(error => {
-  //    loginError.textContent = error.message;
-  //  });
-   
-    alert("chúc mừng bạn đã quét thành công!");
+    // Bắt đầu khi người dùng nhấn nút
+    restartBtn.addEventListener('click', () => {
       startScanner();
-    
-});
+    });
 
-// document.getElementById('logout').addEventListener('click', () => {
- // auth.signOut().then(() => location.reload());
-});
-
-// =================== QR Scanner ===================
-const videoElem = document.getElementById('qr-video');
-const resultDiv = document.getElementById('result');
-const errorDiv = document.getElementById('error');
-const restartBtn = document.getElementById('restartBtn');
-
-let scanner;
-
-function startScanner() {
-  resultDiv.textContent = 'Đang chờ quét QR...';
-  errorDiv.textContent = '';
-  restartBtn.style.display = 'none';
-
-  scanner = new QrScanner(videoElem, qrResult => {
-    handleAttendance(qrResult);
-  }, { highlightScanRegion: true, highlightCodeOutline: true });
-
-  scanner.start().catch(err => {
-    errorDiv.textContent = '❌ Không thể mở camera: ' + err;
-  });
-}
-
-restartBtn.addEventListener('click', () => startScanner());
-
-// =================== Xử lý chấm công ===================
-function handleAttendance(employeeId) {
-  scanner.stop();
-  const now = new Date();
-  const today = now.toISOString().split('T')[0]; // YYYY-MM-DD
-  const currentHour = now.getHours() + now.getMinutes()/60;
-
-  const docId = employeeId + '_' + today;
-  const attendanceRef = db.collection('attendance').doc(docId);
-
-  attendanceRef.get().then(doc => {
-    let data = doc.exists ? doc.data() : {};
-
-    // Ca sáng: 7.5 -> 11.5, Ca chiều: 13 -> 17.5
-    const morningStart = 7.5, morningEnd = 11.5;
-    const afternoonStart = 13, afternoonEnd = 17.5;
-    let msg = '';
-
-    // Quy tắc tính check-in/check-out
-    if (currentHour >= morningStart && currentHour <= morningEnd) {
-      if (!data.checkInMorning) {
-        data.checkInMorning = now.toLocaleTimeString();
-        if (currentHour > morningStart) msg += '⚠ Đi muộn ca sáng! ';
-      } else {
-        data.checkOutMorning = now.toLocaleTimeString();
-      }
-    } else if (currentHour >= afternoonStart && currentHour <= afternoonEnd) {
-      if (!data.checkInAfternoon) {
-        data.checkInAfternoon = now.toLocaleTimeString();
-        if (currentHour > afternoonStart) msg += '⚠ Đi muộn ca chiều! ';
-      } else {
-        data.checkOutAfternoon = now.toLocaleTimeString();
-      }
-    } else if (currentHour > morningEnd && currentHour < afternoonStart) {
-      msg += 'ℹ Giờ nghỉ trưa, ghi nhận làm thêm nếu có.';
-    } else {
-      msg += 'ℹ Ngoài giờ ca, ghi nhận theo ca.';
-    }
-
-    // Tính tổng giờ làm (sơ khai, bạn có thể mở rộng)
-    let totalHours = 0;
-    if (data.checkInMorning && data.checkOutMorning) {
-      const inM = parseTime(data.checkInMorning), outM = parseTime(data.checkOutMorning);
-      totalHours += (outM - inM);
-    }
-    if (data.checkInAfternoon && data.checkOutAfternoon) {
-      const inA = parseTime(data.checkInAfternoon), outA = parseTime(data.checkOutAfternoon);
-      totalHours += (outA - inA);
-    }
-
-    data.totalWorkingHours = totalHours.toFixed(2);
-
-    attendanceRef.set(data, { merge:true })
-      .then(() => {
-        resultDiv.textContent = `✅ Nhân viên: ${employeeId}\n` +
-                                `Sáng: ${data.checkInMorning || '-'} - ${data.checkOutMorning || '-'}\n` +
-                                `Chiều: ${data.checkInAfternoon || '-'} - ${data.checkOutAfternoon || '-'}\n` +
-                                `Tổng giờ: ${data.totalWorkingHours}h\n` + msg;
-        alert('✅ Đã quét QR!\n' + msg);
-        restartBtn.style.display = 'inline-block';
-      })
-      .catch(err => errorDiv.textContent = '❌ Lỗi lưu dữ liệu: ' + err);
-  });
-}
-
-// Chuyển HH:MM:SS thành giờ số
-function parseTime(timeStr) {
-  const parts = timeStr.split(':');
-  return Number(parts[0]) + Number(parts[1])/60 + (parts[2]?Number(parts[2])/3600:0);
-}
-</script>
+    // Tự động hiển thị nút bắt đầu quét cho Safari/Chrome
+    window.addEventListener('load', () => {
+      startScanner();
+    });
+  </script>
 </body>
 </html>
-
-
-
