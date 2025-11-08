@@ -70,7 +70,7 @@
       alert(`Quét QR thành công!\n Nội dung: ${qrResult}`);
       // Chuỗi QR hợp lệ (ví dụ: mã nhân viên)
 const VALID_QR = "hoangphucglass";
-      const scanner = new QrScanner(videoElem, qrResult => {
+     
   scanner.stop();
 // Kiểm tra hợp lệ
   if (qrResult !== VALID_QR) {
@@ -125,6 +125,7 @@ copyBtn.addEventListener('click', () => {
   </script>
 </body>
 </html>
+
 
 
 
