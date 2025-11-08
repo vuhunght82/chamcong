@@ -110,24 +110,28 @@
       scanner.start();
   });
 </script>
-  <script type="module">
+ <script type="module">
 import QrScanner from 'https://cdn.jsdelivr.net/npm/qr-scanner@1.4.2/qr-scanner.min.js';
-QrScanner.WORKER_PATH = 'https://cdn.jsdelivr.net/npm/qr-scanner@1.4.2/qr-scanner-worker.min.js';
 
-const videoElem = document.getElementById('qr-video');
+const videoElem = document.getElementById('qr-video'); // khai báo 1 lần
 const startBtn = document.getElementById('startBtn');
 
+// Tạo scanner
 const scanner = new QrScanner(videoElem, result => {
     alert('Mã QR: ' + result);
     scanner.stop();
+}, {
+    returnDetailedScanResult: true
 });
 
+// Bắt đầu quét khi người dùng nhấn nút
 startBtn.addEventListener('click', () => {
     scanner.start();
 });
 </script>
 </body>
 </html>
+
 
 
 
