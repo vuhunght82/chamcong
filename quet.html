@@ -2,100 +2,59 @@
 <html lang="vi">
 <head>
   <meta charset="UTF-8">
-  <title>Chấm công QR</title>
-  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
-  <script src="firebase.js"></script>
+  <title>Quét mã QR chấm công</title>
   <style>
-    body { font-family: Arial; text-align: center; background: #f0f2f5; margin:0; }
-    h1 { background:#007bff; color:white; padding:15px; }
-    #video-container { margin:20px auto; width:300px; border:2px solid #007bff; border-radius:10px; overflow:hidden;}
-    video { width:100%; height:auto; }
-    button { padding:10px 20px; font-size:16px; margin:10px; }
+    body { font-family: Arial; text-align:center; background:#eef2f7; }
+    #video { width:300px; margin:20px; border:2px solid #007bff; border-radius:10px; }
   </style>
 </head>
 <body>
+  <h2>📸 Quét mã QR chấm công</h2>
+  <video id="video" muted></video>
+  <div id="result"></div>
+  <button id="logoutBtn">Đăng xuất</button>
+  <p><a href="xem.html">Xem thời gian làm</a></p>
 
-<h1>📷 Quét mã chấm công</h1>
-<div id="video-container"><video id="qr-video" muted></video></div>
-<div id="result">Đang chờ quét QR...</div>
-<div id="error" style="color:red;"></div>
-<button id="restartBtn" style="display:none;">Quét lại</button>
-<button id="viewBtn">Xem thời gian làm</button>
-<button id="logoutBtn">Đăng xuất</button>
+  <script type="module">
+    import { auth, db, ref, set, update } from './firebase.js';
+    import QrScanner from 'https://cdn.jsdelivr.net/npm/qr-scanner@1.4.2/qr-scanner.min.js';
 
-<script type="module">
-import QrScanner from 'https://cdn.jsdelivr.net/npm/qr-scanner@1.4.2/qr-scanner.min.js';
-import './firebase.js';
+    const videoElem = document.getElementById('video');
+    const resultDiv = document.getElementById('result');
+    const userEmail = sessionStorage.getItem('userEmail');
 
-const videoElem = document.getElementById('qr-video');
-const resultDiv = document.getElementById('result');
-const restartBtn = document.getElementById('restartBtn');
-const errorDiv = document.getElementById('error');
+    if (!userEmail) window.location.href = 'index.html';
 
-const email = sessionStorage.getItem('userEmail');
-if (!email) window.location.href = 'index.html';
+    const scanner = new QrScanner(videoElem, result => handleScan(result), {
+      highlightScanRegion: true, highlightCodeOutline: true
+    });
+    scanner.start();
 
-let scanner;
+    async function handleScan(result) {
+      const qrValue = result.data || result;
+      resultDiv.textContent = '✅ Quét thành công: ' + qrValue;
 
-function startScanner() {
-  resultDiv.textContent = 'Đang chờ quét QR...';
-  scanner = new QrScanner(videoElem, qrResult => handleAttendance(qrResult), { highlightScanRegion:true });
-  scanner.start().catch(err => errorDiv.textContent = '❌ Không mở được camera: ' + err);
-}
+      const now = new Date();
+      const date = now.toISOString().split('T')[0];
+      const time = now.toLocaleTimeString();
+      const dbPath = `chamcong/${userEmail.replace(/\./g, "_")}/${date}`;
 
-restartBtn.addEventListener('click', startScanner);
-document.getElementById('viewBtn').onclick = () => location.href = 'xem.html';
-document.getElementById('logoutBtn').onclick = () => { sessionStorage.clear(); location.href = 'index.html'; };
+      await update(ref(db, dbPath), {
+        tendangnhap: userEmail,
+        noidungmaquet: qrValue,
+        giolamtrongngay: time,
+        diadiemquetma: "Văn phòng",
+        updatedAt: now.toISOString()
+      });
 
-// Hàm xử lý chấm công
-function handleAttendance(qrResult) {
-  scanner.stop();
-  const now = new Date();
-  const dateKey = now.toISOString().split('T')[0];
-  const timeStr = now.toLocaleTimeString('vi-VN');
-  const hour = now.getHours() + now.getMinutes()/60;
-  const ref = db.ref('attendance/' + email.replace('.', '_') + '/' + dateKey);
-
-  ref.once('value').then(snapshot => {
-    let data = snapshot.val() || {};
-    let msg = '';
-    const morningStart = 7.5, morningEnd = 11.5, afternoonStart = 13, afternoonEnd = 17;
-
-    if (hour >= morningStart && hour <= morningEnd) {
-      if (!data.vaoCaSang) {
-        data.vaoCaSang = timeStr;
-        if (hour > morningStart) data.diMuon = true, msg = '⚠ Đi muộn ca sáng!';
-      } else data.raCaSang = timeStr;
-    } else if (hour >= afternoonStart && hour <= afternoonEnd) {
-      if (!data.vaoCaChieu) {
-        data.vaoCaChieu = timeStr;
-        if (hour > afternoonStart) data.diMuon = true, msg = '⚠ Đi muộn ca chiều!';
-      } else data.raCaChieu = timeStr;
-    } else if (hour > morningEnd && hour < afternoonStart) {
-      data.lamThem = true; msg = '🕐 Làm thêm buổi trưa!';
+      alert('✅ Chấm công thành công!');
+      scanner.stop();
     }
 
-    data.noiDungMaQuet = qrResult;
-    data.diaDiemQuetMa = "Cổng công ty";
-    data.gioLamTrongNgay = tinhGio(data);
-
-    ref.set(data);
-    resultDiv.textContent = `✅ Quét thành công: ${qrResult}\n${msg}\nTổng giờ: ${data.gioLamTrongNgay}h`;
-    alert(msg || '✅ Quét thành công!');
-    restartBtn.style.display = 'inline-block';
-  });
-}
-
-function tinhGio(data) {
-  let sum = 0;
-  if (data.vaoCaSang && data.raCaSang) sum += parseTime(data.raCaSang) - parseTime(data.vaoCaSang);
-  if (data.vaoCaChieu && data.raCaChieu) sum += parseTime(data.raCaChieu) - parseTime(data.vaoCaChieu);
-  return sum.toFixed(2);
-}
-function parseTime(t) { const [h,m,s] = t.split(':').map(Number); return h + m/60 + (s||0)/3600; }
-
-startScanner();
-</script>
+    document.getElementById('logoutBtn').onclick = () => {
+      sessionStorage.clear();
+      window.location.href = 'index.html';
+    };
+  </script>
 </body>
 </html>
