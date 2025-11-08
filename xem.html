@@ -13,6 +13,91 @@
   button { margin:10px; padding:8px 16px; font-size:16px; }
 </style>
 </head>
+  body {
+  font-family: Arial, sans-serif;
+  text-align: center;
+  background-color: #f0f2f5;
+  margin: 0;
+  padding: 0 10px; /* padding nhỏ 2 bên cho mobile */
+}
+
+h1 {
+  background-color: #007bff;
+  color: white;
+  padding: 15px;
+  margin: 0 0 20px 0;
+  font-size: 1.5em; /* to vừa trên mobile */
+}
+
+input, button {
+  width: 90%;       /* rộng vừa đủ trên mobile */
+  max-width: 400px; /* không quá rộng trên desktop */
+  padding: 10px;
+  margin: 5px 0;
+  font-size: 1em;
+  box-sizing: border-box;
+}
+
+#video-container {
+  width: 100%;     /* chiếm hết chiều ngang */
+  max-width: 360px;
+  margin: 0 auto 20px auto;
+  border: 2px solid #007bff;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+video {
+  width: 100%;
+  height: auto;
+}
+
+table {
+  width: 100%;
+  max-width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9em;
+}
+
+th, td {
+  padding: 6px;
+  border: 1px solid #007bff;
+  word-wrap: break-word;
+}
+
+th {
+  background-color: #007bff;
+  color: white;
+}
+
+button {
+  font-size: 1em;
+  padding: 10px 15px;
+  margin: 5px;
+}
+
+/* Media query cho điện thoại nhỏ */
+@media (max-width: 480px) {
+  h1 {
+    font-size: 1.3em;
+    padding: 10px;
+  }
+
+  input, button {
+    width: 95%;
+    font-size: 1em;
+  }
+
+  th, td {
+    font-size: 0.8em;
+    padding: 4px;
+  }
+
+  #video-container {
+    max-width: 100%;
+  }
+}
+
 <body>
 
 <h1>📄 Xem lịch sử chấm công</h1>
@@ -115,3 +200,4 @@ window.addEventListener('load', loadAttendance);
 
 </body>
 </html>
+
