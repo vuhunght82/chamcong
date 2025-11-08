@@ -62,7 +62,7 @@
     const resultDiv = document.getElementById('result');
     const errorDiv = document.getElementById('error');
     const restartBtn = document.getElementById('restartBtn');
-
+const VALID_QR = "hoangphucglass";
     // Tạo scanner 1 lần
     const scanner = new QrScanner(videoElem, qrResult => {
       // Hiển thị kết quả QR
@@ -125,6 +125,7 @@ copyBtn.addEventListener('click', () => {
   </script>
 </body>
 </html>
+
 
 
 
