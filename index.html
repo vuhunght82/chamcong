@@ -110,7 +110,24 @@
       scanner.start();
   });
 </script>
+  <script type="module">
+import QrScanner from 'https://cdn.jsdelivr.net/npm/qr-scanner@1.4.2/qr-scanner.min.js';
+QrScanner.WORKER_PATH = 'https://cdn.jsdelivr.net/npm/qr-scanner@1.4.2/qr-scanner-worker.min.js';
+
+const videoElem = document.getElementById('qr-video');
+const startBtn = document.getElementById('startBtn');
+
+const scanner = new QrScanner(videoElem, result => {
+    alert('Mã QR: ' + result);
+    scanner.stop();
+});
+
+startBtn.addEventListener('click', () => {
+    scanner.start();
+});
+</script>
 </body>
 </html>
+
 
 
