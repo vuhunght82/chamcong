@@ -1,3 +1,129 @@
+
+
+
+        <!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Biểu đồ bán hàng theo tháng</title>
+
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    /* Reset đơn giản */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f4f6f8;
+      color: #333;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 20px;
+      font-size: 1.8rem;
+      color: #007bff;
+    }
+
+    .chart-container {
+      width: 90%;
+      max-width: 700px;
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      padding: 20px;
+    }
+
+    @media (max-width: 600px) {
+      h1 {
+        font-size: 1.4rem;
+      }
+
+      .chart-container {
+        padding: 15px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <h1>📊 Biểu đồ hàng hoá bán ra theo tháng</h1>
+
+  <div class="chart-container">
+    <canvas id="salesChart"></canvas>
+  </div>
+
+  <script>
+    // === DỮ LIỆU MẪU (có thể thay bằng Firebase sau) ===
+    const months = ["Tháng 1", "Tháng 2", "Tháng 3", "Tháng 4", "Tháng 5", "Tháng 6"];
+    const salesData = [120, 150, 90, 180, 200, 160];
+
+    // === KHỞI TẠO BIỂU ĐỒ ===
+    const ctx = document.getElementById("salesChart").getContext("2d");
+
+    new Chart(ctx, {
+      type: "bar",
+      data: {
+        labels: months,
+        datasets: [{
+          label: "Số lượng hàng hoá bán ra",
+          data: salesData,
+          backgroundColor: "rgba(54, 162, 235, 0.6)",
+          borderColor: "rgba(54, 162, 235, 1)",
+          borderWidth: 1,
+          borderRadius: 4
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          y: {
+            beginAtZero: true,
+            title: {
+              display: true,
+              text: "Số lượng"
+            }
+          },
+          x: {
+            title: {
+              display: true,
+              text: "Tháng"
+            }
+          }
+        },
+        plugins: {
+          legend: {
+            display: true,
+            position: "top"
+          },
+          tooltip: {
+            enabled: true
+          }
+        }
+      },
+      plugins: [{
+        // Plugin tùy chỉnh để tự động điều chỉnh chiều cao canvas
+        id: 'resizeCanvas',
+        beforeInit(chart) {
+          const container = chart.canvas.parentNode;
+          container.style.height = "400px";
+        }
+      }]
+    });
+  <script>
 function handleAttendance(email, qrContent, lat, lng){
   scanner.stop();
 
@@ -76,8 +202,13 @@ ${msg}`;
       errorDiv.textContent = '❌ Lỗi đọc Firebase: ' + err;
     });
 }
-
 // Mã encode email
 function encodeEmail(email){
   return email.replace(/\./g, ',');
 }
+</scipt>
+  
+</body>
+</html>
+
+
