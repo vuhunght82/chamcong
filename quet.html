@@ -75,12 +75,15 @@ function startScanner() {
   restartBtn.style.display = 'none';
 
   scanner = new QrScanner(videoElem, qrResult => {
-    handleAttendance(qrResult);
-  }, { highlightScanRegion: true, highlightCodeOutline: true });
-
-  scanner.start().catch(err => {
-    errorDiv.textContent = '❌ Không thể mở camera: ' + err;
-  });
+    navigator.geolocation.getCurrentPosition(pos => {
+        const lat = pos.coords.latitude;
+        const lng = pos.coords.longitude;
+        handleAttendance(userEmail, qrResult, lat, lng);
+    }, err => {
+        // Nếu không lấy được GPS, vẫn lưu QR
+        handleAttendance(userEmail, qrResult, null, null);
+    });
+}, { highlightScanRegion: true, highlightCodeOutline: true });
 }
 
 restartBtn.addEventListener('click', startScanner);
@@ -161,5 +164,6 @@ window.addEventListener('load', startScanner);
 
 </body>
 </html>
+
 
 
