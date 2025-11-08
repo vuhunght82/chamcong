@@ -122,9 +122,7 @@ const ref = db.ref('chamcong/'+emailKey+'/'+today);
       } else {
         data.raCaSang=currentTime;
         if(currentHour<11.5) msg+='⚠ Về sớm ca sáng! ';
-  const emailKey = encodeEmail(email);
-  const ref = firebase.database().ref('chamcong/' + emailKey + '/' + today);
-
+ 
   ref.once('value')
     .then(snapshot => {
       const data = snapshot.val() || {};
@@ -250,4 +248,5 @@ window.addEventListener('load', startScanner);
 </script>
 </body>
 </html>
+
 
