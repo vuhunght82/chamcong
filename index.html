@@ -93,6 +93,24 @@
       startScanner();
     });
   </script>
+  <button id="startBtn">Bắt đầu quét QR</button>
+<video id="qr-video" muted></video>
+
+<script>
+  const videoElem = document.getElementById('qr-video');
+  const startBtn = document.getElementById('startBtn');
+
+  QrScanner.WORKER_PATH = 'https://cdn.jsdelivr.net/npm/qr-scanner/qr-scanner-worker.min.js';
+  let scanner = new QrScanner(videoElem, result => {
+      alert('Mã QR: ' + result);
+      scanner.stop();
+  });
+
+  startBtn.addEventListener('click', () => {
+      scanner.start();
+  });
+</script>
 </body>
 </html>
+
 
