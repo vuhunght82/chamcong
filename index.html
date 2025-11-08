@@ -68,7 +68,17 @@
       resultDiv.textContent = `✅ Nội dung QR: ${qrResult}`;
       alert(`Đã quét QR! Nội dung: ${qrResult}`);
       scanner.stop();
+       // Kiểm tra nếu qrResult là URL
+      let displayContent = qrResult;
+      if (/^https?:\/\//i.test(qrResult)) {
+        displayContent = `<a href="${qrResult}" target="_blank">${qrResult}</a>`;
+      }
+
+      resultDiv.innerHTML = `✅ Nội dung QR: ${displayContent}`;
+
+      // Hiển thị nút copy và quét lại
       restartBtn.style.display = 'inline-block';
+      copyBtn.style.display = 'inline-block';
     });
 
     // Hàm bắt đầu quét
@@ -93,3 +103,4 @@
   </script>
 </body>
 </html>
+
