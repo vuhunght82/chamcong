@@ -8,6 +8,32 @@
     #video { width:300px; margin:20px; border:2px solid #007bff; border-radius:10px; }
   </style>
 </head>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+
+<script>
+  // Cấu hình Firebase
+  const firebaseConfig = {
+    apiKey: "AIzaSyAb5AZOBvEVY3a_9ioEKTW-wuVMXdnRZGQ",
+    authDomain: "sellglass-3ebe9.firebaseapp.com",
+    databaseURL: "https://sellglass-3ebe9-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "sellglass-3ebe9",
+    storageBucket: "sellglass-3ebe9.appspot.com",
+    messagingSenderId: "513741829035",
+    appId: "1:513741829035:web:1b2c59dcf1a0be329358ee"
+  };
+
+  if (!firebase.apps.length) {
+    firebase.initializeApp(firebaseConfig);
+  }
+
+  const db = firebase.database();
+  const auth = firebase.auth();
+
+  window.db = db;   // cho các file khác dùng
+  window.auth = auth;
+</script>
 <body>
   <h2>📸 Quét mã QR chấm công</h2>
   <video id="video" muted></video>
@@ -16,7 +42,7 @@
   <p><a href="xem.html">Xem thời gian làm</a></p>
 
   <script type="module">
-    import { auth, db, ref, set, update } from './firebase.js';
+   
     import QrScanner from 'https://cdn.jsdelivr.net/npm/qr-scanner@1.4.2/qr-scanner.min.js';
 
     const videoElem = document.getElementById('video');
@@ -58,3 +84,4 @@
   </script>
 </body>
 </html>
+
