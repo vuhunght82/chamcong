@@ -62,7 +62,7 @@ const db = firebase.database();
 const userEmail = sessionStorage.getItem('userEmail');
 if(!userEmail){
   alert('Vui lòng đăng nhập trước!');
-  window.location.href='dangnhap.html';
+  window.location.href='index.html';
 }
 
 // ================== Elements ==================
@@ -238,7 +238,7 @@ function parseTime(timeStr){
 restartBtn.addEventListener('click', startScanner);
 logoutBtn.addEventListener('click', ()=>{
   sessionStorage.removeItem('userEmail');
-  window.location.href='dangnhap.html';
+  window.location.href='index.html';
 });
 viewBtn.addEventListener('click', ()=>{ window.location.href='xem.html'; });
 
