@@ -68,7 +68,21 @@
       // Hiển thị kết quả QR
       resultDiv.textContent = `✅ Nội dung QR: ${qrResult}`;
       alert(`Quét QR thành công!\n Nội dung: ${qrResult}`);
-      scanner.stop();
+      // Chuỗi QR hợp lệ (ví dụ: mã nhân viên)
+const VALID_QR = "hoangphucglass";
+      const scanner = new QrScanner(videoElem, qrResult => {
+  scanner.stop();
+// Kiểm tra hợp lệ
+  if (qrResult !== VALID_QR) {
+    resultDiv.textContent = `❌ Mã QR không hợp lệ: ${qrResult}`;
+    errorDiv.textContent = '⚠ Vui lòng quét lại mã đúng.';
+ //   restartBtn.style.display = 'inline-block';
+   
+    return;
+  }
+
+
+      
        // Kiểm tra nếu qrResult là URL
       let displayContent = qrResult;
       if (/^https?:\/\//i.test(qrResult)) {
@@ -111,6 +125,7 @@ copyBtn.addEventListener('click', () => {
   </script>
 </body>
 </html>
+
 
 
 
