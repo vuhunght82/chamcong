@@ -1,92 +1,102 @@
 <!DOCTYPE html>
-<html lang="vi">
+<html>
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Chấm Công QR</title>
-
-  <!-- Thư viện quét QR -->
-  <script src="https://unpkg.com/html5-qrcode/minified/html5-qrcode.min.js"></script>
-
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      text-align: center;
-      background-color: #f0f2f5;
-      margin: 0;
-      padding: 0;
-    }
-    h1 {
-      background-color: #007bff;
-      color: white;
-      padding: 15px;
-      margin: 0;
-    }
-    #reader {
-      width: 300px;
-      margin: 20px auto;
-      border: 2px solid #007bff;
-      border-radius: 10px;
-      overflow: hidden;
-    }
-    #result {
-      font-weight: bold;
-      color: green;
-      margin-top: 20px;
-    }
-    #error {
-      color: red;
-      margin-top: 10px;
-    }
-    button {
-      margin-top: 10px;
-      padding: 10px 20px;
-      font-size: 16px;
-    }
-  </style>
+    <title>QR Code Scanner</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+        #preview {
+            width: 300px;
+            height: 300px;
+            border: 2px solid #ccc;
+            background-color: #333;
+            margin-bottom: 20px;
+        }
+        #result {
+            font-size: 1.2em;
+            color: #333;
+            word-break: break-all;
+            text-align: center;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 1em;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+    </style>
 </head>
 <body>
-  <h1>📸 Chấm Công QR</h1>
-  <div id="reader"></div>
-  <div id="result">Đang chờ quét mã...</div>
-  <div id="error"></div>
-  <button id="restartBtn" style="display:none;">Quét lại</button>
+    <h1>QR Code Scanner</h1>
+    <video id="preview"></video>
+    <p id="result">Scanning...</p>
+    <button id="startButton">Start Scanner</button>
+    <button id="stopButton" style="display: none;">Stop Scanner</button>
 
-  <script>
-    let html5QrCode;
+    <script src="https://rawgit.com/schmich/instascanjs/master/instascan.min.js"></script>
+    <script>
+        let scanner;
 
-    function startQRScanner() {
-      html5QrCode = new Html5Qrcode("reader");
+        document.getElementById('startButton').addEventListener('click', () => {
+            startScanner();
+        });
 
-      html5QrCode.start(
-        {}, // dùng camera mặc định
-        { fps: 10, qrbox: 250 },
-        qrCodeMessage => {
-          html5QrCode.stop().then(() => {
-            document.getElementById("result").innerText = "✅ Mã QR: " + qrCodeMessage;
-            document.getElementById("restartBtn").style.display = "inline-block";
-            alert("Đã quét được mã: " + qrCodeMessage);
-            // TODO: lưu vào Firebase ở đây
-          });
-        },
-        errorMessage => {
-          console.log("QR error:", errorMessage);
+        document.getElementById('stopButton').addEventListener('click', () => {
+            stopScanner();
+        });
+
+        function startScanner() {
+            if (scanner) {
+                scanner.start();
+                return;
+            }
+            scanner = new Instascan(
+                {
+                    // Khai báo camera và kết quả quét
+                    video: document.getElementById('preview'),
+                    mirror: false, // Phản chiếu camera
+                    captureImage: false, // Không chụp ảnh
+                    backgroundScan: true, // Quét liên tục trong nền
+                    // Các cài đặt khác
+                }
+            );
+            scanner.addListener('scan', function (content) {
+                document.getElementById('result').textContent = 'Result: ' + content;
+            });
+            Instascan.Camera.getCameras().then(function (cameras) {
+                if (cameras.length > 0) {
+                    scanner.start(cameras[0]);
+                    document.getElementById('startButton').style.display = 'none';
+                    document.getElementById('stopButton').style.display = 'inline-block';
+                } else {
+                    console.error('No cameras found.');
+                    alert('No cameras found.');
+                }
+            }).catch(function (e) {
+                console.error(e);
+                alert('Error accessing camera: ' + e);
+            });
         }
-      ).catch(err => {
-        document.getElementById("error").innerText = "❌ Không thể mở camera: " + err.message;
-      });
-    }
 
-    document.getElementById("restartBtn").addEventListener("click", () => {
-      document.getElementById("result").innerText = "Đang chờ quét mã...";
-      document.getElementById("restartBtn").style.display = "none";
-      startQRScanner();
-    });
+        function stopScanner() {
+            if (scanner) {
+                scanner.stop();
+                document.getElementById('startButton').style.display = 'inline-block';
+                document.getElementById('stopButton').style.display = 'none';
+                document.getElementById('result').textContent = 'Scanning...';
+            }
+        }
 
-    // Khi trang load, tự mở camera và quét QR
-    window.addEventListener("load", () => {
-      startQRScanner();
-    });
-  </script>
+        // Tự động bắt đầu quét khi tải trang
+        startScanner();
+    </script>
 </body>
 </html>
