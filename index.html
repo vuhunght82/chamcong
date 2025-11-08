@@ -69,8 +69,15 @@
     function startScanner() {
       scanner = new QrScanner(videoElem, result => {
         scanner.stop();
+        
         document.getElementById('result').innerText = '✅ Mã QR: ' + result;
         document.getElementById('restartBtn').style.display = 'inline-block';
+
+        const scanner = new QrScanner(videoElem, qrResult => {
+    // qrResult là chuỗi ký tự đọc được từ QR
+    resultDiv.textContent = `✅ Nội dung QR: ${qrResult}`;
+    alert(`Đã quét QR! Nội dung: ${qrResult}`);
+    scanner.stop(); // dừng quét sau khi đọc
         alert('Đã quét được mã: ' + result);
         // TODO: Lưu vào Firebase tại đây
       }, {
@@ -131,6 +138,7 @@ startBtn.addEventListener('click', () => {
 </script>
 </body>
 </html>
+
 
 
 
