@@ -4,23 +4,23 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Chấm Công QR</title>
-
+  
   <!-- Thư viện quét QR -->
   <script src="https://unpkg.com/html5-qrcode/minified/html5-qrcode.min.js"></script>
 
   <style>
     body {
       font-family: Arial, sans-serif;
-      background: #f8f9fa;
+      text-align: center;
+      background-color: #f0f2f5;
       margin: 0;
       padding: 0;
-      text-align: center;
     }
     h1 {
-      background: #007bff;
+      background-color: #007bff;
       color: white;
-      margin: 0;
       padding: 15px;
+      margin: 0;
     }
     #reader {
       width: 300px;
@@ -30,58 +30,76 @@
       overflow: hidden;
     }
     #result {
-      font-size: 18px;
       font-weight: bold;
-      margin-top: 20px;
       color: green;
+      margin-top: 20px;
     }
     #error {
       color: red;
       margin-top: 10px;
     }
+    button {
+      margin-top: 10px;
+      padding: 10px 20px;
+      font-size: 16px;
+    }
   </style>
 </head>
 <body>
-  <h1>📸 Chấm Công - Quét QR</h1>
+  <h1>📸 Chấm Công QR</h1>
   <div id="reader"></div>
   <div id="result">Đang chờ quét mã...</div>
   <div id="error"></div>
+  <button id="restartBtn" style="display:none;">Quét lại</button>
 
   <script>
-    // Hỏi quyền sử dụng camera
+    let html5QrCode;
+
     async function requestCameraPermission() {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ video: true });
         if (stream) {
-          // Nếu được phép thì tắt camera tạm thời (sẽ bật lại trong html5-qrcode)
+          // Tạm dừng camera, sẽ dùng html5-qrcode mở lại
           stream.getTracks().forEach(track => track.stop());
           startQRScanner();
         }
       } catch (err) {
-        document.getElementById("error").innerText =
-          "❌ Bạn chưa cho phép quyền camera! Vui lòng bật lại trong cài đặt trình duyệt.";
+        document.getElementById("error").innerText = 
+          "❌ Bạn chưa cho phép quyền camera hoặc không có camera! Vui lòng kiểm tra lại.";
       }
     }
 
-    // Hàm bắt đầu quét QR
     function startQRScanner() {
-      const html5QrCode = new Html5Qrcode("reader");
+      html5QrCode = new Html5Qrcode("reader");
       html5QrCode.start(
-        { facingMode: "environment" }, // Dùng camera sau nếu có
+        { facingMode: "environment" }, // camera sau
         { fps: 10, qrbox: 250 },
         qrCodeMessage => {
-          html5QrCode.stop(); // Dừng quét khi đã quét được mã
-          document.getElementById("result").innerText = "✅ Mã QR: " + qrCodeMessage;
-          alert("Đã quét được mã: " + qrCodeMessage);
-          // 👉 Ở đây bạn có thể thêm đoạn code lưu Firebase
+          html5QrCode.stop().then(() => {
+            document.getElementById("result").innerText = "✅ Mã QR: " + qrCodeMessage;
+            document.getElementById("restartBtn").style.display = "inline-block";
+            alert("Đã quét được mã: " + qrCodeMessage);
+            // TODO: lưu vào Firebase ở đây
+          }).catch(err => {
+            document.getElementById("error").innerText = "Lỗi khi dừng quét: " + err;
+          });
         },
         errorMessage => {
-          document.getElementById("error").innerText = "Đang quét... (" + errorMessage + ")";
+          // Có thể bỏ dòng này nếu muốn console sạch hơn
+          console.log("QR error:", errorMessage);
         }
-      );
+      ).catch(err => {
+        document.getElementById("error").innerText = "Không thể mở camera: " + err;
+      });
     }
 
-    // Gọi hàm xin quyền camera khi tải trang
+    document.getElementById("restartBtn").addEventListener("click", () => {
+      document.getElementById("result").innerText = "Đang chờ quét mã...";
+      document.getElementById("restartBtn").style.display = "none";
+      startQRScanner();
+    });
+
+    // Khi load trang, yêu cầu quyền camera
     requestCameraPermission();
   </script>
 </body>
