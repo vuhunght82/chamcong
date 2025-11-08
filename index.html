@@ -80,13 +80,13 @@ loginBtn.addEventListener('click', () => {
   //    loginError.textContent = error.message;
   //  });
    
-    alert('✅ Đã quét QR!\n' + msg);
+    alert("chúc mừng bạn đã quét thành công!");
       startScanner();
     
 });
 
-document.getElementById('logout').addEventListener('click', () => {
-  auth.signOut().then(() => location.reload());
+// document.getElementById('logout').addEventListener('click', () => {
+ // auth.signOut().then(() => location.reload());
 });
 
 // =================== QR Scanner ===================
@@ -186,5 +186,6 @@ function parseTime(timeStr) {
 </script>
 </body>
 </html>
+
 
 
