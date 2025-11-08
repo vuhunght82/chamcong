@@ -108,14 +108,7 @@ const VALID_QR = "hoangphucglass";
     restartBtn.addEventListener('click', () => {
       startScanner();
     });
-copyBtn.addEventListener('click', () => {
-      const text = scanner.lastResult || '';
-      if (text) {
-        navigator.clipboard.writeText(text)
-          .then(() => alert('✅ Đã sao chép nội dung QR vào clipboard'))
-          .catch(err => alert('❌ Lỗi khi sao chép: ' + err));
-      }
-    });
+
     // Tự động hiển thị nút bắt đầu quét cho Safari/Chrome
     window.addEventListener('load', () => {
       startScanner();
@@ -123,6 +116,7 @@ copyBtn.addEventListener('click', () => {
   </script>
 </body>
 </html>
+
 
 
 
