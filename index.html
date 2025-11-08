@@ -67,7 +67,7 @@
     2. Đã cho phép quyền camera cho trang web.<br>
     3. Thiết bị có camera hoạt động.
   </div>
-  <button id="restartBtn" style="display:none;">Quét lại</button>
+  <button id="restartBtn">Quét lại</button>
 
   <script>
     let html5QrCode;
@@ -92,9 +92,11 @@
     function startQRScanner() {
       document.getElementById("reader").style.display = "block";
       html5QrCode = new Html5Qrcode("reader");
-      html5QrCode.start(
-        { facingMode: "environment" }, // camera sau
-        { fps: 10, qrbox: 250 },
+     html5QrCode.start(
+  {}, // dùng camera mặc định
+  { fps: 10, qrbox: 250 },
+  qrCodeMessage => { ... }
+)
         qrCodeMessage => {
           html5QrCode.stop().then(() => {
             document.getElementById("result").innerText = "✅ Mã QR: " + qrCodeMessage;
@@ -123,3 +125,4 @@
   </script>
 </body>
 </html>
+
