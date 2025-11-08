@@ -103,7 +103,7 @@ function handleAttendance(email, qrContent, lat, lng){
 
   const now = new Date();
   const today = now.toISOString().split('T')[0]; // YYYY-MM-DD
-  const today = now.toISOString().split('T')[0];
+ 
   const currentTime = now.toLocaleTimeString();
   const currentHour = now.getHours() + now.getMinutes()/60;
 const emailKey = encodeEmail(email);
@@ -250,3 +250,4 @@ window.addEventListener('load', startScanner);
 </script>
 </body>
 </html>
+
