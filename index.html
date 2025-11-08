@@ -12,91 +12,158 @@
             min-height: 100vh;
             margin: 0;
             background-color: #f0f0f0;
+            color: #333;
         }
-        #preview {
-            width: 300px;
-            height: 300px;
-            border: 2px solid #ccc;
-            background-color: #333;
+        h1 {
+            color: #2c3e50;
+        }
+        #reader {
+            width: 300px; /* Chiều rộng khung quét */
+            height: 300px; /* Chiều cao khung quét */
+            border: 2px solid #3498db; /* Khung viền đẹp hơn */
+            border-radius: 8px; /* Bo góc nhẹ */
+            overflow: hidden; /* Đảm bảo video nằm gọn trong khung */
+            background-color: #ecf0f1; /* Màu nền nhẹ */
             margin-bottom: 20px;
         }
         #result {
             font-size: 1.2em;
-            color: #333;
+            color: #27ae60; /* Màu xanh lá cây cho kết quả */
             word-break: break-all;
             text-align: center;
+            margin-top: 10px;
+            padding: 0 15px;
+        }
+        .button-container {
+            margin-top: 20px;
         }
         button {
             padding: 10px 20px;
             font-size: 1em;
             cursor: pointer;
+            margin: 5px;
+            border: none;
+            border-radius: 5px;
+            background-color: #3498db;
+            color: white;
+            transition: background-color 0.3s ease;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        button:disabled {
+            background-color: #bdc3c7;
+            cursor: not-allowed;
+        }
+        #error-message {
+            color: #e74c3c;
             margin-top: 10px;
+            font-weight: bold;
         }
     </style>
+    <!-- Thư viện html5-qrcode từ CDN -->
+    <script src="https://unpkg.com/html5-qrcode/minified/html5-qrcode.min.js"></script>
 </head>
 <body>
     <h1>QR Code Scanner</h1>
-    <video id="preview"></video>
-    <p id="result">Scanning...</p>
-    <button id="startButton">Start Scanner</button>
-    <button id="stopButton" style="display: none;">Stop Scanner</button>
+    <div id="reader"></div>
+    <p id="result">Kết quả quét sẽ hiển thị ở đây.</p>
+    <p id="error-message" style="display: none;"></p>
 
-    <script src="https://rawgit.com/schmich/instascanjs/master/instascan.min.js"></script>
+    <div class="button-container">
+        <button id="startScanButton">Bắt đầu quét</button>
+        <button id="stopScanButton" style="display: none;">Dừng quét</button>
+    </div>
+
     <script>
-        let scanner;
+        let html5QrCode;
+        let isScanning = false;
+        const resultElement = document.getElementById('result');
+        const errorMessageElement = document.getElementById('error-message');
+        const startButton = document.getElementById('startScanButton');
+        const stopButton = document.getElementById('stopScanButton');
 
-        document.getElementById('startButton').addEventListener('click', () => {
-            startScanner();
-        });
+        function onScanSuccess(decodedText, decodedResult) {
+            console.log(`Code matched = ${decodedText}`, decodedResult);
+            resultElement.textContent = 'Kết quả: ' + decodedText;
+            errorMessageElement.style.display = 'none';
 
-        document.getElementById('stopButton').addEventListener('click', () => {
-            stopScanner();
-        });
-
-        function startScanner() {
-            if (scanner) {
-                scanner.start();
-                return;
-            }
-            scanner = new Instascan(
-                {
-                    // Khai báo camera và kết quả quét
-                    video: document.getElementById('preview'),
-                    mirror: false, // Phản chiếu camera
-                    captureImage: false, // Không chụp ảnh
-                    backgroundScan: true, // Quét liên tục trong nền
-                    // Các cài đặt khác
-                }
-            );
-            scanner.addListener('scan', function (content) {
-                document.getElementById('result').textContent = 'Result: ' + content;
-            });
-            Instascan.Camera.getCameras().then(function (cameras) {
-                if (cameras.length > 0) {
-                    scanner.start(cameras[0]);
-                    document.getElementById('startButton').style.display = 'none';
-                    document.getElementById('stopButton').style.display = 'inline-block';
-                } else {
-                    console.error('No cameras found.');
-                    alert('No cameras found.');
-                }
-            }).catch(function (e) {
-                console.error(e);
-                alert('Error accessing camera: ' + e);
-            });
+            // Dừng quét sau khi phát hiện thành công một mã
+            // Nếu bạn muốn quét liên tục, hãy bỏ qua dòng này
+            // stopScanning();
         }
 
-        function stopScanner() {
-            if (scanner) {
-                scanner.stop();
-                document.getElementById('startButton').style.display = 'inline-block';
-                document.getElementById('stopButton').style.display = 'none';
-                document.getElementById('result').textContent = 'Scanning...';
+        function onScanFailure(error) {
+            // Xử lý lỗi quét (có thể bỏ qua hoặc hiển thị thông báo)
+            // console.warn(`Code scan error = ${error}`);
+            // if (!isScanning) { // Chỉ hiển thị lỗi nếu chưa bắt đầu quét hoặc có lỗi nghiêm trọng
+            //     errorMessageElement.textContent = 'Không thể quét: ' + error;
+            //     errorMessageElement.style.display = 'block';
+            // }
+        }
+
+        async function startScanning() {
+            if (isScanning) return; // Tránh khởi động lại khi đang quét
+
+            html5QrCode = new Html5Qrcode("reader");
+            const config = { 
+                fps: 10, // Số khung hình mỗi giây
+                qrbox: { width: 250, height: 250 }, // Kích thước khung quét QR
+                rememberLastUsedCamera: true // Nhớ camera đã dùng lần trước
+            };
+
+            resultElement.textContent = 'Đang tìm kiếm camera và bắt đầu quét...';
+            errorMessageElement.style.display = 'none';
+            startButton.disabled = true;
+
+            try {
+                // Yêu cầu camera sau trước (environment)
+                await html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess, onScanFailure);
+                isScanning = true;
+                resultElement.textContent = 'Di chuyển mã QR vào khung để quét.';
+                startButton.style.display = 'none';
+                stopButton.style.display = 'inline-block';
+                stopButton.disabled = false;
+            } catch (err) {
+                console.error("Lỗi khi khởi động camera: ", err);
+                isScanning = false;
+                resultElement.textContent = 'Không thể khởi động camera.';
+                errorMessageElement.textContent = 'Lỗi: ' + err.message + '. Vui lòng kiểm tra quyền camera cho trình duyệt của bạn.';
+                errorMessageElement.style.display = 'block';
+                startButton.disabled = false;
+                startButton.style.display = 'inline-block';
+                stopButton.style.display = 'none';
             }
         }
 
-        // Tự động bắt đầu quét khi tải trang
-        startScanner();
+        async function stopScanning() {
+            if (!isScanning) return;
+
+            resultElement.textContent = 'Đang dừng quét...';
+            stopButton.disabled = true;
+
+            try {
+                await html5QrCode.stop();
+                isScanning = false;
+                resultElement.textContent = 'Kết quả quét sẽ hiển thị ở đây.';
+                startButton.style.display = 'inline-block';
+                startButton.disabled = false;
+                stopButton.style.display = 'none';
+            } catch (err) {
+                console.error("Lỗi khi dừng quét: ", err);
+                errorMessageElement.textContent = 'Lỗi khi dừng quét: ' + err.message;
+                errorMessageElement.style.display = 'block';
+                stopButton.disabled = false; // Vẫn có thể thử lại dừng
+            }
+        }
+
+        // Gán sự kiện cho nút
+        startButton.addEventListener('click', startScanning);
+        stopButton.addEventListener('click', stopScanning);
+
+        // Tự động bắt đầu quét khi trang tải xong
+        // startScanning(); 
+        // Bỏ comment dòng trên nếu bạn muốn tự động bắt đầu thay vì nhấn nút
     </script>
 </body>
 </html>
