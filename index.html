@@ -77,7 +77,7 @@ const VALID_QR = "hoangphucglass";
   if (qrResult !== VALID_QR) {
     resultDiv.textContent = `❌ Mã QR không hợp lệ: ${qrResult}`;
     errorDiv.textContent = '⚠ Vui lòng quét lại mã đúng.';
- //   restartBtn.style.display = 'inline-block';
+    restartBtn.style.display = 'inline-block';
    
     return;
   }
@@ -116,6 +116,7 @@ const VALID_QR = "hoangphucglass";
   </script>
 </body>
 </html>
+
 
 
 
