@@ -21,7 +21,7 @@
 
   <script>
     document.getElementById('loginBtn').addEventListener('click', () => {
-      const email = email.value.trim();
+     const email = document.getElementById('email').value.trim();
       const password = document.getElementById('password').value.trim();
 
       auth.signInWithEmailAndPassword(email, password)
@@ -34,3 +34,4 @@
   </script>
 </body>
 </html>
+
