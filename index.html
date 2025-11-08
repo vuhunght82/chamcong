@@ -67,7 +67,7 @@ const copyBtn = document.getElementById('copyBtn');
     const scanner = new QrScanner(videoElem, qrResult => {
       // Hiển thị kết quả QR
       resultDiv.textContent = `✅ Nội dung QR: ${qrResult}`;
-      alert(`Đã quét QR! Nội dung: ${qrResult}`);
+      alert(`Quét QR thành công!\n Nội dung: ${qrResult}`);
       scanner.stop();
        // Kiểm tra nếu qrResult là URL
       let displayContent = qrResult;
@@ -96,7 +96,14 @@ const copyBtn = document.getElementById('copyBtn');
     restartBtn.addEventListener('click', () => {
       startScanner();
     });
-
+copyBtn.addEventListener('click', () => {
+      const text = scanner.lastResult || '';
+      if (text) {
+        navigator.clipboard.writeText(text)
+          .then(() => alert('✅ Đã sao chép nội dung QR vào clipboard'))
+          .catch(err => alert('❌ Lỗi khi sao chép: ' + err));
+      }
+    });
     // Tự động hiển thị nút bắt đầu quét cho Safari/Chrome
     window.addEventListener('load', () => {
       startScanner();
@@ -104,5 +111,6 @@ const copyBtn = document.getElementById('copyBtn');
   </script>
 </body>
 </html>
+
 
 
