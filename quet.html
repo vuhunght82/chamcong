@@ -197,56 +197,26 @@ const ref = db.ref('chamcong/'+emailKey+'/'+today);
         if(note) data.ghiChu = note;
       }
 
-    ref.set(data).then(()=>{
-      alert('✅ Chấm công thành công!\n'+msg+(isOvertime?'\nGhi chú: '+(data.ghiChu||''):''));
-      resultDiv.textContent=`Nhân viên: ${email}
-      // Lưu vào Firebase
-      ref.set(data)
-        .then(() => {
-          alert('✅ Chấm công thành công!\n' + msg + (isOvertime ? '\nGhi chú: ' + (data.ghiChu||'') : ''));
-          resultDiv.textContent = `Nhân viên: ${email}
-Sáng: ${data.vaoCaSang||'-'} - ${data.raCaSang||'-'}
-Chiều: ${data.vaoCaChieu||'-'} - ${data.raCaChieu||'-'}
+   ref.set(data)
+  .then(() => {
+    alert('✅ Chấm công thành công!\n' + msg + (isOvertime ? '\nGhi chú: ' + (data.ghiChu || '') : ''));
+
+    resultDiv.textContent = `Nhân viên: ${email}
+Sáng: ${data.vaoCaSang || '-'} - ${data.raCaSang || '-'}
+Chiều: ${data.vaoCaChieu || '-'} - ${data.raCaChieu || '-'}
 Tổng giờ: ${data.gioLamTrongNgay}h
 ${msg}`;
-      restartBtn.style.display='inline-block';
-          restartBtn.style.display = 'inline-block';
-        })
-        .catch(err => {
-          console.error('❌ Lỗi lưu Firebase:', err);
-          errorDiv.textContent = '❌ Lỗi lưu Firebase: ' + err;
-        });
-    })
-    .catch(err => {
-      console.error('❌ Lỗi đọc Firebase:', err);
-      errorDiv.textContent = '❌ Lỗi đọc Firebase: ' + err;
-    });
+
+    restartBtn.style.display = 'inline-block';
+  })
+  .catch(err => {
+    console.error('❌ Lỗi lưu Firebase:', err);
+    errorDiv.textContent = '❌ Lỗi lưu Firebase: ' + err;
   });
-}
-
-// Mã encode email
-function encodeEmail(email){
-  return email.replace(/\./g, ',');
-}
-// Chuyển HH:MM:SS -> giờ số
-function parseTime(timeStr){
-  const parts=timeStr.split(':');
-  return Number(parts[0])+Number(parts[1])/60+(parts[2]?Number(parts[2])/3600:0);
-}
-
-// ================== Event ==================
-restartBtn.addEventListener('click', startScanner);
-logoutBtn.addEventListener('click', ()=>{
-  sessionStorage.removeItem('userEmail');
-  window.location.href='index.html';
-});
-viewBtn.addEventListener('click', ()=>{ window.location.href='xem.html'; });
-
-// Bắt đầu quét tự động
-window.addEventListener('load', startScanner);
 
 </script>
 </body>
 </html>
+
 
 
