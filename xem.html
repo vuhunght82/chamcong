@@ -1,206 +1,63 @@
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Xem chấm công</title>
-<style>
-  body { font-family: Arial; text-align:center; background:#f0f2f5; padding:20px;}
-  h1 { color:#007bff; }
-  table { margin:auto; border-collapse: collapse; width:90%; max-width:800px;}
-  th, td { border:1px solid #007bff; padding:8px; }
-  th { background:#007bff; color:white; }
-  button { margin:10px; padding:8px 16px; font-size:16px; }
-</style>
-</head>
-<style> body {
-  font-family: Arial, sans-serif;
-  text-align: center;
-  background-color: #f0f2f5;
-  margin: 0;
-  padding: 0 10px; /* padding nhỏ 2 bên cho mobile */
-}
+<h1>📋 Xem chấm công</h1>
 
-h1 {
-  background-color: #007bff;
-  color: white;
-  padding: 15px;
-  margin: 0 0 20px 0;
-  font-size: 1.5em; /* to vừa trên mobile */
-}
-
-input, button {
-  width: 90%;       /* rộng vừa đủ trên mobile */
-  max-width: 400px; /* không quá rộng trên desktop */
-  padding: 10px;
-  margin: 5px 0;
-  font-size: 1em;
-  box-sizing: border-box;
-}
-
-#video-container {
-  width: 100%;     /* chiếm hết chiều ngang */
-  max-width: 360px;
-  margin: 0 auto 20px auto;
-  border: 2px solid #007bff;
-  border-radius: 10px;
-  overflow: hidden;
-}
-
-video {
-  width: 100%;
-  height: auto;
-}
-
-table {
-  width: 100%;
-  max-width: 100%;
-  border-collapse: collapse;
-  font-size: 0.9em;
-}
-
-th, td {
-  padding: 6px;
-  border: 1px solid #007bff;
-  word-wrap: break-word;
-}
-
-th {
-  background-color: #007bff;
-  color: white;
-}
-
-button {
-  font-size: 1em;
-  padding: 10px 15px;
-  margin: 5px;
-}
-
-/* Media query cho điện thoại nhỏ */
-@media (max-width: 480px) {
-  h1 {
-    font-size: 1.3em;
-    padding: 10px;
-  }
-
-  input, button {
-    width: 95%;
-    font-size: 1em;
-  }
-
-  th, td {
-    font-size: 0.8em;
-    padding: 4px;
-  }
-
-  #video-container {
-    max-width: 100%;
-  }
-}
-</style>
-<body>
-
-<h1>📄 Xem lịch sử chấm công</h1>
-<button id="logoutBtn">Đăng xuất</button>
-<button id="refreshBtn">Cập nhật</button>
+<label>Chọn tháng: <input type="month" id="monthPicker"></label>
+<button id="searchBtn">Tìm</button>
 
 <table>
   <thead>
     <tr>
       <th>Ngày</th>
-      <th>Vào sáng</th>
-      <th>Ra sáng</th>
-      <th>Vào chiều</th>
-      <th>Ra chiều</th>
-      <th>Tổng giờ</th>
-      <th>Đi muộn / Ghi chú</th>
+      <th>Nhân viên</th>
+      <th>Ca sáng (Vào-Ra)</th>
+      <th>Ca chiều (Vào-Ra)</th>
+      <th>Đi muộn / Về sớm</th>
+      <th>Giờ làm</th>
+      <th>Địa điểm quét</th>
       <th>Nội dung QR</th>
     </tr>
   </thead>
-  <tbody id="tableBody">
-  </tbody>
+  <tbody id="attendanceTable"></tbody>
 </table>
 
-<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 
 <script>
-const firebaseConfig = {
-  apiKey: "AIzaSyAb5AZOBvEVY3a_9ioEKTW-wuVMXdnRZGQ",
-  authDomain: "sellglass-3ebe9.firebaseapp.com",
-  databaseURL: "https://sellglass-3ebe9-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "sellglass-3ebe9",
-  storageBucket: "sellglass-3ebe9.appspot.com",
-  messagingSenderId: "513741829035",
-  appId: "1:513741829035:web:1b2c59dcf1a0be329358ee"
-};
-
+// Firebase config
+const firebaseConfig = { /* cấu hình của bạn */ };
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
-// Lấy userEmail
-const userEmail = sessionStorage.getItem('userEmail');
-if(!userEmail) {
-  alert('Vui lòng đăng nhập trước!');
-  window.location.href = 'dangnhap.html';
-}
-
-const employeeId = userEmail.replace(/[@.]/g,'_');
-const tableBody = document.getElementById('tableBody');
-
-function loadAttendance() {
-  tableBody.innerHTML = '<tr><td colspan="8">Đang tải...</td></tr>';
-
-  db.ref('chamcong/' + employeeId).once('value', snapshot => {
-    const data = snapshot.val();
-    tableBody.innerHTML = '';
-
-    if(!data) {
-      tableBody.innerHTML = '<tr><td colspan="8">Chưa có dữ liệu chấm công</td></tr>';
-      return;
-    }
-
-    // Sắp xếp theo ngày giảm dần
-    const dates = Object.keys(data).sort((a,b)=> b.localeCompare(a));
-
-    for(const date of dates){
-      const row = data[date];
-      const ghiChu = [];
-      if(row.vaoCaSang && parseFloat(row.vaoCaSang.split(':')[0]+'.'+row.vaoCaSang.split(':')[1]) > 7.5) ghiChu.push('Đi muộn sáng');
-      if(row.vaoCaChieu && parseFloat(row.vaoCaChieu.split(':')[0]+'.'+row.vaoCaChieu.split(':')[1]) > 13) ghiChu.push('Đi muộn chiều');
-      tableBody.innerHTML += `
-        <tr>
-          <td>${date}</td>
-          <td>${row.vaoCaSang||'-'}</td>
-          <td>${row.raCaSang||'-'}</td>
-          <td>${row.vaoCaChieu||'-'}</td>
-          <td>${row.raCaChieu||'-'}</td>
-          <td>${row.gioLamTrongNgay||'0'}</td>
-          <td>${ghiChu.join(', ')}</td>
-          <td>${row.noiDungMaQuet||'-'}</td>
-        </tr>
-      `;
-    }
-  });
-}
-
-// Nút đăng xuất
-document.getElementById('logoutBtn').addEventListener('click', () => {
-  sessionStorage.removeItem('userEmail');
-  window.location.href = 'index.html';
+document.getElementById('searchBtn').addEventListener('click', () => {
+  const monthVal = document.getElementById('monthPicker').value; // YYYY-MM
+  if(!monthVal) return alert('Chọn tháng!');
+  loadAttendance(monthVal);
 });
 
-// Nút refresh
-document.getElementById('refreshBtn').addEventListener('click', loadAttendance);
-
-// Tải khi mở trang
-window.addEventListener('load', loadAttendance);
+function loadAttendance(monthVal){
+  const tbody = document.getElementById('attendanceTable');
+  tbody.innerHTML = '';
+  db.ref('chamcong').once('value').then(snapshot=>{
+    snapshot.forEach(empSnap=>{
+      const empId = empSnap.key;
+      const days = empSnap.val();
+      Object.keys(days).forEach(day=>{
+        if(day.startsWith(monthVal)){
+          const data = days[day];
+          const row = `<tr>
+            <td>${day}</td>
+            <td>${empId}</td>
+            <td>${data.vaoCaSang||'-'} - ${data.raCaSang||'-'}</td>
+            <td>${data.vaoCaChieu||'-'} - ${data.raCaChieu||'-'}</td>
+            <td>${data.diMuon || ''}</td>
+            <td>${data.gioLamTrongNgay || ''}</td>
+            <td>${data.diadiemQuet || ''}</td>
+            <td>${data.noiDungMaQuet || ''}</td>
+          </tr>`;
+          tbody.innerHTML += row;
+        }
+      });
+    });
+  });
+}
 </script>
-
-</body>
-</html>
-
-
-
-
