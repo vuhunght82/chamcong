@@ -1,83 +1,90 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-  <meta charset="UTF-8">
-  <title>Đăng ký tài khoản</title>
-  <style>
-    body { font-family: Arial; background: #f3f4f6; text-align:center; margin-top:100px; }
-    input, button { padding:10px; margin:5px; width:250px; font-size:16px; }
-    button { background:#007bff; color:#fff; border:none; border-radius:5px; cursor:pointer; }
-    button:hover { background:#0056b3; }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Đăng ký nhân viên</title>
+<style>
+  body { font-family: Arial; text-align: center; padding: 20px; background: #f0f2f5; }
+  h2 { color: #007bff; }
+  input, button { padding: 8px; margin: 5px; font-size: 16px; }
+  #error { color: red; margin-top: 10px; }
+  #success { color: green; margin-top: 10px; }
+</style>
 </head>
-  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+<body>
+
+<h2>Đăng ký nhân viên</h2>
+<input type="text" id="ten" placeholder="Tên nhân viên"><br>
+<input type="email" id="email" placeholder="Email"><br>
+<input type="password" id="pass" placeholder="Mật khẩu"><br>
+<button id="registerBtn">Đăng ký</button>
+
+<div id="error"></div>
+<div id="success"></div>
+<br>
+<a href="dangnhap.html">← Quay về trang đăng nhập</a>
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 
 <script>
-  // Cấu hình Firebase
-  const firebaseConfig = {
-    apiKey: "AIzaSyAb5AZOBvEVY3a_9ioEKTW-wuVMXdnRZGQ",
-    authDomain: "sellglass-3ebe9.firebaseapp.com",
-    databaseURL: "https://sellglass-3ebe9-default-rtdb.asia-southeast1.firebasedatabase.app",
-    projectId: "sellglass-3ebe9",
-    storageBucket: "sellglass-3ebe9.appspot.com",
-    messagingSenderId: "513741829035",
-    appId: "1:513741829035:web:1b2c59dcf1a0be329358ee"
-  };
+const firebaseConfig = {
+  apiKey: "AIzaSyAb5AZOBvEVY3a_9ioEKTW-wuVMXdnRZGQ",
+  authDomain: "sellglass-3ebe9.firebaseapp.com",
+  databaseURL: "https://sellglass-3ebe9-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "sellglass-3ebe9",
+  storageBucket: "sellglass-3ebe9.appspot.com",
+  messagingSenderId: "513741829035",
+  appId: "1:513741829035:web:1b2c59dcf1a0be329358ee"
+};
 
-  if (!firebase.apps.length) {
-    firebase.initializeApp(firebaseConfig);
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+document.getElementById('registerBtn').addEventListener('click', () => {
+  const ten = document.getElementById('ten').value.trim();
+  const email = document.getElementById('email').value.trim();
+  const pass = document.getElementById('pass').value.trim();
+  const errorDiv = document.getElementById('error');
+  const successDiv = document.getElementById('success');
+
+  errorDiv.textContent = '';
+  successDiv.textContent = '';
+
+  if (!ten || !email || !pass) {
+    errorDiv.textContent = 'Vui lòng điền đầy đủ thông tin.';
+    return;
   }
 
-  const db = firebase.database();
-  const auth = firebase.auth();
+  if (pass.length < 6) {
+    errorDiv.textContent = 'Mật khẩu phải ít nhất 6 ký tự.';
+    return;
+  }
 
-  window.db = db;   // cho các file khác dùng
-  window.auth = auth;
+  // Kiểm tra email đã tồn tại chưa
+  db.ref('nhanvien').orderByChild('email').equalTo(email).once('value', snapshot => {
+    if (snapshot.exists()) {
+      errorDiv.textContent = 'Email này đã đăng ký trước đó.';
+      return;
+    }
+
+    // Thêm nhân viên mới
+    const newRef = db.ref('nhanvien').push();
+    newRef.set({ ten, email, pass })
+      .then(() => {
+        successDiv.textContent = '✅ Đăng ký thành công! Bạn có thể quay về trang đăng nhập.';
+        document.getElementById('ten').value = '';
+        document.getElementById('email').value = '';
+        document.getElementById('pass').value = '';
+      })
+      .catch(err => {
+        errorDiv.textContent = '❌ Lỗi lưu dữ liệu: ' + err;
+      });
+  });
+});
 </script>
-<body>
-  <h2>Đăng ký nhân viên</h2>
-  <input id="name" type="text" placeholder="Họ và tên"><br>
-  <input id="email" type="email" placeholder="Email"><br>
-  <input id="password" type="password" placeholder="Mật khẩu"><br>
-  <button id="registerBtn">Đăng ký</button>
-  <p>Đã có tài khoản? <a href="index.html">Đăng nhập</a></p>
-  <div id="msg"></div>
 
-  <script type="module">
-   
-    import { createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-
-    const registerBtn = document.getElementById('registerBtn');
-    const msg = document.getElementById('msg');
-
-    registerBtn.addEventListener('click', async () => {
-      const name = document.getElementById('name').value.trim();
-      const email = document.getElementById('email').value.trim();
-      const password = document.getElementById('password').value.trim();
-
-      if (!name || !email || !password) {
-        msg.textContent = '⚠️ Vui lòng nhập đầy đủ thông tin.';
-        return;
-      }
-
-      try {
-        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-        const user = userCredential.user;
-
-        await set(ref(db, 'nhanvien/' + user.uid), {
-          name: name,
-          email: email,
-          createdAt: new Date().toISOString()
-        });
-
-        msg.textContent = '✅ Đăng ký thành công! Hãy đăng nhập.';
-      } catch (e) {
-        msg.textContent = '❌ Lỗi: ' + e.message;
-      }
-    });
-  </script>
 </body>
 </html>
-
