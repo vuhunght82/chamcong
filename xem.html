@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>Xem thời gian làm việc</title>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+  <script src="firebase.js"></script>
+  <style>
+    body { font-family:Arial; text-align:center; background:#f0f2f5; }
+    table { border-collapse:collapse; margin:auto; width:90%; background:white; }
+    th,td { border:1px solid #ccc; padding:8px; }
+    th { background:#007bff; color:white; }
+  </style>
+</head>
+<body>
+  <h2>📅 Thời gian làm việc của bạn</h2>
+  <table id="workTable">
+    <tr>
+      <th>Ngày</th><th>Vào sáng</th><th>Ra sáng</th><th>Vào chiều</th><th>Ra chiều</th><th>Giờ làm</th><th>Đi muộn</th><th>Làm thêm</th>
+    </tr>
+  </table>
+  <button onclick="location.href='quet.html'">⬅ Quay lại quét</button>
+
+  <script>
+    const email = sessionStorage.getItem('userEmail');
+    if (!email) location.href = 'index.html';
+    const ref = db.ref('attendance/' + email.replace('.', '_'));
+
+    ref.on('value', snap => {
+      const table = document.getElementById('workTable');
+      table.innerHTML = `<tr>
+        <th>Ngày</th><th>Vào sáng</th><th>Ra sáng</th><th>Vào chiều</th><th>Ra chiều</th><th>Giờ làm</th><th>Đi muộn</th><th>Làm thêm</th>
+      </tr>`;
+      const data = snap.val() || {};
+      Object.keys(data).sort().reverse().forEach(date => {
+        const d = data[date];
+        table.innerHTML += `<tr>
+          <td>${date}</td>
+          <td>${d.vaoCaSang||'-'}</td>
+          <td>${d.raCaSang||'-'}</td>
+          <td>${d.vaoCaChieu||'-'}</td>
+          <td>${d.raCaChieu||'-'}</td>
+          <td>${d.gioLamTrongNgay||'0'}</td>
+          <td>${d.diMuon?'Có':'-'}</td>
+          <td>${d.lamThem?'Có':'-'}</td>
+        </tr>`;
+      });
+    });
+  </script>
+</body>
+</html>
