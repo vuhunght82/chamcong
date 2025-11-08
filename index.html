@@ -2,131 +2,35 @@
 <html lang="vi">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Chấm Công QR</title>
+  <title>Đăng nhập nhân viên</title>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+  <script src="firebase.js"></script>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      text-align: center;
-      background-color: #f0f2f5;
-      margin: 0;
-      padding: 0;
-    }
-    h1 {
-      background-color: #007bff;
-      color: white;
-      padding: 15px;
-      margin: 0;
-    }
-    #video-container {
-      margin: 20px auto;
-      width: 300px;
-      border: 2px solid #007bff;
-      border-radius: 10px;
-      overflow: hidden;
-    }
-    video {
-      width: 100%;
-      height: auto;
-    }
-    #result {
-      font-weight: bold;
-      color: green;
-      margin-top: 20px;
-    }
-    #error {
-      color: red;
-      margin-top: 10px;
-    }
-    button {
-      margin-top: 10px;
-      padding: 10px 20px;
-      font-size: 16px;
-    }
+    body { text-align:center; font-family:Arial; background:#f0f2f5; padding-top:100px;}
+    input,button { margin:8px; padding:8px; font-size:16px; }
   </style>
 </head>
 <body>
-  <h1>📸 Chấm Công QR</h1>
-  <div id="video-container">
-    <video id="qr-video" muted></video>
-  </div>
-  <div id="result">Đang chờ quét QR...</div>
-  <div id="error"></div>
-  <button id="restartBtn" style="display:none;">Quét lại</button>
-  
+  <h2>🔐 Đăng nhập nhân viên</h2>
+  <input type="email" id="email" placeholder="Email"><br>
+  <input type="password" id="password" placeholder="Mật khẩu"><br>
+  <button id="loginBtn">Đăng nhập</button>
+  <div id="error" style="color:red;"></div>
 
-  <script type="module">
-    import QrScanner from 'https://cdn.jsdelivr.net/npm/qr-scanner@1.4.2/qr-scanner.min.js';
+  <script>
+    document.getElementById('loginBtn').addEventListener('click', () => {
+      const email = email.value.trim();
+      const password = document.getElementById('password').value.trim();
 
-    const videoElem = document.getElementById('qr-video');
-    const resultDiv = document.getElementById('result');
-    const errorDiv = document.getElementById('error');
-    const restartBtn = document.getElementById('restartBtn');
-
-    // Chuỗi QR hợp lệ (ví dụ: mã nhân viên)
-const VALID_QR = "hoangphucglass";
-    // Tạo scanner 1 lần
-    const scanner = new QrScanner(videoElem, qrResult => {
-      // Hiển thị kết quả QR
-      resultDiv.textContent = `✅ Nội dung QR: ${qrResult}`;
-      alert(`Quét QR thành công!\n Nội dung: ${qrResult}`);
-      
- 
-  scanner.stop();
-      // Kiểm tra hợp lệ
-  if (qrResult !== VALID_QR) {
-    resultDiv.textContent = `❌ Mã QR không hợp lệ: ${qrResult}`;
-    errorDiv.textContent = '⚠ Vui lòng quét lại mã đúng.';
-    restartBtn.style.display = 'inline-block';
-   
-    return;
-  }
-// Kiểm tra nếu qrResult là URL
-      let displayContent = qrResult;
-      if (/^https?:\/\//i.test(qrResult)) {
-        displayContent = `<a href="${qrResult}" target="_blank">${qrResult}</a>`;
-  }
-
-      resultDiv.innerHTML =`✅ Nội dung QR: ${displayContent}`;
-
-      // Hiển thị nút copy và quét lại
-      restartBtn.style.display = 'inline-block';
-      
-    });
-
-    // Hàm bắt đầu quét
-    function startScanner() {
-      resultDiv.textContent = 'Đang chờ quét QR...';
-      errorDiv.textContent = '';
-      restartBtn.style.display = 'none';
-      scanner.start().catch(err => {
-        errorDiv.textContent = '❌ Không thể mở camera: ' + err;
-      });
-    }
-
-    // Bắt đầu khi người dùng nhấn nút
-    restartBtn.addEventListener('click', () => {
-      startScanner();
-    });
-
-    // Tự động hiển thị nút bắt đầu quét cho Safari/Chrome
-    window.addEventListener('load', () => {
-      startScanner();
+      auth.signInWithEmailAndPassword(email, password)
+        .then(() => {
+          sessionStorage.setItem('userEmail', email);
+          window.location.href = 'quet.html';
+        })
+        .catch(err => document.getElementById('error').textContent = err.message);
     });
   </script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
