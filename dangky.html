@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>Đăng ký tài khoản</title>
+  <style>
+    body { font-family: Arial; background: #f3f4f6; text-align:center; margin-top:100px; }
+    input, button { padding:10px; margin:5px; width:250px; font-size:16px; }
+    button { background:#007bff; color:#fff; border:none; border-radius:5px; cursor:pointer; }
+    button:hover { background:#0056b3; }
+  </style>
+</head>
+<body>
+  <h2>Đăng ký nhân viên</h2>
+  <input id="name" type="text" placeholder="Họ và tên"><br>
+  <input id="email" type="email" placeholder="Email"><br>
+  <input id="password" type="password" placeholder="Mật khẩu"><br>
+  <button id="registerBtn">Đăng ký</button>
+  <p>Đã có tài khoản? <a href="index.html">Đăng nhập</a></p>
+  <div id="msg"></div>
+
+  <script type="module">
+    import { auth, db, ref, set } from './firebase.js';
+    import { createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+    const registerBtn = document.getElementById('registerBtn');
+    const msg = document.getElementById('msg');
+
+    registerBtn.addEventListener('click', async () => {
+      const name = document.getElementById('name').value.trim();
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value.trim();
+
+      if (!name || !email || !password) {
+        msg.textContent = '⚠️ Vui lòng nhập đầy đủ thông tin.';
+        return;
+      }
+
+      try {
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        const user = userCredential.user;
+
+        await set(ref(db, 'nhanvien/' + user.uid), {
+          name: name,
+          email: email,
+          createdAt: new Date().toISOString()
+        });
+
+        msg.textContent = '✅ Đăng ký thành công! Hãy đăng nhập.';
+      } catch (e) {
+        msg.textContent = '❌ Lỗi: ' + e.message;
+      }
+    });
+  </script>
+</body>
+</html>
