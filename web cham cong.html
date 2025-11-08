@@ -1,0 +1,288 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Web App Chấm Công (QR + Firebase)</title>
+  <style>
+    body{font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial;max-width:980px;margin:18px auto;padding:12px}
+    header{display:flex;align-items:center;gap:12px}
+    #reader{width:320px;height:240px;background:#eee}
+    label,button{display:block;margin:8px 0}
+    table{border-collapse:collapse;width:100%;margin-top:12px}
+    th,td{border:1px solid #ddd;padding:6px;text-align:left}
+    .small{font-size:0.9rem;color:#444}
+    .muted{color:#666;font-size:0.9rem}
+    .controls{display:flex;gap:8px;flex-wrap:wrap}
+    .note{background:#f8f9fa;border-left:4px solid #ccc;padding:8px;margin:8px 0}
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Chấm Công bằng QR</h1>
+    <div class="muted">Scan trên di động → lưu Firestore</div>
+  </header>
+
+  <section>
+    <h2>1) Máy quét (QR)</h2>
+    <div id="reader"></div>
+    <div class="small">Chọn camera nếu thiết bị hỗ trợ</div>
+    <div class="controls">
+      <button id="startScan">Bắt đầu quét</button>
+      <button id="stopScan">Dừng</button>
+      <select id="cameraSelect"></select>
+    </div>
+    <div class="note">Khi quét thành công, hệ thống sẽ xử lý thời gian vào/ra theo ca và lưu vào Firestore. Có thể thêm ghi chú nếu hệ thống tính thêm giờ.</div>
+  </section>
+
+  <section>
+    <h2>2) Quản trị / Thông số</h2>
+    <div>
+      <label>Ca sáng: <input id="workMorningStart" type="time"></label>
+      <label>Ca sáng kết thúc: <input id="workMorningEnd" type="time"></label>
+      <label>Ca chiều: <input id="workAfternoonStart" type="time"></label>
+      <label>Ca chiều kết thúc: <input id="workAfternoonEnd" type="time"></label>
+      <label>Giờ chuẩn vào sớm (nếu quét trước giờ sẽ lấy giờ chuẩn): <input id="graceBefore" type="time"></label>
+      <button id="saveSettings">Lưu thông số lên Firebase</button>
+      <button id="loadSettings">Tải thông số từ Firebase</button>
+    </div>
+  </section>
+
+  <section>
+    <h2>3) In danh sách / Báo cáo tháng</h2>
+    <label>Chọn tháng: <input id="reportMonth" type="month"/></label>
+    <label>Nhập ID nhân viên (hoặc mã QR chứa userId): <input id="reportUserId" type="text"/></label>
+    <button id="printReport">Xem / In báo cáo</button>
+    <div id="reportArea"></div>
+  </section>
+
+  <section>
+    <h2>4) Lịch sử (mới nhất)</h2>
+    <table id="history">
+      <thead><tr><th>Ngày</th><th>Giờ vào</th><th>Giờ ra</th><th>Giờ làm</th><th>Muộn</th><th>Làm thêm</th><th>Ghi chú</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </section>
+
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/minified/html5-qrcode.min.js"></script>
+  <!-- Firebase modular v9+ -->
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js';
+    import { getFirestore, doc, setDoc, getDoc, collection, addDoc, query, where, getDocs, orderBy, limit } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js';
+
+    // TODO: Thay bằng cấu hình Firebase của bạn
+    const firebaseConfig = {
+      apiKey: "REPLACE_WITH_YOUR_APIKEY",
+      authDomain: "PROJECT.firebaseapp.com",
+      projectId: "PROJECT_ID",
+      // ...
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // ----- Utilities về thời gian và ca -----
+    function parseTimeToMinutes(t){ if(!t) return null; const [h,m]=t.split(':').map(Number); return h*60+m; }
+    function minutesToHHMM(mins){ if(mins==null) return ''; const h=Math.floor(mins/60); const m=mins%60; return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}` }
+
+    // Lấy settings từ Firestore (collection 'settings', doc 'shifts')
+    async function loadSettingsFromFirestore(){
+      const ref = doc(db,'settings','shifts');
+      const snap = await getDoc(ref);
+      if(snap.exists()) return snap.data();
+      // default
+      return {
+        morningStart:'07:30', morningEnd:'11:30', afternoonStart:'13:00', afternoonEnd:'17:30', graceBefore:'07:30'
+      }
+    }
+
+    async function saveSettingsToFirestore(obj){
+      await setDoc(doc(db,'settings','shifts'), obj, {merge:true});
+      alert('Đã lưu thông số');
+    }
+
+    // ----- Lưu một lần quét: xử lý logic giờ -----
+    // qrContent expected to contain userId; you can extend to JSON {userId: '...'}
+    async function processScan(qrContent){
+      const userId = qrContent.trim();
+      const now = new Date();
+      const dateKey = now.toISOString().slice(0,10); // YYYY-MM-DD
+      const settings = await loadSettingsFromFirestore();
+
+      // times in minutes
+      const msNow = now.getTime();
+      const minutesNow = now.getHours()*60 + now.getMinutes();
+      const mMorningStart = parseTimeToMinutes(settings.morningStart);
+      const mMorningEnd = parseTimeToMinutes(settings.morningEnd);
+      const mAfStart = parseTimeToMinutes(settings.afternoonStart);
+      const mAfEnd = parseTimeToMinutes(settings.afternoonEnd);
+      const mGraceBefore = parseTimeToMinutes(settings.graceBefore) || mMorningStart;
+
+      // Get today's attendance doc for this user (doc id userId_date)
+      const docId = `${userId}_${dateKey}`;
+      const docRef = doc(db,'attendance',docId);
+      const docSnap = await getDoc(docRef);
+      let record = docSnap.exists() ? docSnap.data() : { userId, date:dateKey };
+
+      let note = record.note || '';
+
+      // If no check-in time yet -> treat as "in" scan; else treat as out scan if out missing
+      if(!record.timeIn){
+        // if scanned before graceBefore -> set timeIn = mGraceBefore (chuẩn)
+        let usedInMinutes = minutesNow;
+        if(minutesNow <= mGraceBefore) usedInMinutes = mMorningStart; // lấy chuẩn
+        // if scanned after morning start but before afternoon start, it's morning in (but may be late)
+        // If scanned after afternoon start but before afternoon end and no morning scan, treat as morning in at morningStart? We'll follow rule: if quét lúc chiều mà sáng chưa quét -> consider additional hours later (per req)
+
+        record.timeIn = minutesToHHMM(usedInMinutes);
+        // check late
+        record.late = Math.max(0, usedInMinutes - mMorningStart);
+
+        // Special: if scan in afternoon (>= mAfStart) but no morning scan: we still record timeIn as morningStart? The user requested: "nếu quét mã từ vào giờ sáng mà qua 13h vẫn chưa quét lại hoặc đến 17h30 mới quét thì tính thêm giờ cho khoảng 11h30-13h"
+        // Implement: if first scan of the day happens after mAfStart, we mark timeIn as mMorningStart and also add an auto "break extension" hour from 11:30-13:00 as working time.
+        if(minutesNow >= mAfStart){
+          // user scanned only in afternoon
+          // set timeIn to morningStart (if scanned after morning)
+          record.timeIn = minutesToHHMM(mMorningStart);
+          // mark that auto additional hours between morningEnd and afternoonStart count as work
+          record.autoAdded = true;
+          note += (note? ' | ':'') + 'Tự động cộng giờ 11:30-13:00 do quét trước 13h muộn';
+        }
+
+      } else if(!record.timeOut){
+        // Treat as time out
+        record.timeOut = minutesToHHMM(minutesNow);
+        // compute work minutes
+        const inMin = parseTimeToMinutes(record.timeIn);
+        let totalWork = 0;
+        // if had autoAdded, add 60 minutes (11:30-13:00)
+        if(record.autoAdded) totalWork += (mAfStart - mMorningEnd); // typically 90 but per requirement 11:30-13:00 = 60 (if morningEnd 11:30 and afStart 13:00 -> 90? careful)
+        // Calculate worked minutes between in and out limited to shifts
+        // simple approach: count overlap with morning and afternoon
+        function overlap(a1,a2,b1,b2){ return Math.max(0, Math.min(a2,b2)-Math.max(a1,b1)); }
+        totalWork += overlap(inMin, minutesNow, mMorningStart, mMorningEnd);
+        totalWork += overlap(inMin, minutesNow, mAfStart, mAfEnd);
+
+        // overtime = minutes beyond scheduled end of afternoon
+        const overtime = Math.max(0, minutesNow - mAfEnd);
+        record.workMinutes = totalWork;
+        record.overtime = overtime;
+
+        // late already set at timeIn
+        note += (note? ' | ':'') + (record.late>0? `Đi muộn ${record.late} phút` : 'Không đi muộn');
+        record.note = note;
+      } else {
+        alert('Đã có cả giờ vào và ra hôm nay.');
+      }
+
+      // Save record
+      await setDoc(docRef, record, {merge:true});
+      alert('Đã lưu chấm công: ' + JSON.stringify(record));
+      refreshRecent();
+    }
+
+    // ----- UI: lịch sử recent -----
+    async function refreshRecent(){
+      const q = query(collection(db,'attendance'), orderBy('date','desc'), limit(10));
+      const snaps = await getDocs(q);
+      const tbody = document.querySelector('#history tbody'); tbody.innerHTML='';
+      snaps.forEach(s=>{
+        const r=s.data();
+        const tr=document.createElement('tr');
+        tr.innerHTML = `<td>${r.date}</td><td>${r.timeIn||''}</td><td>${r.timeOut||''}</td><td>${r.workMinutes? Math.round(r.workMinutes/60*100)/100: ''}</td><td>${r.late||''}</td><td>${r.overtime||''}</td><td>${r.note||''}</td>`;
+        tbody.appendChild(tr);
+      })
+    }
+
+    // ----- Report by month -----
+    async function generateReportForMonth(userId, month){
+      if(!userId) { alert('Nhập userId'); return; }
+      // month format yyyy-mm
+      const [y,m] = month.split('-').map(Number);
+      const start = new Date(y,m-1,1);
+      const end = new Date(y,m,1);
+      // Firestore doesn't support range on doc id easily; we'll query collection and filter client-side (small scale)
+      const snaps = await getDocs(collection(db,'attendance'));
+      const rows = [];
+      snaps.forEach(s=>{
+        const d = s.data();
+        if(d.userId===userId){
+          const dd = new Date(d.date);
+          if(dd>=start && dd<end) rows.push(d);
+        }
+      });
+      // build table
+      const area = document.getElementById('reportArea');
+      let html = `<h3>Báo cáo ${month} - ${userId}</h3>`;
+      html += `<button id='doPrint'>In trang</button>`;
+      html += `<table><thead><tr><th>Ngày</th><th>Vào</th><th>Ra</th><th>Giờ làm (phút)</th><th>Muộn (phút)</th><th>OT (phút)</th><th>Ghi chú</th></tr></thead><tbody>`;
+      rows.sort((a,b)=>a.date.localeCompare(b.date));
+      rows.forEach(r=>{
+        html+=`<tr><td>${r.date}</td><td>${r.timeIn||''}</td><td>${r.timeOut||''}</td><td>${r.workMinutes||0}</td><td>${r.late||0}</td><td>${r.overtime||0}</td><td>${r.note||''}</td></tr>`;
+      });
+      html += '</tbody></table>';
+      area.innerHTML = html;
+      document.getElementById('doPrint').onclick = ()=> window.print();
+    }
+
+    // ----- Wiring UI -----
+    document.getElementById('saveSettings').onclick = async ()=>{
+      const obj = {
+        morningStart: document.getElementById('workMorningStart').value || '07:30',
+        morningEnd: document.getElementById('workMorningEnd').value || '11:30',
+        afternoonStart: document.getElementById('workAfternoonStart').value || '13:00',
+        afternoonEnd: document.getElementById('workAfternoonEnd').value || '17:30',
+        graceBefore: document.getElementById('graceBefore').value || '07:30'
+      };
+      await saveSettingsToFirestore(obj);
+    };
+    document.getElementById('loadSettings').onclick = async ()=>{
+      const s = await loadSettingsFromFirestore();
+      document.getElementById('workMorningStart').value = s.morningStart;
+      document.getElementById('workMorningEnd').value = s.morningEnd;
+      document.getElementById('workAfternoonStart').value = s.afternoonStart;
+      document.getElementById('workAfternoonEnd').value = s.afternoonEnd;
+      document.getElementById('graceBefore').value = s.graceBefore;
+      alert('Đã tải thông số');
+    };
+
+    document.getElementById('printReport').onclick = ()=>{
+      const month = document.getElementById('reportMonth').value;
+      const userId = document.getElementById('reportUserId').value.trim();
+      generateReportForMonth(userId, month);
+    }
+
+    // QR scanner using html5-qrcode
+    const html5QrCode = new Html5Qrcode("reader");
+    let currentCameraId = null;
+
+    async function startCamera(cameraId){
+      const config = { fps:10, qrbox:250 };
+      try{
+        await html5QrCode.start({deviceId: {exact: cameraId}}, config, (decoded)=>{
+          // on success
+          stopCamera();
+          processScan(decoded);
+        });
+      }catch(e){ console.error(e); alert('Không thể bật camera: '+e.message) }
+    }
+    function stopCamera(){ html5QrCode.stop().catch(()=>{}); }
+
+    document.getElementById('startScan').onclick = async ()=>{
+      // enumerate cameras
+      const cams = await Html5Qrcode.getCameras();
+      const sel = document.getElementById('cameraSelect'); sel.innerHTML='';
+      cams.forEach(c=>{ const o=document.createElement('option'); o.value=c.id; o.text=c.label || c.id; sel.appendChild(o); });
+      const use = sel.value || (cams[0] && cams[0].id);
+      if(use) startCamera(use);
+    };
+    document.getElementById('stopScan').onclick = ()=> stopCamera();
+
+    document.getElementById('cameraSelect').onchange = (e)=>{ startCamera(e.target.value); }
+
+    // initial load
+    (async ()=>{ await refreshRecent(); const s=await loadSettingsFromFirestore(); document.getElementById('workMorningStart').value=s.morningStart; document.getElementById('workMorningEnd').value=s.morningEnd; document.getElementById('workAfternoonStart').value=s.afternoonStart; document.getElementById('workAfternoonEnd').value=s.afternoonEnd; document.getElementById('graceBefore').value=s.graceBefore; })();
+
+  </script>
+</body>
+</html>
