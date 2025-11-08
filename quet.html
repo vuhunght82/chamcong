@@ -165,7 +165,10 @@ ${msg}`;
     });
   });
 }
-
+// Mã encode email
+function encodeEmail(email){
+  return email.replace(/\./g, ',');
+}
 // Chuyển HH:MM:SS -> giờ số
 function parseTime(timeStr){
   const parts=timeStr.split(':');
@@ -182,12 +185,10 @@ viewBtn.addEventListener('click', ()=>{ window.location.href='xem.html'; });
 
 // Bắt đầu quét tự động
 window.addEventListener('load', startScanner);
-function encodeEmail(email){
-  return email.replace(/\./g, ',');
-}
-  
+
 </script>
 </body>
 </html>
+
 
 
