@@ -53,6 +53,7 @@
   <div id="result">Đang chờ quét QR...</div>
   <div id="error"></div>
   <button id="restartBtn" style="display:none;">Quét lại</button>
+  <button id="copyBtn" style="display:none;">Copy</button>
 
   <script type="module">
     import QrScanner from 'https://cdn.jsdelivr.net/npm/qr-scanner@1.4.2/qr-scanner.min.js';
@@ -61,7 +62,7 @@
     const resultDiv = document.getElementById('result');
     const errorDiv = document.getElementById('error');
     const restartBtn = document.getElementById('restartBtn');
-
+const copyBtn = document.getElementById('copyBtn');
     // Tạo scanner 1 lần
     const scanner = new QrScanner(videoElem, qrResult => {
       // Hiển thị kết quả QR
@@ -103,4 +104,5 @@
   </script>
 </body>
 </html>
+
 
