@@ -1,63 +1,117 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-  <meta charset="UTF-8">
-  <title>Xem thời gian làm</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Xem chấm công</title>
+<style>
+  body { font-family: Arial; text-align:center; background:#f0f2f5; padding:20px;}
+  h1 { color:#007bff; }
+  table { margin:auto; border-collapse: collapse; width:90%; max-width:800px;}
+  th, td { border:1px solid #007bff; padding:8px; }
+  th { background:#007bff; color:white; }
+  button { margin:10px; padding:8px 16px; font-size:16px; }
+</style>
 </head>
-  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+<body>
+
+<h1>📄 Xem lịch sử chấm công</h1>
+<button id="logoutBtn">Đăng xuất</button>
+<button id="refreshBtn">Cập nhật</button>
+
+<table>
+  <thead>
+    <tr>
+      <th>Ngày</th>
+      <th>Vào sáng</th>
+      <th>Ra sáng</th>
+      <th>Vào chiều</th>
+      <th>Ra chiều</th>
+      <th>Tổng giờ</th>
+      <th>Đi muộn / Ghi chú</th>
+      <th>Nội dung QR</th>
+    </tr>
+  </thead>
+  <tbody id="tableBody">
+  </tbody>
+</table>
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 
 <script>
-  // Cấu hình Firebase
-  const firebaseConfig = {
-    apiKey: "AIzaSyAb5AZOBvEVY3a_9ioEKTW-wuVMXdnRZGQ",
-    authDomain: "sellglass-3ebe9.firebaseapp.com",
-    databaseURL: "https://sellglass-3ebe9-default-rtdb.asia-southeast1.firebasedatabase.app",
-    projectId: "sellglass-3ebe9",
-    storageBucket: "sellglass-3ebe9.appspot.com",
-    messagingSenderId: "513741829035",
-    appId: "1:513741829035:web:1b2c59dcf1a0be329358ee"
-  };
+const firebaseConfig = {
+  apiKey: "AIzaSyAb5AZOBvEVY3a_9ioEKTW-wuVMXdnRZGQ",
+  authDomain: "sellglass-3ebe9.firebaseapp.com",
+  databaseURL: "https://sellglass-3ebe9-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "sellglass-3ebe9",
+  storageBucket: "sellglass-3ebe9.appspot.com",
+  messagingSenderId: "513741829035",
+  appId: "1:513741829035:web:1b2c59dcf1a0be329358ee"
+};
 
-  if (!firebase.apps.length) {
-    firebase.initializeApp(firebaseConfig);
-  }
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
 
-  const db = firebase.database();
-  const auth = firebase.auth();
+// Lấy userEmail
+const userEmail = sessionStorage.getItem('userEmail');
+if(!userEmail) {
+  alert('Vui lòng đăng nhập trước!');
+  window.location.href = 'dangnhap.html';
+}
 
-  window.db = db;   // cho các file khác dùng
-  window.auth = auth;
+const employeeId = userEmail.replace(/[@.]/g,'_');
+const tableBody = document.getElementById('tableBody');
+
+function loadAttendance() {
+  tableBody.innerHTML = '<tr><td colspan="8">Đang tải...</td></tr>';
+
+  db.ref('chamcong/' + employeeId).once('value', snapshot => {
+    const data = snapshot.val();
+    tableBody.innerHTML = '';
+
+    if(!data) {
+      tableBody.innerHTML = '<tr><td colspan="8">Chưa có dữ liệu chấm công</td></tr>';
+      return;
+    }
+
+    // Sắp xếp theo ngày giảm dần
+    const dates = Object.keys(data).sort((a,b)=> b.localeCompare(a));
+
+    for(const date of dates){
+      const row = data[date];
+      const ghiChu = [];
+      if(row.vaoCaSang && parseFloat(row.vaoCaSang.split(':')[0]+'.'+row.vaoCaSang.split(':')[1]) > 7.5) ghiChu.push('Đi muộn sáng');
+      if(row.vaoCaChieu && parseFloat(row.vaoCaChieu.split(':')[0]+'.'+row.vaoCaChieu.split(':')[1]) > 13) ghiChu.push('Đi muộn chiều');
+      tableBody.innerHTML += `
+        <tr>
+          <td>${date}</td>
+          <td>${row.vaoCaSang||'-'}</td>
+          <td>${row.raCaSang||'-'}</td>
+          <td>${row.vaoCaChieu||'-'}</td>
+          <td>${row.raCaChieu||'-'}</td>
+          <td>${row.gioLamTrongNgay||'0'}</td>
+          <td>${ghiChu.join(', ')}</td>
+          <td>${row.noiDungMaQuet||'-'}</td>
+        </tr>
+      `;
+    }
+  });
+}
+
+// Nút đăng xuất
+document.getElementById('logoutBtn').addEventListener('click', () => {
+  sessionStorage.removeItem('userEmail');
+  window.location.href = 'dangnhap.html';
+});
+
+// Nút refresh
+document.getElementById('refreshBtn').addEventListener('click', loadAttendance);
+
+// Tải khi mở trang
+window.addEventListener('load', loadAttendance);
 </script>
-<body>
-  <h2>🕒 Lịch sử chấm công</h2>
-  <div id="list"></div>
-  <p><a href="quet.html">← Quay lại chấm công</a></p>
 
-  <script type="module">
-   
-
-    const userEmail = sessionStorage.getItem('userEmail');
-    if (!userEmail) window.location.href = 'index.html';
-
-    const dbPath = `chamcong/${userEmail.replace(/\./g, "_")}`;
-    const listDiv = document.getElementById('list');
-
-    onValue(ref(db, dbPath), snapshot => {
-      listDiv.innerHTML = '';
-      if (!snapshot.exists()) {
-        listDiv.textContent = 'Chưa có dữ liệu chấm công.';
-        return;
-      }
-
-      const data = snapshot.val();
-      Object.keys(data).forEach(date => {
-        const d = data[date];
-        listDiv.innerHTML += `<div>📅 ${date}: ${d.giolamtrongngay} - ${d.noidungmaquet}</div>`;
-      });
-    });
-  </script>
 </body>
 </html>
-
