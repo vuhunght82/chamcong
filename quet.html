@@ -24,6 +24,13 @@
 <div id="error"></div>
 <button id="restartBtn" style="display:none;">Quét lại</button>
 <button id="logoutBtn">Đăng xuất</button>
+<div>
+  <button id="viewBtn">📋 Xem chấm công</button></div>
+<script>
+document.getElementById('viewBtn').addEventListener('click', () => {
+  window.location.href = 'xem.html';
+});
+</script>
 
 <!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
@@ -83,62 +90,64 @@ logoutBtn.addEventListener('click', () => {
 });
 
 // Xử lý chấm công
-function handleAttendance(qrResult) {
-  scanner.stop();
+function handleAttendance(employeeId, qrContent, lat, lng) {
   const now = new Date();
-  const today = now.toISOString().split('T')[0]; // YYYY-MM-DD
+  const today = now.toISOString().split('T')[0];
+  const currentTime = now.toLocaleTimeString();
   const currentHour = now.getHours() + now.getMinutes()/60;
-  const employeeId = userEmail.replace(/[@.]/g,'_'); // key Firebase
 
-  const attendanceRef = db.ref('chamcong/' + employeeId + '/' + today);
+  const docRef = db.ref('chamcong/' + employeeId + '/' + today);
 
-  attendanceRef.once('value', snapshot => {
-    let data = snapshot.exists() ? snapshot.val() : {};
-
-    const morningStart = 7.5, morningEnd = 11.5;
-    const afternoonStart = 13, afternoonEnd = 17.5;
+  docRef.once('value').then(snapshot => {
+    const data = snapshot.val() || {};
     let msg = '';
+    let isOvertime = false;
 
-    // Xử lý ca
-    if(currentHour >= morningStart && currentHour <= morningEnd) {
-      if(!data.vaoCaSang) {
-        data.vaoCaSang = now.toLocaleTimeString();
-        if(currentHour > morningStart) msg += '⚠ Đi muộn ca sáng! ';
+    // --- Ca sáng ---
+    if(currentHour >= 7.5 && currentHour <= 11.5){
+      if(!data.vaoCaSang){
+        data.vaoCaSang = currentTime;
+        if(currentHour > 7.5) msg += '⚠ Đi muộn ca sáng! ';
       } else {
-        data.raCaSang = now.toLocaleTimeString();
+        data.raCaSang = currentTime;
+        if(currentHour < 11.5) msg += '⚠ Về sớm ca sáng! ';
       }
-    } else if(currentHour >= afternoonStart && currentHour <= afternoonEnd) {
-      if(!data.vaoCaChieu) {
-        data.vaoCaChieu = now.toLocaleTimeString();
-        if(currentHour > afternoonStart) msg += '⚠ Đi muộn ca chiều! ';
+    }
+    // --- Ca chiều ---
+    else if(currentHour >= 13 && currentHour <= 17.5){
+      if(!data.vaoCaChieu){
+        data.vaoCaChieu = currentTime;
+        if(currentHour > 13) msg += '⚠ Đi muộn ca chiều! ';
       } else {
-        data.raCaChieu = now.toLocaleTimeString();
+        data.raCaChieu = currentTime;
+        if(currentHour < 17.5) msg += '⚠ Về sớm ca chiều! ';
       }
-    } else if(currentHour > morningEnd && currentHour < afternoonStart) {
-      msg += 'ℹ Giờ nghỉ trưa, ghi nhận làm thêm nếu có.';
-    } else {
-      msg += 'ℹ Ngoài giờ ca.';
+    }
+    // --- Làm thêm ngoài giờ ---
+    else if((currentHour > 11.5 && currentHour < 13) || currentHour > 17.5){
+      msg += 'ℹ Giờ làm thêm phát hiện!';
+      isOvertime = true;
     }
 
-    data.noiDungMaQuet = qrResult;
-    data.diaDiemQuetMa = 'Chưa xác định'; // có thể thêm GPS nếu muốn
-
-    // Tính giờ làm trong ngày sơ khai
+    // Tính giờ làm trong ngày
     let totalHours = 0;
     if(data.vaoCaSang && data.raCaSang) totalHours += parseTime(data.raCaSang) - parseTime(data.vaoCaSang);
     if(data.vaoCaChieu && data.raCaChieu) totalHours += parseTime(data.raCaChieu) - parseTime(data.vaoCaChieu);
     data.gioLamTrongNgay = totalHours.toFixed(2);
 
-    attendanceRef.set(data)
-      .then(() => {
-        resultDiv.textContent = `✅ QR: ${qrResult}\n` +
-                                `Sáng: ${data.vaoCaSang||'-'} - ${data.raCaSang||'-'}\n` +
-                                `Chiều: ${data.vaoCaChieu||'-'} - ${data.raCaChieu||'-'}\n` +
-                                `Tổng giờ: ${data.gioLamTrongNgay}h\n` + msg;
-        alert('✅ Đã lưu chấm công!\n' + msg);
-        restartBtn.style.display = 'inline-block';
-      })
-      .catch(err => errorDiv.textContent = '❌ Lỗi lưu dữ liệu: '+err);
+    data.noiDungMaQuet = qrContent;
+    data.diadiemQuet = lat + ',' + lng;
+
+    // --- Nếu có làm thêm thì yêu cầu ghi chú ---
+    if(isOvertime){
+      const note = prompt("📝 Bạn có giờ làm thêm, vui lòng nhập ghi chú:");
+      if(note) data.ghiChu = note;
+    }
+
+    // Lưu vào Firebase
+    docRef.set(data).then(() => {
+      alert('✅ Chấm công thành công!\n' + msg + (isOvertime ? `\nGhi chú: ${data.ghiChu || ''}` : ''));
+    });
   });
 }
 
@@ -152,3 +161,4 @@ window.addEventListener('load', startScanner);
 
 </body>
 </html>
+
