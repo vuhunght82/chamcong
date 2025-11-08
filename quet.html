@@ -107,7 +107,6 @@ function handleAttendance(email, qrContent, lat, lng){
   const currentHour = now.getHours() + now.getMinutes()/60;
 const emailKey = encodeEmail(email);
 const ref = db.ref('chamcong/'+emailKey+'/'+today);
-  const ref = db.ref('chamcong/'+email+'/'+today);
 
   ref.once('value').then(snapshot=>{
     const data = snapshot.val()||{};
@@ -190,4 +189,5 @@ function encodeEmail(email){
 </script>
 </body>
 </html>
+
 
