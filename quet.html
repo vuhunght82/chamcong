@@ -1,87 +1,154 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-  <meta charset="UTF-8">
-  <title>Quét mã QR chấm công</title>
-  <style>
-    body { font-family: Arial; text-align:center; background:#eef2f7; }
-    #video { width:300px; margin:20px; border:2px solid #007bff; border-radius:10px; }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chấm công QR</title>
+<style>
+  body { font-family: Arial; text-align:center; background:#f0f2f5; }
+  h1 { color:#007bff; }
+  #video-container { margin:20px auto; width:300px; border:2px solid #007bff; border-radius:10px; overflow:hidden; }
+  video { width:100%; height:auto; }
+  #result { font-weight:bold; color:green; margin-top:20px; white-space: pre-line; }
+  #error { color:red; margin-top:10px; }
+  button { margin-top:10px; padding:10px 20px; font-size:16px; }
+</style>
 </head>
-  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+<body>
+
+<h1>📸 Quét QR chấm công</h1>
+<div id="video-container">
+  <video id="qr-video" muted></video>
+</div>
+<div id="result">Đang chờ quét QR...</div>
+<div id="error"></div>
+<button id="restartBtn" style="display:none;">Quét lại</button>
+<button id="logoutBtn">Đăng xuất</button>
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 
-<script>
-  // Cấu hình Firebase
-  const firebaseConfig = {
-    apiKey: "AIzaSyAb5AZOBvEVY3a_9ioEKTW-wuVMXdnRZGQ",
-    authDomain: "sellglass-3ebe9.firebaseapp.com",
-    databaseURL: "https://sellglass-3ebe9-default-rtdb.asia-southeast1.firebasedatabase.app",
-    projectId: "sellglass-3ebe9",
-    storageBucket: "sellglass-3ebe9.appspot.com",
-    messagingSenderId: "513741829035",
-    appId: "1:513741829035:web:1b2c59dcf1a0be329358ee"
-  };
+<!-- QR Scanner -->
+<script type="module">
+import QrScanner from 'https://cdn.jsdelivr.net/npm/qr-scanner@1.4.2/qr-scanner.min.js';
 
-  if (!firebase.apps.length) {
-    firebase.initializeApp(firebaseConfig);
-  }
+const firebaseConfig = {
+  apiKey: "AIzaSyAb5AZOBvEVY3a_9ioEKTW-wuVMXdnRZGQ",
+  authDomain: "sellglass-3ebe9.firebaseapp.com",
+  databaseURL: "https://sellglass-3ebe9-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "sellglass-3ebe9",
+  storageBucket: "sellglass-3ebe9.appspot.com",
+  messagingSenderId: "513741829035",
+  appId: "1:513741829035:web:1b2c59dcf1a0be329358ee"
+};
 
-  const db = firebase.database();
-  const auth = firebase.auth();
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
 
-  window.db = db;   // cho các file khác dùng
-  window.auth = auth;
-</script>
-<body>
-  <h2>📸 Quét mã QR chấm công</h2>
-  <video id="video" muted></video>
-  <div id="result"></div>
-  <button id="logoutBtn">Đăng xuất</button>
-  <p><a href="xem.html">Xem thời gian làm</a></p>
+// Lấy userEmail từ đăng nhập
+const userEmail = sessionStorage.getItem('userEmail');
+if(!userEmail) {
+  alert('Vui lòng đăng nhập trước!');
+  window.location.href = 'dangnhap.html';
+}
 
-  <script type="module">
-   
-    import QrScanner from 'https://cdn.jsdelivr.net/npm/qr-scanner@1.4.2/qr-scanner.min.js';
+// Khởi tạo video
+const videoElem = document.getElementById('qr-video');
+const resultDiv = document.getElementById('result');
+const errorDiv = document.getElementById('error');
+const restartBtn = document.getElementById('restartBtn');
+const logoutBtn = document.getElementById('logoutBtn');
 
-    const videoElem = document.getElementById('video');
-    const resultDiv = document.getElementById('result');
-    const userEmail = sessionStorage.getItem('userEmail');
+let scanner;
 
-    if (!userEmail) window.location.href = 'index.html';
+function startScanner() {
+  resultDiv.textContent = 'Đang chờ quét QR...';
+  errorDiv.textContent = '';
+  restartBtn.style.display = 'none';
 
-    const scanner = new QrScanner(videoElem, result => handleScan(result), {
-      highlightScanRegion: true, highlightCodeOutline: true
-    });
-    scanner.start();
+  scanner = new QrScanner(videoElem, qrResult => {
+    handleAttendance(qrResult);
+  }, { highlightScanRegion: true, highlightCodeOutline: true });
 
-    async function handleScan(result) {
-      const qrValue = result.data || result;
-      resultDiv.textContent = '✅ Quét thành công: ' + qrValue;
+  scanner.start().catch(err => {
+    errorDiv.textContent = '❌ Không thể mở camera: ' + err;
+  });
+}
 
-      const now = new Date();
-      const date = now.toISOString().split('T')[0];
-      const time = now.toLocaleTimeString();
-      const dbPath = `chamcong/${userEmail.replace(/\./g, "_")}/${date}`;
+restartBtn.addEventListener('click', startScanner);
+logoutBtn.addEventListener('click', () => {
+  sessionStorage.removeItem('userEmail');
+  window.location.href = 'dangnhap.html';
+});
 
-      await update(ref(db, dbPath), {
-        tendangnhap: userEmail,
-        noidungmaquet: qrValue,
-        giolamtrongngay: time,
-        diadiemquetma: "Văn phòng",
-        updatedAt: now.toISOString()
-      });
+// Xử lý chấm công
+function handleAttendance(qrResult) {
+  scanner.stop();
+  const now = new Date();
+  const today = now.toISOString().split('T')[0]; // YYYY-MM-DD
+  const currentHour = now.getHours() + now.getMinutes()/60;
+  const employeeId = userEmail.replace(/[@.]/g,'_'); // key Firebase
 
-      alert('✅ Chấm công thành công!');
-      scanner.stop();
+  const attendanceRef = db.ref('chamcong/' + employeeId + '/' + today);
+
+  attendanceRef.once('value', snapshot => {
+    let data = snapshot.exists() ? snapshot.val() : {};
+
+    const morningStart = 7.5, morningEnd = 11.5;
+    const afternoonStart = 13, afternoonEnd = 17.5;
+    let msg = '';
+
+    // Xử lý ca
+    if(currentHour >= morningStart && currentHour <= morningEnd) {
+      if(!data.vaoCaSang) {
+        data.vaoCaSang = now.toLocaleTimeString();
+        if(currentHour > morningStart) msg += '⚠ Đi muộn ca sáng! ';
+      } else {
+        data.raCaSang = now.toLocaleTimeString();
+      }
+    } else if(currentHour >= afternoonStart && currentHour <= afternoonEnd) {
+      if(!data.vaoCaChieu) {
+        data.vaoCaChieu = now.toLocaleTimeString();
+        if(currentHour > afternoonStart) msg += '⚠ Đi muộn ca chiều! ';
+      } else {
+        data.raCaChieu = now.toLocaleTimeString();
+      }
+    } else if(currentHour > morningEnd && currentHour < afternoonStart) {
+      msg += 'ℹ Giờ nghỉ trưa, ghi nhận làm thêm nếu có.';
+    } else {
+      msg += 'ℹ Ngoài giờ ca.';
     }
 
-    document.getElementById('logoutBtn').onclick = () => {
-      sessionStorage.clear();
-      window.location.href = 'index.html';
-    };
-  </script>
+    data.noiDungMaQuet = qrResult;
+    data.diaDiemQuetMa = 'Chưa xác định'; // có thể thêm GPS nếu muốn
+
+    // Tính giờ làm trong ngày sơ khai
+    let totalHours = 0;
+    if(data.vaoCaSang && data.raCaSang) totalHours += parseTime(data.raCaSang) - parseTime(data.vaoCaSang);
+    if(data.vaoCaChieu && data.raCaChieu) totalHours += parseTime(data.raCaChieu) - parseTime(data.vaoCaChieu);
+    data.gioLamTrongNgay = totalHours.toFixed(2);
+
+    attendanceRef.set(data)
+      .then(() => {
+        resultDiv.textContent = `✅ QR: ${qrResult}\n` +
+                                `Sáng: ${data.vaoCaSang||'-'} - ${data.raCaSang||'-'}\n` +
+                                `Chiều: ${data.vaoCaChieu||'-'} - ${data.raCaChieu||'-'}\n` +
+                                `Tổng giờ: ${data.gioLamTrongNgay}h\n` + msg;
+        alert('✅ Đã lưu chấm công!\n' + msg);
+        restartBtn.style.display = 'inline-block';
+      })
+      .catch(err => errorDiv.textContent = '❌ Lỗi lưu dữ liệu: '+err);
+  });
+}
+
+function parseTime(timeStr) {
+  const parts = timeStr.split(':');
+  return Number(parts[0]) + Number(parts[1])/60 + (parts[2]?Number(parts[2])/3600:0);
+}
+
+window.addEventListener('load', startScanner);
+</script>
+
 </body>
 </html>
-
