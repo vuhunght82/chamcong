@@ -241,7 +241,7 @@ alert(`Khoảng cách tới công ty: ${distance.toFixed(1)} m`);
         .then(() => {
          
           // Hiển thị thông báo
-          alert('✅ Chấm công thành công!\n' + msg + (isOvertime ? '\nGhi chú: ' + (data.ghiChu || '') + (ghichulamthem): ''));
+          alert('✅ Chấm công thành công!\n' + msg + (isOvertime ? '\nGhi chú: ' + (data.ghiChu || ''): ''));
 
 
           
@@ -322,6 +322,7 @@ function deg2rad(deg){ return deg*Math.PI/180; }
 </script>
 </body>
 </html>
+
 
 
 
