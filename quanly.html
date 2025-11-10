@@ -111,6 +111,9 @@ button:hover {
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 
 <script>
+  function encodeEmail(email) {
+  return email.replace(/\./g, '_dot_').replace(/@/g, '_at_');
+}
 const firebaseConfig = {
   apiKey: "AIzaSyAb5AZOBvEVY3a_9ioEKTW-wuVMXdnRZGQ",
   authDomain: "sellglass-3ebe9.firebaseapp.com",
@@ -147,6 +150,44 @@ select.addEventListener('change', () => {
     tongGio.textContent = tongGioThem.textContent = 0;
     return;
   }
+const selectedEmail = document.getElementById('nhanvienSelect').value;
+if (!selectedEmail) return;
+
+const emailKey = encodeEmail(selectedEmail);
+const chamCongRef = db.ref('chamcong/' + emailKey);
+
+chamCongRef.once('value').then(snapshot => {
+  const data = snapshot.val();
+  if (!data) {
+    tableBody.innerHTML = '<tr><td colspan="10">Không có dữ liệu chấm công!</td></tr>';
+    return;
+  }
+
+  // render ra bảng
+  renderChamCongTable(data);
+});
+  function renderChamCongTable(data) {
+  const tableBody = document.querySelector('#chamcongTable tbody');
+  tableBody.innerHTML = '';
+
+  Object.entries(data).forEach(([date, info]) => {
+    const row = `
+      <tr>
+        <td>${date}</td>
+        <td>${info.vaoCaSang || '-'}</td>
+        <td>${info.raCaSang || '-'}</td>
+        <td>${info.vaoCaChieu || '-'}</td>
+        <td>${info.raCaChieu || '-'}</td>
+        <td>${info.vaoLamThem || '-'}</td>
+        <td>${info.raLamThem || '-'}</td>
+        <td>${info.gioLamTrongNgay || '-'}</td>
+        <td>${info.gioLamThem || '-'}</td>
+        <td>${info.ghiChu || ''}</td>
+      </tr>
+    `;
+    tableBody.insertAdjacentHTML('beforeend', row);
+  });
+}
 
   firebase.database().ref('chamcong').orderByChild('email').equalTo(email).once('value')
   .then(snapshot => {
@@ -219,3 +260,4 @@ function xoa(id) {
 </script>
 </body>
 </html>
+
