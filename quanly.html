@@ -5,79 +5,33 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>👨‍💼 Quản lý chấm công nhân viên</title>
 <style>
-  body {
-    font-family: Arial, sans-serif;
-    background-color: #f0f4f8;
-    margin: 0;
-    padding: 20px;
-    text-align: center;
-  }
-
-  h1 {
-    color: #007bff;
-    margin-bottom: 20px;
-  }
-
-  select, button {
-    padding: 10px;
-    font-size: 16px;
-    border-radius: 8px;
-    border: 1px solid #ccc;
-    margin: 5px;
-    outline: none;
-  }
-
-  button {
-    background-color: #007bff;
-    color: white;
-    cursor: pointer;
-  }
-
-  button:hover {
-    background-color: #0056b3;
-  }
-
-  table {
-    width: 100%;
-    max-width: 1000px;
-    margin: 20px auto;
-    border-collapse: collapse;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-    background-color: white;
-  }
-
-  th {
-    background-color: #007bff;
-    color: white;
-    padding: 10px;
-  }
-
-  td {
-    padding: 8px;
-    border: 1px solid #ddd;
-    text-align: center;
-  }
-
-  tr:hover {
-    background-color: #f1f9ff;
-  }
-
-  #summary {
-    margin-top: 20px;
-    font-weight: bold;
-    color: #333;
-  }
+  body { font-family: Arial, sans-serif; background-color: #f0f4f8; margin:0; padding:20px; text-align:center;}
+  h1 { color:#007bff; margin-bottom:20px; }
+  select, input[type="month"], button { padding:10px; font-size:16px; border-radius:8px; border:1px solid #ccc; margin:5px; outline:none;}
+  button { background-color:#007bff; color:white; cursor:pointer; }
+  button:hover { background-color:#0056b3; }
+  table { width:100%; max-width:1000px; margin:20px auto; border-collapse:collapse; box-shadow:0 4px 10px rgba(0,0,0,0.1); background-color:white; }
+  th { background-color:#007bff; color:white; padding:10px; }
+  td { padding:8px; border:1px solid #ddd; text-align:center; }
+  tr:hover { background-color:#f1f9ff; }
+  .deleteBtn { background:#ff4d4f; color:white; padding:4px 8px; border:none; border-radius:5px; cursor:pointer; }
+  .deleteBtn:hover { background:#c82333; }
+  #summary { margin-top:20px; font-weight:bold; color:#333; }
 </style>
 </head>
 <body>
 
-<h1>👨‍💼 Quản lý chấm công nhân viên</h1>
+<h1>👨‍💼 Quản lý chấm công</h1>
 
 <div>
-  <label for="nhanvienSelect">Chọn nhân viên:</label>
+  <label for="nhanvienSelect">Nhân viên:</label>
   <select id="nhanvienSelect">
     <option value="">-- Chọn nhân viên --</option>
   </select>
+
+  <label for="monthSelect">Tháng:</label>
+  <input type="month" id="monthSelect" value="<?php echo date('Y-m'); ?>">
+  
   <button id="reloadBtn">🔄 Tải lại</button>
   <button id="exportBtn">📊 Xuất Excel</button>
 </div>
@@ -95,10 +49,11 @@
       <th>Giờ làm (h)</th>
       <th>Giờ làm thêm (h)</th>
       <th>Ghi chú</th>
+      <th>Xóa</th>
     </tr>
   </thead>
   <tbody>
-    <tr><td colspan="10">Chưa có dữ liệu</td></tr>
+    <tr><td colspan="11">Chưa có dữ liệu</td></tr>
   </tbody>
 </table>
 
@@ -108,7 +63,7 @@
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 
-<!-- SheetJS (xuất Excel) -->
+<!-- SheetJS -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
 <script>
@@ -127,6 +82,7 @@ const db = firebase.database();
 
 // ================== Elements ==================
 const nhanvienSelect = document.getElementById('nhanvienSelect');
+const monthSelect = document.getElementById('monthSelect');
 const tableBody = document.querySelector('#chamcongTable tbody');
 const summaryDiv = document.getElementById('summary');
 const reloadBtn = document.getElementById('reloadBtn');
@@ -140,23 +96,21 @@ function loadNhanVien() {
     nhanvienSelect.innerHTML = '<option value="">-- Chọn nhân viên --</option>';
     snapshot.forEach(child => {
       const nv = child.val();
-      nhanvienSelect.insertAdjacentHTML('beforeend', `
-        <option value="${nv.email}">${nv.ten} (${nv.email})</option>
-      `);
+      nhanvienSelect.insertAdjacentHTML('beforeend', `<option value="${nv.email}">${nv.ten} (${nv.email})</option>`);
     });
   });
 }
 
-// ================== Hiển thị dữ liệu chấm công ==================
-function loadChamCong(email) {
+// ================== Hàm hiển thị dữ liệu ==================
+function loadChamCong(email, month) {
   if (!email) {
-    tableBody.innerHTML = '<tr><td colspan="10">Vui lòng chọn nhân viên.</td></tr>';
+    tableBody.innerHTML = '<tr><td colspan="11">Vui lòng chọn nhân viên.</td></tr>';
     summaryDiv.textContent = '';
     currentData = [];
     return;
   }
 
-  tableBody.innerHTML = '<tr><td colspan="10">Đang tải dữ liệu...</td></tr>';
+  tableBody.innerHTML = '<tr><td colspan="11">Đang tải dữ liệu...</td></tr>';
 
   db.ref('chamcong').once('value').then(snapshot => {
     const data = snapshot.val();
@@ -168,8 +122,11 @@ function loadChamCong(email) {
       const nhanvienData = data[key];
       for (let ngay in nhanvienData) {
         const info = nhanvienData[ngay];
-        if (info.email && info.email.includes(email)) {
+        if (info.email && info.email.includes(email) && (!month || ngay.startsWith(month))) {
+          const gioLam = parseFloat(info.gioLamTrongNgay || 0);
+          const gioLamThem = parseFloat(info.gioLamThem || 0);
           rows.push({
+            key: key,
             Ngày: ngay,
             "Vào sáng": info.vaoCaSang || '-',
             "Ra sáng": info.raCaSang || '-',
@@ -177,49 +134,50 @@ function loadChamCong(email) {
             "Ra chiều": info.raCaChieu || '-',
             "Vào làm thêm": info.vaoLamThem || '-',
             "Ra làm thêm": info.raLamThem || '-',
-            "Giờ làm (h)": parseFloat(info.gioLamTrongNgay || 0),
-            "Giờ làm thêm (h)": parseFloat(info.gioLamThem || 0),
+            "Giờ làm (h)": gioLam,
+            "Giờ làm thêm (h)": gioLamThem,
             "Ghi chú": info.ghiChu || ''
           });
-          tongGio += parseFloat(info.gioLamTrongNgay || 0);
-          tongLamThem += parseFloat(info.gioLamThem || 0);
+          tongGio += gioLam;
+          tongLamThem += gioLamThem;
         }
       }
     }
 
-    currentData = rows; // lưu lại để xuất excel
+    currentData = rows;
 
     if (rows.length === 0) {
-      tableBody.innerHTML = '<tr><td colspan="10">Không có dữ liệu chấm công cho nhân viên này.</td></tr>';
+      tableBody.innerHTML = '<tr><td colspan="11">Không có dữ liệu.</td></tr>';
       summaryDiv.textContent = '';
       return;
     }
 
     tableBody.innerHTML = '';
-    rows.forEach(r => {
+    rows.forEach((r, index) => {
       tableBody.insertAdjacentHTML('beforeend', `
-        <tr>
-          <td>${r["Ngày"]}</td>
-          <td>${r["Vào sáng"]}</td>
-          <td>${r["Ra sáng"]}</td>
-          <td>${r["Vào chiều"]}</td>
-          <td>${r["Ra chiều"]}</td>
-          <td>${r["Vào làm thêm"]}</td>
-          <td>${r["Ra làm thêm"]}</td>
-          <td>${r["Giờ làm (h)"].toFixed(2)}</td>
-          <td>${r["Giờ làm thêm (h)"].toFixed(2)}</td>
-          <td>${r["Ghi chú"]}</td>
+        <tr data-key="${r.key}">
+          <td contenteditable="true">${r["Ngày"]}</td>
+          <td contenteditable="true">${r["Vào sáng"]}</td>
+          <td contenteditable="true">${r["Ra sáng"]}</td>
+          <td contenteditable="true">${r["Vào chiều"]}</td>
+          <td contenteditable="true">${r["Ra chiều"]}</td>
+          <td contenteditable="true">${r["Vào làm thêm"]}</td>
+          <td contenteditable="true">${r["Ra làm thêm"]}</td>
+          <td contenteditable="true">${r["Giờ làm (h)"].toFixed(2)}</td>
+          <td contenteditable="true">${r["Giờ làm thêm (h)"].toFixed(2)}</td>
+          <td contenteditable="true">${r["Ghi chú"]}</td>
+          <td><button class="deleteBtn">Xóa</button></td>
         </tr>
       `);
     });
 
-    // Dòng tổng cộng
+    // Tổng cộng
     tableBody.insertAdjacentHTML('beforeend', `
       <tr style="background:#e9f5ff;font-weight:bold;">
         <td colspan="7">TỔNG CỘNG</td>
         <td>${tongGio.toFixed(2)}</td>
         <td>${tongLamThem.toFixed(2)}</td>
-        <td></td>
+        <td colspan="2"></td>
       </tr>
     `);
 
@@ -227,12 +185,23 @@ function loadChamCong(email) {
   });
 }
 
+// ================== Xóa dòng ==================
+tableBody.addEventListener('click', e => {
+  if(e.target.classList.contains('deleteBtn')){
+    const tr = e.target.closest('tr');
+    const key = tr.dataset.key;
+    const date = tr.children[0].textContent;
+    if(confirm(`Xóa dữ liệu ngày ${date}?`)){
+      db.ref(`chamcong/${key}/${date}`).remove()
+        .then(()=>{ tr.remove(); alert('✅ Xóa thành công'); })
+        .catch(err=>alert('❌ Lỗi: '+err));
+    }
+  }
+});
+
 // ================== Xuất Excel ==================
 function exportToExcel() {
-  if (!currentData || currentData.length === 0) {
-    alert('⚠️ Không có dữ liệu để xuất.');
-    return;
-  }
+  if(!currentData || currentData.length===0){ alert('⚠️ Không có dữ liệu để xuất.'); return; }
   const ws = XLSX.utils.json_to_sheet(currentData);
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, "ChamCong");
@@ -241,10 +210,8 @@ function exportToExcel() {
 }
 
 // ================== Sự kiện ==================
-nhanvienSelect.addEventListener('change', () => {
-  loadChamCong(nhanvienSelect.value.trim());
-});
-
+nhanvienSelect.addEventListener('change', ()=>loadChamCong(nhanvienSelect.value, monthSelect.value));
+monthSelect.addEventListener('change', ()=>loadChamCong(nhanvienSelect.value, monthSelect.value));
 reloadBtn.addEventListener('click', loadNhanVien);
 exportBtn.addEventListener('click', exportToExcel);
 
