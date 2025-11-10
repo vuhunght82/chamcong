@@ -155,7 +155,7 @@ alert(`Khoảng cách tới công ty: ${distance.toFixed(1)} m`);
   const currentHour = now.getHours() + now.getMinutes() / 60;
   const emailKey = encodeEmail(email);
   const ref = db.ref('chamcong/' + emailKey + '/' + today);
-  let ghichu='';
+  let ghichucalam='';
 
   ref.once('value')
     .then(snapshot => {
@@ -181,7 +181,7 @@ alert(`Khoảng cách tới công ty: ${distance.toFixed(1)} m`);
         } else {
           data.raCaChieu = currentTime;
           if (currentHour < 17.5) msg += '⚠ Về sớm ca chiều! ';
-          ghichu='Về sớm ca chiều!';
+          ghichucalam='Về sớm ca chiều!';
         }
       }
       // --- Làm thêm / tự chốt ---
@@ -233,8 +233,8 @@ alert(`Khoảng cách tới công ty: ${distance.toFixed(1)} m`);
           alert('✅ Chấm công thành công!\n' + msg + (isOvertime ? '\nGhi chú: ' + (data.ghiChu || '') : ''));
 // khi lưu vào Firebase
 db.ref('chamcong/' + encodeEmail(email) + '/' + today)
-  .update({ ghichu })
-  .then(() => console.log('✅ Đã lưu ghi chú:', ghiChu))
+  .update({ ghichucalam })
+  .then(() => console.log('✅ Đã lưu ghi chú:', ghichucalam))
   .catch(err => console.log('❌ Lỗi:', err));
 
           
@@ -315,6 +315,7 @@ function deg2rad(deg){ return deg*Math.PI/180; }
 </script>
 </body>
 </html>
+
 
 
 
