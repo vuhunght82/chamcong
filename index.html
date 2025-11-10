@@ -24,16 +24,17 @@ button { cursor:pointer; }
 
 <script>
   // ================== Firebase config ==================
-  const firebaseConfig = {
-    apiKey: "YOUR_API_KEY",
-    authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-    databaseURL: "https://YOUR_PROJECT_ID-default-rtdb.asia-southeast1.firebasedatabase.app",
-    projectId: "YOUR_PROJECT_ID",
-    storageBucket: "YOUR_PROJECT_ID.appspot.com",
-    messagingSenderId: "YOUR_SENDER_ID",
-    appId: "YOUR_APP_ID"
-  };
-  firebase.initializeApp(firebaseConfig);
+ const firebaseConfig = {
+  apiKey: "AIzaSyAb5AZOBvEVY3a_9ioEKTW-wuVMXdnRZGQ",
+  authDomain: "sellglass-3ebe9.firebaseapp.com",
+  databaseURL: "https://sellglass-3ebe9-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "sellglass-3ebe9",
+  storageBucket: "sellglass-3ebe9.appspot.com",
+  messagingSenderId: "513741829035",
+  appId: "1:513741829035:web:1b2c59dcf1a0be329358ee"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
 
   const loginBtn = document.getElementById('loginBtn');
   const errorDiv = document.getElementById('error');
@@ -81,3 +82,4 @@ button { cursor:pointer; }
 
 </body>
 </html>
+
