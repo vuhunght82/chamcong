@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>👨‍💼 Quản lý chấm công</title>
+<style>
+body {
+  font-family: "Segoe UI", Arial, sans-serif;
+  background: #f4f9ff;
+  margin: 0;
+  padding: 20px;
+}
+
+h1 {
+  color: #0099ff;
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.container {
+  max-width: 1000px;
+  margin: 0 auto;
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  padding: 20px;
+}
+
+select {
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  font-size: 16px;
+  margin-bottom: 15px;
+  width: 100%;
+  max-width: 300px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+  font-size: 14px;
+}
+
+th {
+  background-color: #0099ff;
+  color: white;
+  padding: 10px;
+  text-align: center;
+}
+
+td {
+  border-bottom: 1px solid #ddd;
+  padding: 8px;
+  text-align: center;
+}
+
+tr:nth-child(even) {
+  background: #f9fcff;
+}
+
+td[contenteditable="true"] {
+  background-color: #fff8e1;
+  border: 1px dashed #ccc;
+}
+
+button {
+  background: #ff6666;
+  border: none;
+  color: white;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+button:hover {
+  background: #ff3333;
+}
+
+.summary {
+  font-weight: bold;
+  color: #004466;
+  background-color: #e6f7ff;
+}
+</style>
+</head>
+<body>
+
+<h1>👨‍💼 Quản lý chấm công</h1>
+
+<div class="container">
+  <label for="nhanvienSelect">Chọn nhân viên:</label>
+  <select id="nhanvienSelect">
+    <option value="">-- Chọn nhân viên --</option>
+  </select>
+
+  <table id="attendanceTable">
+    <thead>
+      <tr>
+        <th>Ngày</th>
+        <th>Vào sáng</th>
+        <th>Ra sáng</th>
+        <th>Vào chiều</th>
+        <th>Ra chiều</th>
+        <th>Vào làm thêm</th>
+        <th>Ra làm thêm</th>
+        <th>Giờ làm</th>
+        <th>Giờ làm thêm</th>
+        <th>Ghi chú</th>
+        <th>Xóa</th>
+      </tr>
+    </thead>
+    <tbody id="attendanceBody"></tbody>
+  </table>
+</div>
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+
+<script>
+// ==================== Firebase Config ====================
+const firebaseConfig = {
+  apiKey: "AIzaSyAb5AZOBvEVY3a_9ioEKTW-wuVMXdnRZGQ",
+  authDomain: "sellglass-3ebe9.firebaseapp.com",
+  databaseURL: "https://sellglass-3ebe9-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "sellglass-3ebe9",
+  storageBucket: "sellglass-3ebe9.appspot.com",
+  messagingSenderId: "513741829035",
+  appId: "1:513741829035:web:1b2c59dcf1a0be329358ee"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+// ==================== Load danh sách nhân viên ====================
+const nhanvienSelect = document.getElementById('nhanvienSelect');
+const attendanceBody = document.getElementById('attendanceBody');
+
+firebase.database().ref('nhanvien').once('value', snap => {
+  snap.forEach(child => {
+    const nv = child.val();
+    const opt = document.createElement('option');
+    opt.value = encodeEmail(nv.email);
+    opt.textContent = nv.ten + " (" + nv.email + ")";
+    nhanvienSelect.appendChild(opt);
+  });
+});
+
+// ==================== Khi chọn nhân viên ====================
+nhanvienSelect.addEventListener('change', () => {
+  const emailKey = nhanvienSelect.value;
+  if (!emailKey) return;
+  loadAttendance(emailKey);
+});
+
+// ==================== Hàm encode email để làm key ====================
+function encodeEmail(email) {
+  return email.replace(/\./g, "_");
+}
+
+// ==================== Hàm parse giờ ====================
+function parseTime(t) {
+  if (!t) return 0;
+  const [h, m] = t.split(':').map(Number);
+  return h + m / 60;
+}
+
+// ==================== Tải bảng chấm công ====================
+function loadAttendance(emailKey) {
+  db.ref('chamcong/' + emailKey).once('value').then(snap => {
+    attendanceBody.innerHTML = '';
+    let totalHours = 0;
+    let totalOvertime = 0;
+
+    const entries = Object.entries(snap.val() || {}).sort((a,b) => new Date(b[0]) - new Date(a[0]));
+
+    entries.forEach(([date, data]) => {
+      const row = document.createElement('tr');
+
+      const gioLam = (
+        (parseTime(data.raCaSang) - parseTime(data.vaoCaSang)) +
+        (parseTime(data.raCaChieu) - parseTime(data.vaoCaChieu))
+      ) || 0;
+
+      const gioLamThem = (
+        (parseTime(data.raLamThem) - parseTime(data.vaoLamThem))
+      ) || 0;
+
+      totalHours += gioLam;
+      totalOvertime += gioLamThem;
+
+      row.innerHTML = `
+        <td>${date}</td>
+        <td contenteditable="true">${data.vaoCaSang || ''}</td>
+        <td contenteditable="true">${data.raCaSang || ''}</td>
+        <td contenteditable="true">${data.vaoCaChieu || ''}</td>
+        <td contenteditable="true">${data.raCaChieu || ''}</td>
+        <td contenteditable="true">${data.vaoLamThem || ''}</td>
+        <td contenteditable="true">${data.raLamThem || ''}</td>
+        <td>${gioLam.toFixed(2)}</td>
+        <td>${gioLamThem.toFixed(2)}</td>
+        <td contenteditable="true">${data.ghiChu || ''}</td>
+        <td><button onclick="xoa('${emailKey}','${date}')">Xóa</button></td>
+      `;
+
+      // Khi sửa thì cập nhật
+      row.querySelectorAll('[contenteditable="true"]').forEach(cell => {
+        cell.addEventListener('blur', () => updateRow(row, emailKey, date));
+      });
+
+      attendanceBody.appendChild(row);
+    });
+
+    // Dòng tổng cộng
+    const sumRow = document.createElement('tr');
+    sumRow.classList.add('summary');
+    sumRow.innerHTML = `
+      <td colspan="7">Tổng cộng</td>
+      <td>${totalHours.toFixed(2)}</td>
+      <td>${totalOvertime.toFixed(2)}</td>
+      <td colspan="2"></td>
+    `;
+    attendanceBody.appendChild(sumRow);
+  });
+}
+
+// ==================== Cập nhật dòng ====================
+function updateRow(row, emailKey, date) {
+  const cells = row.querySelectorAll('td');
+  const data = {
+    vaoCaSang: cells[1].textContent.trim(),
+    raCaSang: cells[2].textContent.trim(),
+    vaoCaChieu: cells[3].textContent.trim(),
+    raCaChieu: cells[4].textContent.trim(),
+    vaoLamThem: cells[5].textContent.trim(),
+    raLamThem: cells[6].textContent.trim(),
+    ghiChu: cells[9].textContent.trim()
+  };
+
+  const gioLam = (parseTime(data.raCaSang) - parseTime(data.vaoCaSang)) + (parseTime(data.raCaChieu) - parseTime(data.vaoCaChieu));
+  const gioLamThem = (parseTime(data.raLamThem) - parseTime(data.vaoLamThem));
+
+  data.gioLamTrongNgay = gioLam.toFixed(2);
+  data.gioLamThem = gioLamThem.toFixed(2);
+
+  db.ref('chamcong/' + emailKey + '/' + date).update(data)
+    .then(() => {
+      alert('✅ Đã cập nhật dữ liệu!');
+      loadAttendance(emailKey);
+    });
+}
+
+// ==================== Xóa dòng ====================
+function xoa(emailKey, date) {
+  if (confirm('Bạn có chắc muốn xóa ngày ' + date + '?')) {
+    db.ref('chamcong/' + emailKey + '/' + date).remove()
+      .then(() => loadAttendance(emailKey));
+  }
+}
+</script>
+</body>
+</html>
