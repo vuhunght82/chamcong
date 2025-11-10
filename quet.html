@@ -168,9 +168,11 @@ alert(`Khoảng cách tới công ty: ${distance.toFixed(1)} m`);
         if (!data.vaoCaSang) {
           data.vaoCaSang = currentTime;
           if (currentHour > 7.5) msg += '⚠ Đi muộn ca sáng! ';
+          ghichucalam+='Đi muộn ca sáng!';
         } else {
           data.raCaSang = currentTime;
           if (currentHour < 11.5) msg += '⚠ Về sớm ca sáng! ';
+          ghichucalam+='Về sớm ca sáng!';
         }
       }
       // --- Ca chiều ---
@@ -178,6 +180,7 @@ alert(`Khoảng cách tới công ty: ${distance.toFixed(1)} m`);
         if (!data.vaoCaChieu) {
           data.vaoCaChieu = currentTime;
           if (currentHour > 13) msg += '⚠ Đi muộn ca chiều! ';
+          ghichucalam+='Về sớm ca chiều!';
         } else {
           data.raCaChieu = currentTime;
           if (currentHour < 17.5) msg += '⚠ Về sớm ca chiều! ';
@@ -188,6 +191,7 @@ alert(`Khoảng cách tới công ty: ${distance.toFixed(1)} m`);
       else if ((currentHour > 11.5 && currentHour < 13) || currentHour > 17.5) {
         isOvertime = true;
         msg += 'ℹ Giờ làm thêm!';
+        ghichucalam+='giờ làm thêm!';
 
         // Tự chốt ca sáng nếu chưa có ra
         if (data.vaoCaSang && !data.raCaSang) {
@@ -312,6 +316,7 @@ function deg2rad(deg){ return deg*Math.PI/180; }
 </script>
 </body>
 </html>
+
 
 
 
