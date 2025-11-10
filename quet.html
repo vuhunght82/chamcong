@@ -115,122 +115,121 @@ function handleAttendance(email, qrContent, lat, lng) {
   const emailKey = encodeEmail(email);
   const ref = db.ref('chamcong/' + emailKey + '/' + today);
 
-  ref.once('value').then(snapshot => {
-    const data = snapshot.val() || {};
-    let msg = '';
-    let isOvertime = false;
+  ref.once('value')
+    .then(snapshot => {
+      const data = snapshot.val() || {};
+      let msg = '';
+      let isOvertime = false;
 
-    // --- Ca sáng ---
-    if (currentHour >= 7.5 && currentHour <= 11.5) {
-      if (!data.vaoCaSang) {
-        data.vaoCaSang = currentTime;
-        if (currentHour > 7.5) msg += '⚠ Đi muộn ca sáng! ';
-      } else {
-        data.raCaSang = currentTime;
-        if (currentHour < 11.5) msg += '⚠ Về sớm ca sáng! ';
+      // --- Ca sáng ---
+      if (currentHour >= 7.5 && currentHour <= 11.5) {
+        if (!data.vaoCaSang) {
+          data.vaoCaSang = currentTime;
+          if (currentHour > 7.5) msg += '⚠ Đi muộn ca sáng! ';
+        } else {
+          data.raCaSang = currentTime;
+          if (currentHour < 11.5) msg += '⚠ Về sớm ca sáng! ';
+        }
       }
-    }
-    // --- Ca chiều ---
-    else if (currentHour >= 13 && currentHour <= 17.5) {
-      if (!data.vaoCaChieu) {
-        data.vaoCaChieu = currentTime;
-        if (currentHour > 13) msg += '⚠ Đi muộn ca chiều! ';
-      } else {
-        data.raCaChieu = currentTime;
-        if (currentHour < 17.5) msg += '⚠ Về sớm ca chiều! ';
+      // --- Ca chiều ---
+      else if (currentHour >= 13 && currentHour <= 17.5) {
+        if (!data.vaoCaChieu) {
+          data.vaoCaChieu = currentTime;
+          if (currentHour > 13) msg += '⚠ Đi muộn ca chiều! ';
+        } else {
+          data.raCaChieu = currentTime;
+          if (currentHour < 17.5) msg += '⚠ Về sớm ca chiều! ';
+        }
       }
-    }
-    // --- Làm thêm ---
-    else if ((currentHour > 11.5 && currentHour < 13) || currentHour > 17.5) {
-      msg += 'ℹ Giờ làm thêm!';
-      isOvertime = true;
-    }
-    else {
-  isOvertime = true;
+      // --- Làm thêm / tự chốt ---
+      else if ((currentHour > 11.5 && currentHour < 13) || currentHour > 17.5) {
+        isOvertime = true;
+        msg += 'ℹ Giờ làm thêm!';
 
-  // Nếu có vaoCaSang mà chưa có raCaSang -> tự chốt 11:30
-  if (data.vaoCaSang && !data.raCaSang) {
-    data.raCaSang = '11:30';
-    msg += '⚠ Tự động chốt ra ca sáng 11:30. ';
-  }
+        // Tự chốt ca sáng nếu chưa có ra
+        if (data.vaoCaSang && !data.raCaSang) {
+          data.raCaSang = '11:30';
+          msg += ' ⚠ Tự động chốt ra ca sáng 11:30.';
+        }
 
-  // Nếu chưa có vào/ra ca chiều mà quét sau 17:30 -> tự chốt ca chiều 13:00–17:30
-  if (!data.vaoCaChieu && !data.raCaChieu && currentHour > 17.5) {
-    data.vaoCaChieu = '13:00';
-    data.raCaChieu = '17:30';
-    msg += '⚠ Tự động tính làm ca chiều 13:00–17:30. ';
-  }
+        // Tự chốt ca chiều nếu chưa vào/ra và >17:30
+        if (!data.vaoCaChieu && !data.raCaChieu && currentHour > 17.5) {
+          data.vaoCaChieu = '13:00';
+          data.raCaChieu = '17:30';
+          msg += ' ⚠ Tự động tính ca chiều 13:00–17:30.';
+        }
 
-  // Phần sau 17:30 là làm thêm
-  if (currentHour > 17.5) {
-    data.vaoLamThem = '17:30';
-    data.raLamThem = currentTime;
-    msg += `ℹ Giờ làm thêm từ 17:30 đến ${currentTime}.`;
-  }
-}
+        // Ghi giờ làm thêm
+        if (currentHour > 17.5) {
+          data.vaoLamThem = '17:30';
+          data.raLamThem = currentTime;
+          msg += ` ℹ Giờ làm thêm từ 17:30 đến ${currentTime}.`;
+        }
+      }
 
+      // --- Tính tổng giờ làm ---
+      let totalHours = 0;
+      if (data.vaoCaSang && data.raCaSang) totalHours += parseTime(data.raCaSang) - parseTime(data.vaoCaSang);
+      if (data.vaoCaChieu && data.raCaChieu) totalHours += parseTime(data.raCaChieu) - parseTime(data.vaoCaChieu);
+      data.gioLamTrongNgay = totalHours.toFixed(2);
 
-    // --- Tổng giờ làm ---
-    let totalHours = 0;
-    if (data.vaoCaSang && data.raCaSang) totalHours += parseTime(data.raCaSang) - parseTime(data.vaoCaSang);
-    if (data.vaoCaChieu && data.raCaChieu) totalHours += parseTime(data.raCaChieu) - parseTime(data.vaoCaChieu);
-    data.gioLamTrongNgay = totalHours.toFixed(2);
+      data.noiDungMaQuet = qrContent;
+      data.diadiemQuet = (lat && lng) ? `${lat},${lng}` : 'Chưa lấy GPS';
 
-    data.noiDungMaQuet = qrContent;
-    data.diadiemQuet = (lat && lng) ? `${lat},${lng}` : 'Chưa lấy GPS';
+      // Nhập ghi chú nếu làm thêm
+      if (isOvertime) {
+        const note = prompt("📝 Bạn có giờ làm thêm, vui lòng nhập ghi chú:");
+        if (note) data.ghiChu = note;
+      }
 
-    if (isOvertime) {
-      const note = prompt("📝 Bạn có giờ làm thêm, vui lòng nhập ghi chú:");
-      if (note) data.ghiChu = note;
-    }
+      // --- Lưu dữ liệu Firebase ---
+      ref.set(data)
+        .then(() => {
+          // Phát tiếng beep
+          document.getElementById('beepSound').play();
 
-    ref.set(data)
-      .then(() => {
-       document.getElementById('beepSound').play();
-        alert('✅ Chấm công thành công!\n' + msg + (isOvertime ? '\nGhi chú: ' + (data.ghiChu || '') : ''));
-        resultDiv.textContent = `Nhân viên: ${email}
+          // Hiển thị thông báo
+          alert('✅ Chấm công thành công!\n' + msg + (isOvertime ? '\nGhi chú: ' + (data.ghiChu || '') : ''));
+
+          // Cập nhật trên trang
+          resultDiv.textContent = `Nhân viên: ${email}
 Sáng: ${data.vaoCaSang || '-'} - ${data.raCaSang || '-'}
 Chiều: ${data.vaoCaChieu || '-'} - ${data.raCaChieu || '-'}
 Tổng giờ: ${data.gioLamTrongNgay}h
 ${msg}`;
-        restartBtn.style.display = 'inline-block';
+          restartBtn.style.display = 'inline-block';
 
-const emailParams = {
-  to_name: "Quản lý công ty",
-  to_email: "vudinhhung11@gmail.com", // 🔹 Địa chỉ mail quản lý
-  from_name: "Hệ thống chấm công tự động",
-  employee_email: email,
-  date: today,
-  time: currentTime,
-  location: (lat && lng) ? `${lat}, ${lng}` : 'Chưa xác định',
-  qr_content: qrContent,
-  morning: `${data.vaoCaSang || '-'} - ${data.raCaSang || '-'}`,
-  afternoon: `${data.vaoCaChieu || '-'} - ${data.raCaChieu || '-'}`,
-  total_hours: data.gioLamTrongNgay,
-  note: data.ghiChu || 'Không có',
-};
+          // --- Gửi email cho quản lý ---
+          const emailParams = {
+            to_name: "Quản lý công ty",
+            to_email: "vudinhhung11@gmail.com",
+            from_name: "Hệ thống chấm công tự động",
+            employee_email: email,
+            date: today,
+            time: currentTime,
+            location: (lat && lng) ? `${lat}, ${lng}` : 'Chưa xác định',
+            qr_content: qrContent,
+            morning: `${data.vaoCaSang || '-'} - ${data.raCaSang || '-'}`,
+            afternoon: `${data.vaoCaChieu || '-'} - ${data.raCaChieu || '-'}`,
+            total_hours: data.gioLamTrongNgay,
+            note: data.ghiChu || 'Không có',
+          };
 
-emailjs.send("service_pwhmtr3", "template_dfq8ykc", emailParams)
-  .then(() => {
-    console.log("📧 Email gửi thành công tới quản lý!");
-  })
-  .catch((err) => {
-    console.error("❌ Lỗi gửi email:", err);
-  });
-
-        
-      })
-             
- 
-           
-      .catch(err => {
-        console.error('❌ Lỗi lưu Firebase:', err);
-        errorDiv.textContent = '❌ Lỗi lưu Firebase: ' + err;
-      });
-
-  
-  });
+          emailjs.send("service_pwhmtr3", "template_dfq8ykc", emailParams)
+            .then(() => console.log("📧 Email gửi thành công tới quản lý!"))
+            .catch(err => console.error("❌ Lỗi gửi email:", err));
+        })
+        .catch(err => {
+          console.error('❌ Lỗi lưu Firebase:', err);
+          errorDiv.textContent = '❌ Lỗi lưu Firebase: ' + err;
+        });
+    })
+    .catch(err => {
+      console.error('❌ Lỗi đọc Firebase:', err);
+      errorDiv.textContent = '❌ Lỗi đọc Firebase: ' + err;
+    });
 }
+
 
 // ================== Hàm phụ trợ ==================
 function encodeEmail(email) {
@@ -255,6 +254,7 @@ window.addEventListener('load', startScanner);
 </script>
 </body>
 </html>
+
 
 
 
