@@ -155,13 +155,14 @@ alert(`Khoảng cách tới công ty: ${distance.toFixed(1)} m`);
   const currentHour = now.getHours() + now.getMinutes() / 60;
   const emailKey = encodeEmail(email);
   const ref = db.ref('chamcong/' + emailKey + '/' + today);
-  let ghichucalam='';
-
+  
   ref.once('value')
     .then(snapshot => {
       const data = snapshot.val() || {};
       let msg = '';
       let isOvertime = false;
+ 
+    let ghichucalam = data.ghiChu || ''; // giữ ghi chú cũ
 
       // --- Ca sáng ---
       if (currentHour >= 7.5 && currentHour <= 11.5) {
@@ -180,7 +181,7 @@ alert(`Khoảng cách tới công ty: ${distance.toFixed(1)} m`);
         if (!data.vaoCaChieu) {
           data.vaoCaChieu = currentTime;
           if (currentHour > 13) msg += '⚠ Đi muộn ca chiều! ';
-          ghichucalam+='Về sớm ca chiều!';
+          ghichucalam+='Đi muộn ca chiều!';
         } else {
           data.raCaChieu = currentTime;
           if (currentHour < 17.5) msg += '⚠ Về sớm ca chiều! ';
@@ -226,16 +227,21 @@ alert(`Khoảng cách tới công ty: ${distance.toFixed(1)} m`);
       // Nhập ghi chú nếu làm thêm
       if (isOvertime) {
         const note = prompt("📝 Bạn có giờ làm thêm, vui lòng nhập ghi chú:");
-        if (note) data.ghiChu = note;
+         if (note) ghiChu += note + ' ';
+       
       }
+
+    
+
   // Gán trực tiếp vào data trước khi set:
-  data.ghiChu = ghichucalam;
+  data.ghiChu = ghichucalam.trim();
+      
         // --- Lưu dữ liệu Firebase ---
       ref.set(data)
         .then(() => {
          
           // Hiển thị thông báo
-          alert('✅ Chấm công thành công!\n' + msg + (isOvertime ? '\nGhi chú: ' + (data.ghiChu || '') : ''));
+          alert('✅ Chấm công thành công!\n' + msg + (isOvertime ? '\nGhi chú: ' + (data.ghiChu || '') + (ghichulamthem): ''));
 
 
           
@@ -316,6 +322,7 @@ function deg2rad(deg){ return deg*Math.PI/180; }
 </script>
 </body>
 </html>
+
 
 
 
