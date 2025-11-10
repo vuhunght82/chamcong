@@ -5,46 +5,100 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>📋 Xem chấm công</title>
 <style>
-body { font-family: Arial; margin: 20px; background:#f0f2f5; }
-h1 { color:#007bff; text-align:center; }
-table { width:100%; border-collapse: collapse; margin-top:20px; }
-th, td { border:1px solid #007bff; padding:8px; text-align:center; }
-th { background:#007bff; color:white; }
-tr:nth-child(even){ background:#e6f0ff; }
-button, select { padding:8px 12px; margin:5px; font-size:16px; }
+body {
+  font-family: Arial, sans-serif;
+  background-color: #f0f2f5;
+  text-align: center;
+  padding: 10px;
+}
+h1 {
+  color: #007bff;
+}
+table {
+  width: 100%;
+  max-width: 900px;
+  margin: 20px auto;
+  border-collapse: collapse;
+  background: white;
+  box-shadow: 0 0 5px rgba(0,0,0,0.1);
+}
+th {
+  background-color: #007bff;
+  color: white;
+  padding: 10px;
+}
+td {
+  border: 1px solid #ddd;
+  padding: 8px;
+}
+tr:nth-child(even) { background-color: #f9f9f9; }
+tr:hover { background-color: #eef; }
+#controls {
+  margin-bottom: 15px;
+}
+#userName {
+  font-weight: bold;
+  color: #007bff;
+  margin-bottom: 10px;
+}
+tfoot td {
+  font-weight: bold;
+  background-color: #e3f2fd;
+}
+button {
+  padding: 8px 15px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+button:hover {
+  background-color: #0056b3;
+}
 </style>
 </head>
 <body>
 
-<h1>📋 Xem chấm công</h1>
-<button id="backBtn">⬅ Quay lại</button>
-<label for="useremail">Nhân viên:</label>
-<div id="userName"></div>
-<label for="monthSelect">Chọn tháng:</label>
-<input type="month" id="monthSelect" />
+<h1>📋 Bảng chấm công nhân viên</h1>
+<div id="userName">Đang tải tên nhân viên...</div>
 
-<table>
+<div id="controls">
+  <input type="month" id="monthFilter">
+  <button id="exportBtn">⬇ Xuất Excel</button>
+  <button onclick="window.location.href='quet.html'">🔙 Quay lại</button>
+</div>
+
+<table id="dataTable">
   <thead>
     <tr>
       <th>Ngày</th>
-      <th>Vào Ca Sáng</th>
-      <th>Ra Ca Sáng</th>
-      <th>Vào Ca Chiều</th>
-      <th>Ra Ca Chiều</th>
+      <th>Vào ca sáng</th>
+      <th>Ra ca sáng</th>
+      <th>Vào ca chiều</th>
+      <th>Ra ca chiều</th>
+      <th>Vào làm thêm</th>
+      <th>Ra làm thêm</th>
       <th>Giờ làm thêm</th>
-      <th>Tổng giờ</th>
-      <th>Địa điểm quét</th>
+      <th>Tổng giờ/ngày</th>
       <th>Ghi chú</th>
     </tr>
   </thead>
-  <tbody id="attendanceBody">
-    <tr><td colspan="9">Chọn tháng để hiển thị dữ liệu</td></tr>
-  </tbody>
+  <tbody></tbody>
+  <tfoot>
+    <tr>
+      <td colspan="7">TỔNG CỘNG</td>
+      <td id="tongGioThem">0.00</td>
+      <td id="tongGioThang">0.00</td>
+      <td></td>
+    </tr>
+  </tfoot>
 </table>
 
 <!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
 <script>
 const firebaseConfig = {
@@ -59,108 +113,81 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
-// Lấy email nhân viên hiện tại
 const userEmail = sessionStorage.getItem('userEmail');
-if(!userEmail){
-  alert('Vui lòng đăng nhập trước!');
-  window.location.href='index.html';
-}
-const emailKey = encodeEmail(userEmail);
-
-const attendanceBody = document.getElementById('attendanceBody');
-const monthSelect = document.getElementById('monthSelect');
+const monthFilter = document.getElementById('monthFilter');
+const tbody = document.querySelector('#dataTable tbody');
+const tongGioThangCell = document.getElementById('tongGioThang');
+const tongGioThemCell = document.getElementById('tongGioThem');
 const userNameDiv = document.getElementById('userName');
 
+// ===== Lấy tên nhân viên =====
 if(userEmail){
-  const userKey = userEmail.replace(/\./g, ',');
-  firebase.database().ref('nhanvien/' + userKey).once('value')
-    .then(snapshot => {
-      const userData = snapshot.val();
-      if(userData && userData.ten){
-        userNameDiv.textContent = `${userData.ten}`;
-      } else {
-       userNameDiv.textContent = `Nhân viên: ${userEmail}`;
-      }
-    })
-    .catch(err => console.error("Lỗi lấy tên nhân viên:", err));
+  const key = userEmail.replace(/\./g, ',');
+  db.ref('nhanvien/' + key).once('value').then(snap => {
+    const nv = snap.val();
+    userNameDiv.textContent = nv?.ten ? `Nhân viên: ${nv.ten}` : `Nhân viên: ${userEmail}`;
+  });
 } else {
-  userNameDiv.textContent = "Nhân viên chưa đăng nhập";
+  alert("Vui lòng đăng nhập trước!");
+  window.location.href = "index.html";
 }
 
-
-  
-// Quay lại
-document.getElementById('backBtn').addEventListener('click', ()=>{ window.history.back(); });
-
-// Lấy dữ liệu theo tháng
-monthSelect.addEventListener('change', ()=>{ loadAttendance(monthSelect.value); });
-
-function loadAttendance(month) {
-  if(!month) return;
-  const [year, mon] = month.split('-');
-  const start = `${year}-${mon}-01`;
-  const end = `${year}-${mon}-31`;
-
-  db.ref('chamcong/' + emailKey).once('value').then(snapshot=>{
+// ===== Hàm hiển thị dữ liệu =====
+function loadData() {
+  if (!userEmail) return;
+  const key = userEmail.replace(/\./g, ',');
+  const ref = db.ref('chamcong/' + key);
+  const month = monthFilter.value || new Date().toISOString().slice(0,7);
+  ref.once('value').then(snapshot => {
     const data = snapshot.val() || {};
-    const rows = [];
+    const filtered = Object.entries(data)
+      .filter(([day]) => day.startsWith(month))
+      .sort(([a], [b]) => new Date(a) - new Date(b));
 
-    Object.keys(data).forEach(date => {
-      if(date >= start && date <= end){
-        const d = data[date];
-        rows.push({
-          date,
-          vaoCaSang: d.vaoCaSang || '-',
-          raCaSang: d.raCaSang || '-',
-          vaoCaChieu: d.vaoCaChieu || '-',
-          raCaChieu: d.raCaChieu || '-',
-          vaoLamThem: d.vaoLamThem || '-',
-          raLamThem: d.raLamThem || '-',
-          totalHours: d.gioLamTrongNgay || '-',
-          location: d.diadiemQuet || '-',
-          note: d.ghiChu || '-'
-        });
-      }
+    let html = '';
+    let tongGio = 0, tongThem = 0;
+
+    filtered.forEach(([day, d]) => {
+      const gioThem = (d.vaoLamThem && d.raLamThem)
+        ? (parseTime(d.raLamThem) - parseTime(d.vaoLamThem))
+        : 0;
+      tongGio += Number(d.gioLamTrongNgay || 0);
+      tongThem += gioThem;
+      html += `
+        <tr>
+          <td>${day}</td>
+          <td>${d.vaoCaSang || '-'}</td>
+          <td>${d.raCaSang || '-'}</td>
+          <td>${d.vaoCaChieu || '-'}</td>
+          <td>${d.raCaChieu || '-'}</td>
+          <td>${d.vaoLamThem || '-'}</td>
+          <td>${d.raLamThem || '-'}</td>
+          <td>${gioThem.toFixed(2)}</td>
+          <td>${d.gioLamTrongNgay || '-'}</td>
+          <td>${d.ghiChu || ''}</td>
+        </tr>`;
     });
 
-    // Sắp xếp theo ngày
-    rows.sort((a,b)=> a.date.localeCompare(b.date));
-
-    attendanceBody.innerHTML = '';
-    if(rows.length===0){
-      attendanceBody.innerHTML='<tr><td colspan="9">Chưa có dữ liệu trong tháng này</td></tr>';
-    } else {
-      rows.forEach(r=>{
-        attendanceBody.innerHTML += `<tr>
-          <td>${r.date}</td>
-          <td>${r.vaoCaSang}</td>
-          <td>${r.raCaSang}</td>
-          <td>${r.vaoCaChieu}</td>
-          <td>${r.raCaChieu}</td>
-          <td>${r.vaoLamThem!=='-'? r.vaoLamThem+' - '+r.raLamThem:'-'}</td>
-          <td>${r.totalHours}</td>
-          <td>${r.location}</td>
-          <td>${r.note}</td>
-        </tr>`;
-      });
-    }
-
-  }).catch(err=>{
-    attendanceBody.innerHTML='<tr><td colspan="9">❌ Lỗi tải dữ liệu</td></tr>';
-    console.error(err);
+    tbody.innerHTML = html;
+    tongGioThangCell.textContent = tongGio.toFixed(2);
+    tongGioThemCell.textContent = tongThem.toFixed(2);
   });
 }
 
-// Mã encode email
-function encodeEmail(email){ return email.replace(/\./g,','); }
+function parseTime(str) {
+  if (!str || str === '-') return 0;
+  const [h, m, s=0] = str.split(':');
+  return Number(h) + Number(m)/60 + Number(s)/3600;
+}
 
+monthFilter.addEventListener('change', loadData);
+window.addEventListener('load', loadData);
+
+// ===== Xuất Excel =====
+document.getElementById('exportBtn').addEventListener('click', () => {
+  const wb = XLSX.utils.table_to_book(document.getElementById('dataTable'), { sheet: "ChamCong" });
+  XLSX.writeFile(wb, `ChamCong_${new Date().toISOString().slice(0,7)}.xlsx`);
+});
 </script>
-
 </body>
 </html>
-
-
-
-
-
-
