@@ -44,7 +44,20 @@ button { margin:5px; padding:10px 15px; font-size:16px; }
 <button id="restartBtn" style="display:none;">🔄 Quét lại</button>
 <button id="viewBtn">📋 Xem chấm công</button>
 <button id="logoutBtn">🚪 Đăng xuất</button>
-
+<button onclick="checkLocation()">Kiểm tra vị trí</button>
+<script>
+function checkLocation() {
+  if (!navigator.geolocation) {
+    alert('Trình duyệt không hỗ trợ geolocation!');
+    return;
+  }
+  navigator.geolocation.getCurrentPosition(
+    pos => alert(`Vĩ độ: ${pos.coords.latitude}, Kinh độ: ${pos.coords.longitude}`),
+    err => alert(`Lỗi: ${err.code} - ${err.message}`),
+    { enableHighAccuracy: true, timeout: 10000 }
+  );
+}
+</script>
 <!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
@@ -293,6 +306,7 @@ function deg2rad(deg){ return deg*Math.PI/180; }
 </script>
 </body>
 </html>
+
 
 
 
