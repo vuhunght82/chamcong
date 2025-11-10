@@ -102,6 +102,8 @@ function startScanner() {
     navigator.geolocation.getCurrentPosition(
       pos => handleAttendance(userEmail, qrResult.data, pos.coords.latitude, pos.coords.longitude),
       err => {
+        console.log("Khoảng cách tới công ty:", distance.toFixed(1), "m");
+alert(`Khoảng cách tới công ty: ${distance.toFixed(1)} m`);
         console.warn('❌ Không lấy được vị trí:', err);
         handleAttendance(userEmail, qrResult.data, null, null);
       },
@@ -307,6 +309,7 @@ function deg2rad(deg){ return deg*Math.PI/180; }
 </script>
 </body>
 </html>
+
 
 
 
