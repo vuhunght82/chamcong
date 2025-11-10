@@ -191,6 +191,8 @@ Tổng giờ: ${data.gioLamTrongNgay}h
 ${msg}`;
         restartBtn.style.display = 'inline-block';
       }
+              // ================= GỬI MAIL CHO QUẢN LÝ =================
+
             const emailParams = {
   to_name: "Quản lý công ty",
   to_email: "vudinhhung11@gmai.com", // 🔹 Địa chỉ mail quản lý
@@ -214,15 +216,14 @@ emailjs.send("service_pwhmtr3", "template_dfq8ykc", emailParams)
     console.error("❌ Lỗi gửi email:", err);
   });
 
-} 
+ 
            )
       .catch(err => {
         console.error('❌ Lỗi lưu Firebase:', err);
         errorDiv.textContent = '❌ Lỗi lưu Firebase: ' + err;
       });
 
-    // ================= GỬI MAIL CHO QUẢN LÝ =================
-
+  
   });
   
 
@@ -249,6 +250,7 @@ window.addEventListener('load', startScanner);
 </script>
 </body>
 </html>
+
 
 
 
