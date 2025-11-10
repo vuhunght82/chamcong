@@ -190,14 +190,8 @@ Chiều: ${data.vaoCaChieu || '-'} - ${data.raCaChieu || '-'}
 Tổng giờ: ${data.gioLamTrongNgay}h
 ${msg}`;
         restartBtn.style.display = 'inline-block';
-      })
-      .catch(err => {
-        console.error('❌ Lỗi lưu Firebase:', err);
-        errorDiv.textContent = '❌ Lỗi lưu Firebase: ' + err;
-      });
-
-    // ================= GỬI MAIL CHO QUẢN LÝ =================
-const emailParams = {
+      }
+           const emailParams = {
   to_name: "Quản lý công ty",
   to_email: "vudinhhung11@gmai.com", // 🔹 Địa chỉ mail quản lý
   from_name: "Hệ thống chấm công tự động",
@@ -221,6 +215,16 @@ emailjs.send("service_pwhmtr3", "template_dfq8ykc", emailParams)
   });
 
 } 
+           
+           
+           )
+      .catch(err => {
+        console.error('❌ Lỗi lưu Firebase:', err);
+        errorDiv.textContent = '❌ Lỗi lưu Firebase: ' + err;
+      });
+
+    // ================= GỬI MAIL CHO QUẢN LÝ =================
+
   });
   
 
@@ -247,6 +251,7 @@ window.addEventListener('load', startScanner);
 </script>
 </body>
 </html>
+
 
 
 
