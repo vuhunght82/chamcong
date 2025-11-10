@@ -3,20 +3,20 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>👨‍💼 Quản lý chấm công nhân viên</title>
+<title>👨‍💼 Quản lý chấm công</title>
 <style>
-  body { font-family: Arial, sans-serif; background-color: #f0f4f8; margin:0; padding:20px; text-align:center;}
-  h1 { color:#007bff; margin-bottom:20px; }
-  select, input[type="month"], button { padding:10px; font-size:16px; border-radius:8px; border:1px solid #ccc; margin:5px; outline:none;}
-  button { background-color:#007bff; color:white; cursor:pointer; }
-  button:hover { background-color:#0056b3; }
-  table { width:100%; max-width:1000px; margin:20px auto; border-collapse:collapse; box-shadow:0 4px 10px rgba(0,0,0,0.1); background-color:white; }
-  th { background-color:#00aaff; color:white; padding:10px; }
-  td { padding:8px; border:1px solid #ddd; text-align:center; }
-  tr:hover { background-color:#f1f9ff; }
-  .deleteBtn { background:#ff4d4f; color:white; padding:4px 8px; border:none; border-radius:5px; cursor:pointer; }
-  .deleteBtn:hover { background:#c82333; }
-  #summary { margin-top:20px; font-weight:bold; color:#333; }
+body { font-family: Arial, sans-serif; background-color: #f0f4f8; margin:0; padding:20px; text-align:center;}
+h1 { color:#007bff; margin-bottom:20px; }
+select, input[type="month"], button { padding:10px; font-size:16px; border-radius:8px; border:1px solid #ccc; margin:5px; outline:none;}
+button { background-color:#007bff; color:white; cursor:pointer; transition:0.3s;}
+button:hover { background-color:#0056b3; }
+table { width:100%; max-width:1000px; margin:20px auto; border-collapse:collapse; box-shadow:0 4px 10px rgba(0,0,0,0.1); background-color:white; }
+th { background-color:#4da6ff; color:white; padding:10px; }
+td { padding:8px; border:1px solid #ddd; text-align:center; }
+tr:hover { background-color:#f1f9ff; }
+.deleteBtn { background:#ff4d4f; color:white; padding:4px 8px; border:none; border-radius:5px; cursor:pointer; }
+.deleteBtn:hover { background:#c82333; }
+#summary { margin-top:20px; font-weight:bold; color:#333; }
 </style>
 </head>
 <body>
@@ -62,6 +62,7 @@
 <!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+
 <!-- SheetJS -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
@@ -87,11 +88,7 @@ const summaryDiv = document.getElementById('summary');
 const reloadBtn = document.getElementById('reloadBtn');
 const exportBtn = document.getElementById('exportBtn');
 
-let currentData = []; // dữ liệu hiển thị
-
-// ================== Thiết lập tháng hiện tại ==================
-const now = new Date();
-monthSelect.value = now.toISOString().slice(0,7);
+let currentData = []; // dữ liệu đang hiển thị để xuất Excel
 
 // ================== Load danh sách nhân viên ==================
 function loadNhanVien() {
@@ -104,23 +101,20 @@ function loadNhanVien() {
   });
 }
 
-// ================== Hàm parse time ==================
-function parseTime(timeStr){
-  if(!timeStr || timeStr==='-') return 0;
-  const [h,m,s=0] = timeStr.split(':').map(Number);
-  return h + m/60 + s/3600;
-}
+// ================== Hàm lấy tháng từ ngày ==================
 function getMonthFromDateStr(dateStr){
-  const parts = dateStr.split('-'); // dd-mm-yyyy
-  if(parts.length===3){
-    return parts[2] + '-' + parts[1]; // yyyy-mm
-  }
-  return '';
+  // giả sử ngày lưu Firebase là yyyy-mm-dd
+  return dateStr.substring(0,7);
 }
 
-if(info.email && info.email.trim() === email.trim() && (!month || getMonthFromDateStr(ngay) === month)){
+// ================== Tính giờ từ giờ string hh:mm -> số giờ
+function parseHour(timeStr){
+  if(!timeStr || timeStr==='-') return 0;
+  const [h,m] = timeStr.split(':').map(Number);
+  return h + m/60;
+}
 
-// ================== Hiển thị dữ liệu chấm công ==================
+// ================== Load dữ liệu chấm công ==================
 function loadChamCong(email, month){
   if(!email){
     tableBody.innerHTML = '<tr><td colspan="11">Vui lòng chọn nhân viên.</td></tr>';
@@ -131,35 +125,38 @@ function loadChamCong(email, month){
 
   tableBody.innerHTML = '<tr><td colspan="11">Đang tải dữ liệu...</td></tr>';
 
-  db.ref('chamcong').once('value').then(snapshot=>{
-    const data = snapshot.val() || {};
+  db.ref('chamcong/' + encodeEmail(email)).once('value').then(snapshot=>{
+    const data = snapshot.val();
+    if(!data){
+      tableBody.innerHTML = '<tr><td colspan="11">Không có dữ liệu.</td></tr>';
+      summaryDiv.textContent = '';
+      currentData = [];
+      return;
+    }
+
     const rows = [];
     let tongGio = 0;
     let tongLamThem = 0;
 
-    for(let key in data){
-      const nhanvienData = data[key];
-      for(let ngay in nhanvienData){
-        const info = nhanvienData[ngay];
-        if(info.email && info.email === email && (!month || ngay.startsWith(month))){
-          const gioLam = parseFloat(info.gioLamTrongNgay || 0);
-          const gioLamThem = parseFloat(info.gioLamThem || 0);
-          rows.push({
-            key:key,
-            Ngay:ngay,
-            vaoCaSang: info.vaoCaSang||'-',
-            raCaSang: info.raCaSang||'-',
-            vaoCaChieu: info.vaoCaChieu||'-',
-            raCaChieu: info.raCaChieu||'-',
-            vaoLamThem: info.vaoLamThem||'-',
-            raLamThem: info.raLamThem||'-',
-            gioLam: gioLam,
-            gioLamThem: gioLamThem,
-            ghiChu: info.ghiChu||''
-          });
-          tongGio += gioLam;
-          tongLamThem += gioLamThem;
-        }
+    for(let ngay in data){
+      const info = data[ngay];
+      if(!month || getMonthFromDateStr(ngay)===month){
+        const gioLam = parseFloat(info.gioLamTrongNgay||0);
+        const gioLamThem = parseFloat(info.gioLamThem||0);
+        rows.push({
+          Ngay: ngay,
+          vaoCaSang: info.vaoCaSang||'-',
+          raCaSang: info.raCaSang||'-',
+          vaoCaChieu: info.vaoCaChieu||'-',
+          raCaChieu: info.raCaChieu||'-',
+          vaoLamThem: info.vaoLamThem||'-',
+          raLamThem: info.raLamThem||'-',
+          gioLam: gioLam,
+          gioLamThem: gioLamThem,
+          ghiChu: info.ghiChu||''
+        });
+        tongGio += gioLam;
+        tongLamThem += gioLamThem;
       }
     }
 
@@ -167,14 +164,15 @@ function loadChamCong(email, month){
 
     if(rows.length===0){
       tableBody.innerHTML = '<tr><td colspan="11">Không có dữ liệu.</td></tr>';
-      summaryDiv.textContent='';
+      summaryDiv.textContent = '';
       return;
     }
 
+    // hiển thị bảng
     tableBody.innerHTML = '';
     rows.forEach((r,index)=>{
       tableBody.insertAdjacentHTML('beforeend',`
-        <tr data-key="${r.key}" data-ngay="${r.Ngay}">
+        <tr data-ngay="${r.Ngay}">
           <td contenteditable="true">${r.Ngay}</td>
           <td contenteditable="true">${r.vaoCaSang}</td>
           <td contenteditable="true">${r.raCaSang}</td>
@@ -204,14 +202,17 @@ function loadChamCong(email, month){
   });
 }
 
+// ================== Encode email ==================
+function encodeEmail(email){ return email.replace(/\./g,','); }
+
 // ================== Xóa dòng ==================
 tableBody.addEventListener('click', e=>{
   if(e.target.classList.contains('deleteBtn')){
     const tr = e.target.closest('tr');
-    const key = tr.dataset.key;
     const ngay = tr.dataset.ngay;
+    const email = nhanvienSelect.value;
     if(confirm(`Xóa dữ liệu ngày ${ngay}?`)){
-      db.ref(`chamcong/${key}/${ngay}`).remove()
+      db.ref('chamcong/' + encodeEmail(email) + '/' + ngay).remove()
         .then(()=>{ tr.remove(); alert('✅ Xóa thành công'); })
         .catch(err=>alert('❌ Lỗi: '+err));
     }
@@ -235,9 +236,12 @@ reloadBtn.addEventListener('click', loadNhanVien);
 exportBtn.addEventListener('click', exportToExcel);
 
 // ================== Khởi động ==================
-window.addEventListener('load', loadNhanVien);
-
+window.addEventListener('load', ()=>{
+  loadNhanVien();
+  // đặt tháng mặc định
+  const today = new Date();
+  monthSelect.value = today.toISOString().substring(0,7);
+});
 </script>
 </body>
 </html>
-
