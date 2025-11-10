@@ -1,33 +1,55 @@
-<h1>📋 Xem chấm công</h1>
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>📋 Xem chấm công</title>
+<style>
+body { font-family: Arial; margin: 20px; background:#f0f2f5; }
+h1 { color:#007bff; text-align:center; }
+table { width:100%; border-collapse: collapse; margin-top:20px; }
+th, td { border:1px solid #007bff; padding:8px; text-align:center; }
+th { background:#007bff; color:white; }
+tr:nth-child(even){ background:#e6f0ff; }
+button, select { padding:8px 12px; margin:5px; font-size:16px; }
+</style>
+</head>
+<body>
 
-<label>Chọn tháng: <input type="month" id="monthPicker"></label>
-<button id="searchBtn">Tìm</button>
+<h1>📋 Xem chấm công</h1>
+<button id="backBtn">⬅ Quay lại</button>
+
+<label for="monthSelect">Chọn tháng:</label>
+<input type="month" id="monthSelect" />
 
 <table>
   <thead>
     <tr>
       <th>Ngày</th>
-      <th>Nhân viên</th>
-      <th>Ca sáng (Vào-Ra)</th>
-      <th>Ca chiều (Vào-Ra)</th>
-      <th>Đi muộn / Về sớm</th>
-      <th>Giờ làm</th>
+      <th>Vào Ca Sáng</th>
+      <th>Ra Ca Sáng</th>
+      <th>Vào Ca Chiều</th>
+      <th>Ra Ca Chiều</th>
+      <th>Giờ làm thêm</th>
+      <th>Tổng giờ</th>
       <th>Địa điểm quét</th>
-      <th>Nội dung QR</th>
+      <th>Ghi chú</th>
     </tr>
   </thead>
-  <tbody id="attendanceTable"></tbody>
+  <tbody id="attendanceBody">
+    <tr><td colspan="9">Chọn tháng để hiển thị dữ liệu</td></tr>
+  </tbody>
 </table>
 
+<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 
 <script>
-// Firebase config
 const firebaseConfig = {
   apiKey: "AIzaSyAb5AZOBvEVY3a_9ioEKTW-wuVMXdnRZGQ",
   authDomain: "sellglass-3ebe9.firebaseapp.com",
-  databaseURL: "https://sellglass-3ebe9-default-rtdb.asia-southeast1.firebasedatabase.app", // <- sửa lại
+  databaseURL: "https://sellglass-3ebe9-default-rtdb.asia-southeast1.firebasedatabase.app",
   projectId: "sellglass-3ebe9",
   storageBucket: "sellglass-3ebe9.appspot.com",
   messagingSenderId: "513741829035",
@@ -36,37 +58,83 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
-document.getElementById('searchBtn').addEventListener('click', () => {
-  const monthVal = document.getElementById('monthPicker').value; // YYYY-MM
-  if(!monthVal) return alert('Chọn tháng!');
-  loadAttendance(monthVal);
-});
+// Lấy email nhân viên hiện tại
+const userEmail = sessionStorage.getItem('userEmail');
+if(!userEmail){
+  alert('Vui lòng đăng nhập trước!');
+  window.location.href='index.html';
+}
+const emailKey = encodeEmail(userEmail);
 
-function loadAttendance(monthVal){
-  const tbody = document.getElementById('attendanceTable');
-  tbody.innerHTML = '';
-  db.ref('chamcong').once('value').then(snapshot=>{
-    snapshot.forEach(empSnap=>{
-      const empId = empSnap.key;
-      const days = empSnap.val();
-      Object.keys(days).forEach(day=>{
-        if(day.startsWith(monthVal)){
-          const data = days[day];
-          const row = `<tr>
-            <td>${day}</td>
-            <td>${empId}</td>
-            <td>${data.vaoCaSang||'-'} - ${data.raCaSang||'-'}</td>
-            <td>${data.vaoCaChieu||'-'} - ${data.raCaChieu||'-'}</td>
-            <td>${data.diMuon || ''}</td>
-            <td>${data.gioLamTrongNgay || ''}</td>
-            <td>${data.diadiemQuet || ''}</td>
-            <td>${data.noiDungMaQuet || ''}</td>
-          </tr>`;
-          tbody.innerHTML += row;
-        }
-      });
+const attendanceBody = document.getElementById('attendanceBody');
+const monthSelect = document.getElementById('monthSelect');
+
+// Quay lại
+document.getElementById('backBtn').addEventListener('click', ()=>{ window.history.back(); });
+
+// Lấy dữ liệu theo tháng
+monthSelect.addEventListener('change', ()=>{ loadAttendance(monthSelect.value); });
+
+function loadAttendance(month) {
+  if(!month) return;
+  const [year, mon] = month.split('-');
+  const start = `${year}-${mon}-01`;
+  const end = `${year}-${mon}-31`;
+
+  db.ref('chamcong/' + emailKey).once('value').then(snapshot=>{
+    const data = snapshot.val() || {};
+    const rows = [];
+
+    Object.keys(data).forEach(date => {
+      if(date >= start && date <= end){
+        const d = data[date];
+        rows.push({
+          date,
+          vaoCaSang: d.vaoCaSang || '-',
+          raCaSang: d.raCaSang || '-',
+          vaoCaChieu: d.vaoCaChieu || '-',
+          raCaChieu: d.raCaChieu || '-',
+          vaoLamThem: d.vaoLamThem || '-',
+          raLamThem: d.raLamThem || '-',
+          totalHours: d.gioLamTrongNgay || '-',
+          location: d.diadiemQuet || '-',
+          note: d.ghiChu || '-'
+        });
+      }
     });
+
+    // Sắp xếp theo ngày
+    rows.sort((a,b)=> a.date.localeCompare(b.date));
+
+    attendanceBody.innerHTML = '';
+    if(rows.length===0){
+      attendanceBody.innerHTML='<tr><td colspan="9">Chưa có dữ liệu trong tháng này</td></tr>';
+    } else {
+      rows.forEach(r=>{
+        attendanceBody.innerHTML += `<tr>
+          <td>${r.date}</td>
+          <td>${r.vaoCaSang}</td>
+          <td>${r.raCaSang}</td>
+          <td>${r.vaoCaChieu}</td>
+          <td>${r.raCaChieu}</td>
+          <td>${r.vaoLamThem!=='-'? r.vaoLamThem+' - '+r.raLamThem:'-'}</td>
+          <td>${r.totalHours}</td>
+          <td>${r.location}</td>
+          <td>${r.note}</td>
+        </tr>`;
+      });
+    }
+
+  }).catch(err=>{
+    attendanceBody.innerHTML='<tr><td colspan="9">❌ Lỗi tải dữ liệu</td></tr>';
+    console.error(err);
   });
 }
+
+// Mã encode email
+function encodeEmail(email){ return email.replace(/\./g,','); }
+
 </script>
 
+</body>
+</html>
