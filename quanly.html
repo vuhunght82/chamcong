@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>👨‍💼 Quản lý chấm công</title>
     <style>
+        .extra-col {
+            background-color: #d0e7ff; /* xanh dương nhạt */
+        }
         body {
             font-family: Arial, sans-serif;
             background-color: #f0f4f8;
@@ -296,8 +299,8 @@
               <td contenteditable="true">${r.raCaSang}</td>
               <td contenteditable="true">${r.vaoCaChieu}</td>
               <td contenteditable="true">${r.raCaChieu}</td>
-              <td contenteditable="true">${r.vaoLamThem}</td>
-              <td contenteditable="true">${r.raLamThem}</td>
+              <td contenteditable="true" class="extra-col">${r.vaoLamThem}</td>
+            <td contenteditable="true" class="extra-col">${r.raLamThem}</td>
               <td contenteditable="true">${r.gioLam.toFixed(2)}</td>
               <td contenteditable="true">${r.gioLamThem.toFixed(2)}</td>
               <td contenteditable="true">${r.ghiChu}</td>
@@ -381,4 +384,5 @@
     </script>
 </body>
 </html>
+
 
