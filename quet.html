@@ -84,20 +84,16 @@ const viewBtn = document.getElementById('viewBtn');
 let scanner;
 
 // ================== Hàm quét ==================
-function startScanner() {
-  resultDiv.textContent = 'Đang chờ quét QR...';
-  errorDiv.textContent = '';
-  restartBtn.style.display = 'none';
-
-  scanner = new QrScanner(videoElem, qrResult => {
-    navigator.geolocation.getCurrentPosition(
-      pos => handleAttendance(userEmail, qrResult.data, pos.coords.latitude, pos.coords.longitude),
-      () => handleAttendance(userEmail, qrResult.data, null, null)
-      
-    );
+scanner = new QrScanner(videoElem, qrResult => {
+  navigator.geolocation.getCurrentPosition(
+    pos => handleAttendance(userEmail, qrResult.data, pos.coords.latitude, pos.coords.longitude),
+    err => {
+      console.warn('❌ Không lấy được vị trí:', err);
+      handleAttendance(userEmail, qrResult.data, null, null);
+    },
     { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
-  }, { highlightScanRegion: true, highlightCodeOutline: true });
-
+  );
+}, { highlightScanRegion: true, highlightCodeOutline: true });
 
   
   scanner.start().catch(err => {
@@ -296,6 +292,7 @@ function deg2rad(deg){ return deg*Math.PI/180; }
 </script>
 </body>
 </html>
+
 
 
 
