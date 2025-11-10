@@ -46,45 +46,43 @@
 </script>
   <script type="module">
 
+const loginBtn = document.getElementById('loginBtn');
+  loginBtn.addEventListener('click', function() {
+    const emailInput = document.getElementById('email').value.trim();
+    const passwordInput = document.getElementById('password').value.trim();
 
-    
-   const emailInput = (document.getElementById('email') as HTMLInputElement).value.trim();
+    if (!emailInput || !passwordInput) {
+      alert('Vui lòng nhập đầy đủ email và mật khẩu!');
+      return;
+    }
 
-if (!emailInput) {
-  alert('Vui lòng nhập email!');
-} else {
-  const usersRef = firebase.database().ref('nhanvien');
-  usersRef.orderByChild('email').equalTo(emailInput).once('value')
-    .then(snapshot => {
-      if (snapshot.exists()) {
-        alert('✅ Email hợp lệ, cho phép quét QR!');
-        sessionStorage.setItem('userEmail', emailInput); // lưu tạm
-        window.location.href = 'quet.html';
-      } else {
-        alert('❌ Email không tồn tại trong hệ thống!');
-      }
-    })
-    .catch(err => {
-      console.error('Lỗi đọc Firebase:', err);
-      alert('❌ Lỗi truy vấn Firebase!');
-    });
-}
-    
-    const loginBtn = document.getElementById('loginBtn');
-    const msg = document.getElementById('msg');
+    const usersRef = firebase.database().ref('users');
+    usersRef.orderByChild('email').equalTo(emailInput).once('value')
+      .then(snapshot => {
+        if (!snapshot.exists()) {
+          alert('❌ Email không tồn tại!');
+          return;
+        }
 
-    loginBtn.addEventListener('click', async () => {
-      const emailVal = document.getElementById('email').value.trim();
-      const passVal = document.getElementById('password').value.trim();
+        let valid = false;
+        snapshot.forEach(child => {
+          const user = child.val();
+          if (user.password === passwordInput) {
+            valid = true;
+            sessionStorage.setItem('userEmail', emailInput);
+            window.location.href = 'quet.html';
+          }
+        });
 
-      try {
-        await signInWithEmailAndPassword(auth, emailVal, passVal);
-        sessionStorage.setItem('userEmail', emailVal);
-        window.location.href = 'quet.html';
-      } catch (e) {
-        msg.textContent = '❌ ' + e.message;
-      }
-    });
+        if (!valid) {
+          alert('❌ Mật khẩu không đúng!');
+        }
+      })
+      .catch(err => {
+        console.error('Lỗi Firebase:', err);
+        alert('❌ Lỗi truy vấn Firebase!');
+      });
+  });
     // Chuyển sang trang đăng ký
       registerBtn.addEventListener('click', () => {
         window.location.href = "dangky.html";
@@ -92,6 +90,7 @@ if (!emailInput) {
   </script>
 </body>
 </html>
+
 
 
 
