@@ -190,8 +190,8 @@ Chiều: ${data.vaoCaChieu || '-'} - ${data.raCaChieu || '-'}
 Tổng giờ: ${data.gioLamTrongNgay}h
 ${msg}`;
         restartBtn.style.display = 'inline-block';
-      }
-              // ================= GỬI MAIL CHO QUẢN LÝ =================
+
+         // ================= GỬI MAIL CHO QUẢN LÝ =================
 
             const emailParams = {
   to_name: "Quản lý công ty",
@@ -216,8 +216,10 @@ emailjs.send("service_pwhmtr3", "template_dfq8ykc", emailParams)
     console.error("❌ Lỗi gửi email:", err);
   });
 
+      })
+             
  
-           )
+           
       .catch(err => {
         console.error('❌ Lỗi lưu Firebase:', err);
         errorDiv.textContent = '❌ Lỗi lưu Firebase: ' + err;
@@ -250,6 +252,7 @@ window.addEventListener('load', startScanner);
 </script>
 </body>
 </html>
+
 
 
 
