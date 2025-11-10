@@ -78,7 +78,7 @@ if(userEmail){
       if(userData && userData.ten){
         userNameDiv.textContent = `Nhân viên: ${userData.ten}`;
       } else {
-      //  userNameDiv.textContent = `Nhân viên: ${userEmail}`;
+       userNameDiv.textContent = `Nhân viên: ${userEmail}`;
       }
     })
     .catch(err => console.error("Lỗi lấy tên nhân viên:", err));
@@ -157,6 +157,7 @@ function encodeEmail(email){ return email.replace(/\./g,','); }
 
 </body>
 </html>
+
 
 
 
