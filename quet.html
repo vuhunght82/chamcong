@@ -91,11 +91,13 @@ function startScanner() {
 
   scanner = new QrScanner(videoElem, qrResult => {
     navigator.geolocation.getCurrentPosition(
-      pos => handleAttendance(userEmail, qrResult.data, pos.coords.latitude, pos.coords.longitude),
+      pos => handleAttendance(userEmail, qrResult, pos.coords.latitude, pos.coords.longitude),
       () => handleAttendance(userEmail, qrResult.data, null, null)
     );
   }, { highlightScanRegion: true, highlightCodeOutline: true });
 
+
+  
   scanner.start().catch(err => {
     console.error(err);
     errorDiv.textContent = '❌ Không thể mở camera: ' + err;
@@ -253,6 +255,7 @@ window.addEventListener('load', startScanner);
 </script>
 </body>
 </html>
+
 
 
 
