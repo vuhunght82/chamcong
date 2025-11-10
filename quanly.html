@@ -3,117 +3,116 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Quản lý chấm công</title>
+<title>👨‍💼 Quản lý chấm công nhân viên</title>
 <style>
-body {
-  font-family: Arial, sans-serif;
-  background-color: #eef5ff;
-  margin: 0;
-  padding: 0;
-  text-align: center;
-}
-.container {
-  max-width: 95%;
-  margin: 20px auto;
-  background: #fff;
-  padding: 20px;
-  border-radius: 12px;
-  box-shadow: 0 0 12px rgba(0,0,0,0.1);
-}
-h1 {
-  background-color: #2196f3;
-  color: white;
-  padding: 12px;
-  border-radius: 8px;
-  margin-bottom: 20px;
-}
-select {
-  font-size: 16px;
-  padding: 8px;
-  border-radius: 8px;
-  border: 1px solid #2196f3;
-  margin-bottom: 15px;
-}
-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 15px;
-}
-th {
-  background-color: #2196f3;
-  color: white;
-  padding: 10px;
-}
-td {
-  border: 1px solid #ccc;
-  padding: 8px;
-}
-td[contenteditable="true"] {
-  background-color: #f3faff;
-}
-tr:hover {
-  background-color: #f1f1f1;
-}
-tfoot td {
-  font-weight: bold;
-  background-color: #d1ecff;
-}
-button {
-  background-color: #2196f3;
-  color: white;
-  border: none;
-  padding: 8px 16px;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: 0.3s;
-}
-button:hover {
-  background-color: #0d8bf2;
-}
+  body {
+    font-family: Arial, sans-serif;
+    background-color: #f0f4f8;
+    margin: 0;
+    padding: 20px;
+    text-align: center;
+  }
+
+  h1 {
+    color: #007bff;
+    margin-bottom: 20px;
+  }
+
+  select, button {
+    padding: 10px;
+    font-size: 16px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    margin: 5px;
+    outline: none;
+  }
+
+  button {
+    background-color: #007bff;
+    color: white;
+    cursor: pointer;
+  }
+
+  button:hover {
+    background-color: #0056b3;
+  }
+
+  table {
+    width: 100%;
+    max-width: 1000px;
+    margin: 20px auto;
+    border-collapse: collapse;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    background-color: white;
+  }
+
+  th {
+    background-color: #007bff;
+    color: white;
+    padding: 10px;
+  }
+
+  td {
+    padding: 8px;
+    border: 1px solid #ddd;
+    text-align: center;
+  }
+
+  tr:hover {
+    background-color: #f1f9ff;
+  }
+
+  #summary {
+    margin-top: 20px;
+    font-weight: bold;
+    color: #333;
+  }
 </style>
 </head>
 <body>
-<div class="container">
-  <h1>📋 Quản lý chấm công</h1>
 
+<h1>👨‍💼 Quản lý chấm công nhân viên</h1>
+
+<div>
+  <label for="nhanvienSelect">Chọn nhân viên:</label>
   <select id="nhanvienSelect">
     <option value="">-- Chọn nhân viên --</option>
   </select>
-
-  <table id="chamcongTable">
-    <thead>
-      <tr>
-        <th>Ngày</th>
-        <th>Giờ vào</th>
-        <th>Giờ ra</th>
-        <th>Vào làm thêm</th>
-        <th>Ra làm thêm</th>
-        <th>Giờ làm</th>
-        <th>Giờ làm thêm</th>
-        <th>Ghi chú</th>
-        <th>Hành động</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-    <tfoot>
-      <tr>
-        <td colspan="5">Tổng cộng</td>
-        <td id="tongGio">0</td>
-        <td id="tongGioThem">0</td>
-        <td colspan="2"></td>
-      </tr>
-    </tfoot>
-  </table>
+  <button id="reloadBtn">🔄 Tải lại</button>
+  <button id="exportBtn">📊 Xuất Excel</button>
 </div>
+
+<table id="chamcongTable">
+  <thead>
+    <tr>
+      <th>Ngày</th>
+      <th>Vào sáng</th>
+      <th>Ra sáng</th>
+      <th>Vào chiều</th>
+      <th>Ra chiều</th>
+      <th>Vào làm thêm</th>
+      <th>Ra làm thêm</th>
+      <th>Giờ làm (h)</th>
+      <th>Giờ làm thêm (h)</th>
+      <th>Ghi chú</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td colspan="10">Chưa có dữ liệu</td></tr>
+  </tbody>
+</table>
+
+<div id="summary"></div>
 
 <!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 
+<!-- SheetJS (xuất Excel) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
 <script>
-  function encodeEmail(email) {
-  return email.replace(/\./g, '_dot_').replace(/@/g, '_at_');
-}
+// ================== Firebase Config ==================
 const firebaseConfig = {
   apiKey: "AIzaSyAb5AZOBvEVY3a_9ioEKTW-wuVMXdnRZGQ",
   authDomain: "sellglass-3ebe9.firebaseapp.com",
@@ -126,138 +125,132 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
-const select = document.getElementById('nhanvienSelect');
+// ================== Elements ==================
+const nhanvienSelect = document.getElementById('nhanvienSelect');
 const tableBody = document.querySelector('#chamcongTable tbody');
-const tongGio = document.getElementById('tongGio');
-const tongGioThem = document.getElementById('tongGioThem');
+const summaryDiv = document.getElementById('summary');
+const reloadBtn = document.getElementById('reloadBtn');
+const exportBtn = document.getElementById('exportBtn');
 
-// === Lấy danh sách nhân viên ===
-firebase.database().ref('nhanvien').once('value').then(snapshot => {
-  snapshot.forEach(child => {
-    const nv = child.val();
-    const opt = document.createElement('option');
-    opt.value = nv.email;
-    opt.textContent = nv.ten;
-    select.appendChild(opt);
-  });
-});
+let currentData = []; // dữ liệu đang hiển thị để xuất Excel
 
-// === Khi chọn nhân viên ===
-select.addEventListener('change', () => {
-  const email = select.value;
-  if (!email) {
-    tableBody.innerHTML = '';
-    tongGio.textContent = tongGioThem.textContent = 0;
-    return;
-  }
-const selectedEmail = document.getElementById('nhanvienSelect').value;
-if (!selectedEmail) return;
-
-const emailKey = encodeEmail(selectedEmail);
-const chamCongRef = db.ref('chamcong/' + emailKey);
-
-chamCongRef.once('value').then(snapshot => {
-  const data = snapshot.val();
-  if (!data) {
-    tableBody.innerHTML = '<tr><td colspan="10">Không có dữ liệu chấm công!</td></tr>';
-    return;
-  }
-
-  // render ra bảng
-  renderChamCongTable(data);
-});
-  function renderChamCongTable(data) {
-  const tableBody = document.querySelector('#chamcongTable tbody');
-  tableBody.innerHTML = '';
-
-  Object.entries(data).forEach(([date, info]) => {
-    const row = `
-      <tr>
-        <td>${date}</td>
-        <td>${info.vaoCaSang || '-'}</td>
-        <td>${info.raCaSang || '-'}</td>
-        <td>${info.vaoCaChieu || '-'}</td>
-        <td>${info.raCaChieu || '-'}</td>
-        <td>${info.vaoLamThem || '-'}</td>
-        <td>${info.raLamThem || '-'}</td>
-        <td>${info.gioLamTrongNgay || '-'}</td>
-        <td>${info.gioLamThem || '-'}</td>
-        <td>${info.ghiChu || ''}</td>
-      </tr>
-    `;
-    tableBody.insertAdjacentHTML('beforeend', row);
+// ================== Load danh sách nhân viên ==================
+function loadNhanVien() {
+  db.ref('nhanvien').once('value').then(snapshot => {
+    nhanvienSelect.innerHTML = '<option value="">-- Chọn nhân viên --</option>';
+    snapshot.forEach(child => {
+      const nv = child.val();
+      nhanvienSelect.insertAdjacentHTML('beforeend', `
+        <option value="${nv.email}">${nv.ten} (${nv.email})</option>
+      `);
+    });
   });
 }
 
-  firebase.database().ref('chamcong').orderByChild('email').equalTo(email).once('value')
-  .then(snapshot => {
+// ================== Hiển thị dữ liệu chấm công ==================
+function loadChamCong(email) {
+  if (!email) {
+    tableBody.innerHTML = '<tr><td colspan="10">Vui lòng chọn nhân viên.</td></tr>';
+    summaryDiv.textContent = '';
+    currentData = [];
+    return;
+  }
+
+  tableBody.innerHTML = '<tr><td colspan="10">Đang tải dữ liệu...</td></tr>';
+
+  db.ref('chamcong').once('value').then(snapshot => {
+    const data = snapshot.val();
+    const rows = [];
+    let tongGio = 0;
+    let tongLamThem = 0;
+
+    for (let key in data) {
+      const nhanvienData = data[key];
+      for (let ngay in nhanvienData) {
+        const info = nhanvienData[ngay];
+        if (info.email && info.email.includes(email)) {
+          rows.push({
+            Ngày: ngay,
+            "Vào sáng": info.vaoCaSang || '-',
+            "Ra sáng": info.raCaSang || '-',
+            "Vào chiều": info.vaoCaChieu || '-',
+            "Ra chiều": info.raCaChieu || '-',
+            "Vào làm thêm": info.vaoLamThem || '-',
+            "Ra làm thêm": info.raLamThem || '-',
+            "Giờ làm (h)": parseFloat(info.gioLamTrongNgay || 0),
+            "Giờ làm thêm (h)": parseFloat(info.gioLamThem || 0),
+            "Ghi chú": info.ghiChu || ''
+          });
+          tongGio += parseFloat(info.gioLamTrongNgay || 0);
+          tongLamThem += parseFloat(info.gioLamThem || 0);
+        }
+      }
+    }
+
+    currentData = rows; // lưu lại để xuất excel
+
+    if (rows.length === 0) {
+      tableBody.innerHTML = '<tr><td colspan="10">Không có dữ liệu chấm công cho nhân viên này.</td></tr>';
+      summaryDiv.textContent = '';
+      return;
+    }
+
     tableBody.innerHTML = '';
-    let total = 0, totalExtra = 0;
-
-    snapshot.forEach(child => {
-      const data = child.val();
-      const key = child.key;
-      const row = document.createElement('tr');
-      row.innerHTML = `
-        <td>${data.ngay || ''}</td>
-        <td contenteditable="true">${data.gioVao || ''}</td>
-        <td contenteditable="true">${data.gioRa || ''}</td>
-        <td contenteditable="true">${data.gioVaoThem || ''}</td>
-        <td contenteditable="true">${data.gioRaThem || ''}</td>
-        <td>${data.gioLam || 0}</td>
-        <td>${data.gioLamThem || 0}</td>
-        <td contenteditable="true">${data.ghichu || ''}</td>
-        <td><button onclick="xoa('${key}')">Xóa</button></td>
-      `;
-      tableBody.appendChild(row);
-
-      total += parseFloat(data.gioLam || 0);
-      totalExtra += parseFloat(data.gioLamThem || 0);
-
-      row.querySelectorAll('[contenteditable="true"]').forEach(cell => {
-        cell.addEventListener('blur', () => capNhat(child.key, row));
-      });
+    rows.forEach(r => {
+      tableBody.insertAdjacentHTML('beforeend', `
+        <tr>
+          <td>${r["Ngày"]}</td>
+          <td>${r["Vào sáng"]}</td>
+          <td>${r["Ra sáng"]}</td>
+          <td>${r["Vào chiều"]}</td>
+          <td>${r["Ra chiều"]}</td>
+          <td>${r["Vào làm thêm"]}</td>
+          <td>${r["Ra làm thêm"]}</td>
+          <td>${r["Giờ làm (h)"].toFixed(2)}</td>
+          <td>${r["Giờ làm thêm (h)"].toFixed(2)}</td>
+          <td>${r["Ghi chú"]}</td>
+        </tr>
+      `);
     });
 
-    tongGio.textContent = total.toFixed(1);
-    tongGioThem.textContent = totalExtra.toFixed(1);
+    // Dòng tổng cộng
+    tableBody.insertAdjacentHTML('beforeend', `
+      <tr style="background:#e9f5ff;font-weight:bold;">
+        <td colspan="7">TỔNG CỘNG</td>
+        <td>${tongGio.toFixed(2)}</td>
+        <td>${tongLamThem.toFixed(2)}</td>
+        <td></td>
+      </tr>
+    `);
+
+    summaryDiv.textContent = `🧾 Tổng giờ làm: ${tongGio.toFixed(2)}h | Tổng giờ làm thêm: ${tongLamThem.toFixed(2)}h`;
   });
+}
+
+// ================== Xuất Excel ==================
+function exportToExcel() {
+  if (!currentData || currentData.length === 0) {
+    alert('⚠️ Không có dữ liệu để xuất.');
+    return;
+  }
+  const ws = XLSX.utils.json_to_sheet(currentData);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "ChamCong");
+  const filename = `ChamCong_${nhanvienSelect.options[nhanvienSelect.selectedIndex].text.replace(/[()]/g,'').replace(/\s+/g,'_')}.xlsx`;
+  XLSX.writeFile(wb, filename);
+}
+
+// ================== Sự kiện ==================
+nhanvienSelect.addEventListener('change', () => {
+  loadChamCong(nhanvienSelect.value.trim());
 });
 
-function capNhat(id, row) {
-  const tds = row.querySelectorAll('td');
-  const data = {
-    gioVao: tds[1].textContent.trim(),
-    gioRa: tds[2].textContent.trim(),
-    gioVaoThem: tds[3].textContent.trim(),
-    gioRaThem: tds[4].textContent.trim(),
-    ghichu: tds[7].textContent.trim(),
-  };
+reloadBtn.addEventListener('click', loadNhanVien);
+exportBtn.addEventListener('click', exportToExcel);
 
-  // Tính giờ làm
-  data.gioLam = tinhGio(data.gioVao, data.gioRa);
-  data.gioLamThem = tinhGio(data.gioVaoThem, data.gioRaThem);
-  tds[5].textContent = data.gioLam;
-  tds[6].textContent = data.gioLamThem;
-
-  firebase.database().ref('chamcong/' + id).update(data);
-}
-
-function tinhGio(gioVao, gioRa) {
-  if (!gioVao || !gioRa) return 0;
-  const [h1,m1] = gioVao.split(':').map(Number);
-  const [h2,m2] = gioRa.split(':').map(Number);
-  const diff = (h2*60+m2)-(h1*60+m1);
-  return diff>0 ? (diff/60).toFixed(1) : 0;
-}
-
-function xoa(id) {
-  if (confirm("Xóa dòng này?")) {
-    firebase.database().ref('chamcong/' + id).remove();
-    select.dispatchEvent(new Event('change'));
-  }
-}
+// ================== Khởi động ==================
+window.addEventListener('load', loadNhanVien);
 </script>
+
 </body>
 </html>
-
