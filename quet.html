@@ -31,6 +31,7 @@ button { margin:5px; padding:10px 15px; font-size:16px; }
 </head>
   
 <body>
+<audio id="beepSound" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg" preload="auto"></audio>
 
 <h1>📸 Quét QR Chấm Công</h1>
 
@@ -183,6 +184,7 @@ function handleAttendance(email, qrContent, lat, lng) {
 
     ref.set(data)
       .then(() => {
+       document.getElementById('beepSound').play();
         alert('✅ Chấm công thành công!\n' + msg + (isOvertime ? '\nGhi chú: ' + (data.ghiChu || '') : ''));
         resultDiv.textContent = `Nhân viên: ${email}
 Sáng: ${data.vaoCaSang || '-'} - ${data.raCaSang || '-'}
@@ -251,6 +253,7 @@ window.addEventListener('load', startScanner);
 </script>
 </body>
 </html>
+
 
 
 
