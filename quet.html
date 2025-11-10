@@ -191,31 +191,7 @@ Tổng giờ: ${data.gioLamTrongNgay}h
 ${msg}`;
         restartBtn.style.display = 'inline-block';
 
-         // ================= GỬI MAIL CHO QUẢN LÝ =================
-
-            const emailParams = {
-  to_name: "Quản lý công ty",
-  to_email: "vudinhhung11@gmai.com", // 🔹 Địa chỉ mail quản lý
-  from_name: "Hệ thống chấm công tự động",
-  employee_email: email,
-  date: today,
-  time: currentTime,
-  location: (lat && lng) ? `${lat}, ${lng}` : 'Chưa xác định',
-  qr_content: qrContent,
-  morning: `${data.vaoCaSang || '-'} - ${data.raCaSang || '-'}`,
-  afternoon: `${data.vaoCaChieu || '-'} - ${data.raCaChieu || '-'}`,
-  total_hours: data.gioLamTrongNgay,
-  note: data.ghiChu || 'Không có',
-};
-
-emailjs.send("service_pwhmtr3", "template_dfq8ykc", emailParams)
-  .then(() => {
-    console.log("📧 Email gửi thành công tới quản lý!");
-  })
-  .catch((err) => {
-    console.error("❌ Lỗi gửi email:", err);
-  });
-
+         
       })
              
  
@@ -252,6 +228,7 @@ window.addEventListener('load', startScanner);
 </script>
 </body>
 </html>
+
 
 
 
