@@ -22,7 +22,14 @@ button { margin:5px; padding:10px 15px; font-size:16px; }
   button, input { width:95%; font-size:1em; }
 }
 </style>
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+<script>
+  (function() {
+    emailjs.init("zw8NnWti6A--Pyys9"); // 🔹 Thay YOUR_PUBLIC_KEY bằng mã trong EmailJS Dashboard
+  })();
+</script>
 </head>
+  
 <body>
 
 <h1>📸 Quét QR Chấm Công</h1>
@@ -135,6 +142,30 @@ function handleAttendance(email, qrContent, lat, lng) {
       msg += 'ℹ Giờ làm thêm!';
       isOvertime = true;
     }
+    else {
+  isOvertime = true;
+
+  // Nếu có vaoCaSang mà chưa có raCaSang -> tự chốt 11:30
+  if (data.vaoCaSang && !data.raCaSang) {
+    data.raCaSang = '11:30';
+    msg += '⚠ Tự động chốt ra ca sáng 11:30. ';
+  }
+
+  // Nếu chưa có vào/ra ca chiều mà quét sau 17:30 -> tự chốt ca chiều 13:00–17:30
+  if (!data.vaoCaChieu && !data.raCaChieu && currentHour > 17.5) {
+    data.vaoCaChieu = '13:00';
+    data.raCaChieu = '17:30';
+    msg += '⚠ Tự động tính làm ca chiều 13:00–17:30. ';
+  }
+
+  // Phần sau 17:30 là làm thêm
+  if (currentHour > 17.5) {
+    data.vaoLamThem = '17:30';
+    data.raLamThem = currentTime;
+    msg += `ℹ Giờ làm thêm từ 17:30 đến ${currentTime}.`;
+  }
+}
+
 
     // --- Tổng giờ làm ---
     let totalHours = 0;
@@ -165,6 +196,30 @@ ${msg}`;
         errorDiv.textContent = '❌ Lỗi lưu Firebase: ' + err;
       });
   });
+  // ================= GỬI MAIL CHO QUẢN LÝ =================
+const emailParams = {
+  to_name: "Quản lý công ty",
+  to_email: "quanly@congty.vn", // 🔹 Địa chỉ mail quản lý
+  from_name: "Hệ thống chấm công tự động",
+  employee_email: email,
+  date: today,
+  time: currentTime,
+  location: (lat && lng) ? `${lat}, ${lng}` : 'Chưa xác định',
+  qr_content: qrContent,
+  morning: `${data.vaoCaSang || '-'} - ${data.raCaSang || '-'}`,
+  afternoon: `${data.vaoCaChieu || '-'} - ${data.raCaChieu || '-'}`,
+  total_hours: data.gioLamTrongNgay,
+  note: data.ghiChu || 'Không có',
+};
+
+emailjs.send("service_pwhmtr3", "template_dfq8ykc", emailParams)
+  .then(() => {
+    console.log("📧 Email gửi thành công tới quản lý!");
+  })
+  .catch((err) => {
+    console.error("❌ Lỗi gửi email:", err);
+  });
+
 }
 
 // ================== Hàm phụ trợ ==================
@@ -190,3 +245,4 @@ window.addEventListener('load', startScanner);
 </script>
 </body>
 </html>
+
