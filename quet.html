@@ -181,7 +181,7 @@ alert(`Khoảng cách tới công ty: ${distance.toFixed(1)} m`);
         } else {
           data.raCaChieu = currentTime;
           if (currentHour < 17.5) msg += '⚠ Về sớm ca chiều! ';
-          ghichucalam='Về sớm ca chiều!';
+          ghichucalam+='Về sớm ca chiều!';
         }
       }
       // --- Làm thêm / tự chốt ---
@@ -224,18 +224,15 @@ alert(`Khoảng cách tới công ty: ${distance.toFixed(1)} m`);
         const note = prompt("📝 Bạn có giờ làm thêm, vui lòng nhập ghi chú:");
         if (note) data.ghiChu = note;
       }
-
-      // --- Lưu dữ liệu Firebase ---
+  // Gán trực tiếp vào data trước khi set:
+  data.ghiChu = ghichucalam;
+        // --- Lưu dữ liệu Firebase ---
       ref.set(data)
         .then(() => {
          
           // Hiển thị thông báo
           alert('✅ Chấm công thành công!\n' + msg + (isOvertime ? '\nGhi chú: ' + (data.ghiChu || '') : ''));
-// khi lưu vào Firebase
-db.ref('chamcong/' + encodeEmail(email) + '/' + today)
-  .update({ ghichucalam })
-  .then(() => console.log('✅ Đã lưu ghi chú:', ghichucalam))
-  .catch(err => console.log('❌ Lỗi:', err));
+
 
           
           // Cập nhật trên trang
@@ -315,6 +312,7 @@ function deg2rad(deg){ return deg*Math.PI/180; }
 </script>
 </body>
 </html>
+
 
 
 
