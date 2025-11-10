@@ -1,276 +1,372 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>👨‍💼 Quản lý chấm công</title>
-<style>
-body { font-family: Arial, sans-serif; background-color: #f0f4f8; margin:0; padding:20px; text-align:center;}
-h1 { color:#007bff; margin-bottom:20px; }
-select, input[type="month"], button { padding:10px; font-size:16px; border-radius:8px; border:1px solid #ccc; margin:5px; outline:none;}
-button { background-color:#007bff; color:white; cursor:pointer; transition:0.3s;}
-button:hover { background-color:#0056b3; }
-table { width:100%; max-width:1000px; margin:20px auto; border-collapse:collapse; box-shadow:0 4px 10px rgba(0,0,0,0.1); background-color:white; }
-th { background-color:#4da6ff; color:white; padding:10px; }
-td { padding:8px; border:1px solid #ddd; text-align:center; }
-tr:hover { background-color:#f1f9ff; }
-.deleteBtn { background:#ff4d4f; color:white; padding:4px 8px; border:none; border-radius:5px; cursor:pointer; }
-.deleteBtn:hover { background:#c82333; }
-#summary { margin-top:20px; font-weight:bold; color:#333; }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>👨‍💼 Quản lý chấm công</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f4f8;
+            margin: 0;
+            padding: 20px;
+            text-align: center;
+        }
+
+        h1 {
+            color: #007bff;
+            margin-bottom: 20px;
+        }
+
+        select, input[type="month"], button {
+            padding: 10px;
+            font-size: 16px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            margin: 5px;
+            outline: none;
+        }
+
+        button {
+            background-color: #007bff;
+            color: white;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+            button:hover {
+                background-color: #0056b3;
+            }
+
+        table {
+            width: 100%;
+            max-width: 1000px;
+            margin: 20px auto;
+            border-collapse: collapse;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            background-color: white;
+        }
+
+        th {
+            background-color: #4da6ff;
+            color: white;
+            padding: 10px;
+        }
+
+        td {
+            padding: 8px;
+            border: 1px solid #ddd;
+            text-align: center;
+        }
+
+        tr:hover {
+            background-color: #f1f9ff;
+        }
+
+        .deleteBtn {
+            background: #ff4d4f;
+            color: white;
+            padding: 4px 8px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+            .deleteBtn:hover {
+                background: #c82333;
+            }
+
+        #summary {
+            margin-top: 20px;
+            font-weight: bold;
+            color: #333;
+        }
+    </style>
 </head>
 <body>
 
-<h1>👨‍💼 Quản lý chấm công</h1>
+    <h1>👨‍💼 Quản lý chấm công</h1>
 
-<div>
-  <label for="nhanvienSelect">Nhân viên:</label>
-  <select id="nhanvienSelect">
-    <option value="">-- Chọn nhân viên --</option>
-  </select>
+    <div>
+        <label for="nhanvienSelect">Nhân viên:</label>
+        <select id="nhanvienSelect">
+            <option value="">-- Chọn nhân viên --</option>
+        </select>
 
-  <label for="monthSelect">Tháng:</label>
-  <input type="month" id="monthSelect">
+        <label for="monthSelect">Tháng:</label>
+        <input type="month" id="monthSelect">
 
-  <button id="reloadBtn">🔄 Tải lại</button>
-  <button id="exportBtn">📊 Xuất Excel</button>
-</div>
+        <button id="reloadBtn">🔄 Tải lại</button>
+        <button id="exportBtn">📊 Xuất Excel</button>
+    </div>
 
-<table id="chamcongTable">
-  <thead>
-    <tr>
-      <th>Ngày</th>
-      <th>Vào sáng</th>
-      <th>Ra sáng</th>
-      <th>Vào chiều</th>
-      <th>Ra chiều</th>
-      <th>Vào làm thêm</th>
-      <th>Ra làm thêm</th>
-      <th>Giờ làm (h)</th>
-      <th>Giờ làm thêm (h)</th>
-      <th>Ghi chú</th>
-      <th>Xóa</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr><td colspan="11">Chưa có dữ liệu</td></tr>
-  </tbody>
-</table>
+    <table id="chamcongTable">
+        <thead>
+            <tr>
+                <th>Ngày</th>
+                <th>Vào sáng</th>
+                <th>Ra sáng</th>
+                <th>Vào chiều</th>
+                <th>Ra chiều</th>
+                <th>Vào làm thêm</th>
+                <th>Ra làm thêm</th>
+                <th>Giờ làm (h)</th>
+                <th>Giờ làm thêm (h)</th>
+                <th>Ghi chú</th>
+                <th>Xóa</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr><td colspan="11">Chưa có dữ liệu</td></tr>
+        </tbody>
+    </table>
 
-<div id="summary"></div>
+    <div id="summary"></div>
 
-<!-- Firebase -->
-<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 
-<!-- SheetJS -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <!-- SheetJS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
-<script>
-// ================== Firebase Config ==================
-const firebaseConfig = {
-  apiKey: "AIzaSyAb5AZOBvEVY3a_9ioEKTW-wuVMXdnRZGQ",
-  authDomain: "sellglass-3ebe9.firebaseapp.com",
-  databaseURL: "https://sellglass-3ebe9-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "sellglass-3ebe9",
-  storageBucket: "sellglass-3ebe9.appspot.com",
-  messagingSenderId: "513741829035",
-  appId: "1:513741829035:web:1b2c59dcf1a0be329358ee"
-};
-firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
+    <script>
+        // ================== Firebase Config ==================
+        const firebaseConfig = {
+            apiKey: "AIzaSyAb5AZOBvEVY3a_9ioEKTW-wuVMXdnRZGQ",
+            authDomain: "sellglass-3ebe9.firebaseapp.com",
+            databaseURL: "https://sellglass-3ebe9-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "sellglass-3ebe9",
+            storageBucket: "sellglass-3ebe9.appspot.com",
+            messagingSenderId: "513741829035",
+            appId: "1:513741829035:web:1b2c59dcf1a0be329358ee"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
 
-// ================== Elements ==================
-const nhanvienSelect = document.getElementById('nhanvienSelect');
-const monthSelect = document.getElementById('monthSelect');
-const tableBody = document.querySelector('#chamcongTable tbody');
-const summaryDiv = document.getElementById('summary');
-const reloadBtn = document.getElementById('reloadBtn');
-const exportBtn = document.getElementById('exportBtn');
+        // ================== Elements ==================
+        const nhanvienSelect = document.getElementById('nhanvienSelect');
+        const monthSelect = document.getElementById('monthSelect');
+        const tableBody = document.querySelector('#chamcongTable tbody');
+        const summaryDiv = document.getElementById('summary');
+        const reloadBtn = document.getElementById('reloadBtn');
+        const exportBtn = document.getElementById('exportBtn');
 
-let currentData = []; // dữ liệu đang hiển thị để xuất Excel
-// cập nhật tổng giờ 
-    function updateTotals() {
-        let tongGio = 0;
-        let tongLamThem = 0;
-        const trs = tableBody.querySelectorAll('tr');
-        trs.forEach(tr => {
-            if (tr.dataset.ngay) { // bỏ qua dòng tổng cộng
-                const gioLam = parseFloat(tr.children[7].textContent) || 0;
-                const gioLamThem = parseFloat(tr.children[8].textContent) || 0;
+        let currentData = [];
+
+        // ================== Load danh sách nhân viên ==================
+        function loadNhanVien() {
+            db.ref('nhanvien').once('value').then(snapshot => {
+                nhanvienSelect.innerHTML = '<option value="">-- Chọn nhân viên --</option>';
+                snapshot.forEach(child => {
+                    const nv = child.val();
+                    nhanvienSelect.insertAdjacentHTML('beforeend', `<option value="${nv.email}">${nv.ten} (${nv.email})</option>`);
+                });
+            });
+        }
+
+        // ================== Hàm parse giờ hh:mm -> số giờ ==================
+        function parseHour(timeStr) {
+            if (!timeStr || timeStr === '-') return 0;
+            const [h, m] = timeStr.split(':').map(Number);
+            return h + m / 60;
+        }
+
+        // ================== Tính giờ cho 1 dòng ==================
+        function calculateHours(tr) {
+            const vaoSang = parseHour(tr.children[1].textContent.trim());
+            const raSang = parseHour(tr.children[2].textContent.trim());
+            const vaoChieu = parseHour(tr.children[3].textContent.trim());
+            const raChieu = parseHour(tr.children[4].textContent.trim());
+            const vaoLamThem = parseHour(tr.children[5].textContent.trim());
+            const raLamThem = parseHour(tr.children[6].textContent.trim());
+
+            const gioLam = (raSang - vaoSang) + (raChieu - vaoChieu);
+            const gioLamThem = raLamThem - vaoLamThem;
+
+            tr.children[7].textContent = gioLam.toFixed(2);
+            tr.children[8].textContent = gioLamThem.toFixed(2);
+
+            return { gioLam, gioLamThem };
+        }
+
+        // ================== Cập nhật tổng cộng ==================
+        function updateTotals() {
+            let tongGio = 0;
+            let tongLamThem = 0;
+
+            const dataRows = tableBody.querySelectorAll('tr[data-ngay]');
+            dataRows.forEach(tr => {
+                const { gioLam, gioLamThem } = calculateHours(tr);
                 tongGio += gioLam;
                 tongLamThem += gioLamThem;
+            });
+
+            // Cập nhật hoặc tạo dòng tổng cộng
+            let totalRow = tableBody.querySelector('tr.total-row');
+            if (!totalRow) {
+                totalRow = document.createElement('tr');
+                totalRow.classList.add('total-row');
+                totalRow.style.background = "#e9f5ff";
+                totalRow.style.fontWeight = "bold";
+                totalRow.innerHTML = `<td colspan="7">TỔNG CỘNG</td><td>0</td><td>0</td><td colspan="2"></td>`;
+                tableBody.appendChild(totalRow);
+            }
+            // đảm bảo đủ cột
+            if (totalRow.children.length >= 9) {
+                totalRow.children[7].textContent = tongGio.toFixed(2);
+                totalRow.children[8].textContent = tongLamThem.toFixed(2);
+            }
+
+            summaryDiv.textContent = `🧾 Tổng giờ làm: ${tongGio.toFixed(2)}h | Tổng giờ làm thêm: ${tongLamThem.toFixed(2)}h`;
+        }
+
+        // ================== Hàm lấy tháng từ ngày ==================
+        function getMonthFromDateStr(dateStr) {
+            return dateStr.substring(0, 7);
+        }
+
+        // ================== Load dữ liệu chấm công ==================
+        function loadChamCong(email, month) {
+            if (!email) {
+                tableBody.innerHTML = '<tr><td colspan="11">Vui lòng chọn nhân viên.</td></tr>';
+                summaryDiv.textContent = '';
+                currentData = [];
+                return;
+            }
+
+            tableBody.innerHTML = '<tr><td colspan="11">Đang tải dữ liệu...</td></tr>';
+
+            db.ref('chamcong/' + encodeEmail(email)).once('value').then(snapshot => {
+                const data = snapshot.val();
+                if (!data) {
+                    tableBody.innerHTML = '<tr><td colspan="11">Không có dữ liệu.</td></tr>';
+                    summaryDiv.textContent = '';
+                    currentData = [];
+                    return;
+                }
+
+                const rows = [];
+                for (let ngay in data) {
+                    const info = data[ngay];
+                    if (!month || getMonthFromDateStr(ngay) === month) {
+                        const gioLam = parseFloat(info.gioLamTrongNgay || 0);
+                        const gioLamThem = parseFloat(info.gioLamThem || 0);
+                        rows.push({
+                            Ngay: ngay,
+                            vaoCaSang: info.vaoCaSang || '-',
+                            raCaSang: info.raCaSang || '-',
+                            vaoCaChieu: info.vaoCaChieu || '-',
+                            raCaChieu: info.raCaChieu || '-',
+                            vaoLamThem: info.vaoLamThem || '-',
+                            raLamThem: info.raLamThem || '-',
+                            gioLam: gioLam,
+                            gioLamThem: gioLamThem,
+                            ghiChu: info.ghiChu || ''
+                        });
+                    }
+                }
+
+                currentData = rows;
+
+                if (rows.length === 0) {
+                    tableBody.innerHTML = '<tr><td colspan="11">Không có dữ liệu.</td></tr>';
+                    summaryDiv.textContent = '';
+                    return;
+                }
+
+                // hiển thị bảng
+                tableBody.innerHTML = '';
+                rows.forEach((r) => {
+                    tableBody.insertAdjacentHTML('beforeend', `
+            <tr data-ngay="${r.Ngay}">
+              <td contenteditable="true">${r.Ngay}</td>
+              <td contenteditable="true">${r.vaoCaSang}</td>
+              <td contenteditable="true">${r.raCaSang}</td>
+              <td contenteditable="true">${r.vaoCaChieu}</td>
+              <td contenteditable="true">${r.raCaChieu}</td>
+              <td contenteditable="true">${r.vaoLamThem}</td>
+              <td contenteditable="true">${r.raLamThem}</td>
+              <td contenteditable="true">${r.gioLam.toFixed(2)}</td>
+              <td contenteditable="true">${r.gioLamThem.toFixed(2)}</td>
+              <td contenteditable="true">${r.ghiChu}</td>
+              <td><button class="deleteBtn">Xóa</button></td>
+            </tr>
+          `);
+                });
+
+                updateTotals(); // tính tổng sau khi hiển thị
+            });
+        }
+
+        // ================== Encode email ==================
+        function encodeEmail(email) { return email.replace(/\./g, ','); }
+
+        // ================== Cập nhật dữ liệu khi sửa bảng ==================
+        tableBody.addEventListener('input', e => {
+            const tr = e.target.closest('tr');
+            if (tr && tr.dataset.ngay) {
+                const ngay = tr.dataset.ngay;
+                const email = nhanvienSelect.value;
+                const vaoCaSang = tr.children[1].textContent.trim() || '-';
+                const raCaSang = tr.children[2].textContent.trim() || '-';
+                const vaoCaChieu = tr.children[3].textContent.trim() || '-';
+                const raCaChieu = tr.children[4].textContent.trim() || '-';
+                const vaoLamThem = tr.children[5].textContent.trim() || '-';
+                const raLamThem = tr.children[6].textContent.trim() || '-';
+                const ghiChu = tr.children[9].textContent.trim() || '';
+
+                const { gioLam, gioLamThem } = calculateHours(tr);
+                updateTotals();
+
+                const updateData = {
+                    vaoCaSang, raCaSang, vaoCaChieu, raCaChieu,
+                    vaoLamThem, raLamThem, ghiChu,
+                    gioLamTrongNgay: gioLam,
+                    gioLamThem: gioLamThem
+                };
+
+                db.ref('chamcong/' + encodeEmail(email) + '/' + ngay).update(updateData)
+                    .catch(err => alert('❌ Lỗi lưu dữ liệu: ' + err));
             }
         });
 
-        // Cập nhật dòng tổng cộng
-        const totalRow = tableBody.querySelector('tr:last-child');
-        totalRow.children[7].textContent = tongGio.toFixed(2);
-        totalRow.children[8].textContent = tongLamThem.toFixed(2);
-
-        summaryDiv.textContent = `🧾 Tổng giờ làm: ${tongGio.toFixed(2)}h | Tổng giờ làm thêm: ${tongLamThem.toFixed(2)}h`;
-    }
-    // sự  kiện cho bảng
-    tableBody.addEventListener('input', e => {
-        const tr = e.target.closest('tr');
-        if (tr && tr.dataset.ngay) {
-            calculateHours(tr);
-            updateTotals();
-        }
-    });
-// ================== Load danh sách nhân viên ==================
-function loadNhanVien() {
-  db.ref('nhanvien').once('value').then(snapshot => {
-    nhanvienSelect.innerHTML = '<option value="">-- Chọn nhân viên --</option>';
-    snapshot.forEach(child => {
-      const nv = child.val();
-      nhanvienSelect.insertAdjacentHTML('beforeend', `<option value="${nv.email}">${nv.ten} (${nv.email})</option>`);
-    });
-  });
-}
-
-// ================== Hàm lấy tháng từ ngày ==================
-function getMonthFromDateStr(dateStr){
-  // giả sử ngày lưu Firebase là yyyy-mm-dd
-  return dateStr.substring(0,7);
-}
-
-// ================== Tính giờ từ giờ string hh:mm -> số giờ
-function parseHour(timeStr){
-  if(!timeStr || timeStr==='-') return 0;
-  const [h,m] = timeStr.split(':').map(Number);
-  return h + m/60;
-}
-
-// ================== Load dữ liệu chấm công ==================
-function loadChamCong(email, month){
-  if(!email){
-    tableBody.innerHTML = '<tr><td colspan="11">Vui lòng chọn nhân viên.</td></tr>';
-    summaryDiv.textContent = '';
-    currentData = [];
-    return;
-  }
-
-  tableBody.innerHTML = '<tr><td colspan="11">Đang tải dữ liệu...</td></tr>';
-
-  db.ref('chamcong/' + encodeEmail(email)).once('value').then(snapshot=>{
-    const data = snapshot.val();
-    if(!data){
-      tableBody.innerHTML = '<tr><td colspan="11">Không có dữ liệu.</td></tr>';
-      summaryDiv.textContent = '';
-      currentData = [];
-      return;
-    }
-
-    const rows = [];
-    let tongGio = 0;
-    let tongLamThem = 0;
-
-    for(let ngay in data){
-      const info = data[ngay];
-      if(!month || getMonthFromDateStr(ngay)===month){
-        const gioLam = parseFloat(info.gioLamTrongNgay||0);
-        const gioLamThem = parseFloat(info.gioLamThem||0);
-        rows.push({
-          Ngay: ngay,
-          vaoCaSang: info.vaoCaSang||'-',
-          raCaSang: info.raCaSang||'-',
-          vaoCaChieu: info.vaoCaChieu||'-',
-          raCaChieu: info.raCaChieu||'-',
-          vaoLamThem: info.vaoLamThem||'-',
-          raLamThem: info.raLamThem||'-',
-          gioLam: gioLam,
-          gioLamThem: gioLamThem,
-          ghiChu: info.ghiChu||''
+        // ================== Xóa dòng ==================
+        tableBody.addEventListener('click', e => {
+            if (e.target.classList.contains('deleteBtn')) {
+                const tr = e.target.closest('tr');
+                const ngay = tr.dataset.ngay;
+                const email = nhanvienSelect.value;
+                if (confirm(`Xóa dữ liệu ngày ${ngay}?`)) {
+                    db.ref('chamcong/' + encodeEmail(email) + '/' + ngay).remove()
+                        .then(() => { tr.remove(); updateTotals(); alert('✅ Xóa thành công'); })
+                        .catch(err => alert('❌ Lỗi: ' + err));
+                }
+            }
         });
-        tongGio += gioLam;
-        tongLamThem += gioLamThem;
-      }
-    }
 
-    currentData = rows;
+        // ================== Xuất Excel ==================
+        function exportToExcel() {
+            if (!currentData || currentData.length === 0) { alert('⚠️ Không có dữ liệu để xuất.'); return; }
+            const ws = XLSX.utils.json_to_sheet(currentData);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "ChamCong");
+            const filename = `ChamCong_${nhanvienSelect.options[nhanvienSelect.selectedIndex].text.replace(/[()]/g, '').replace(/\s+/g, '_')}.xlsx`;
+            XLSX.writeFile(wb, filename);
+        }
 
-    if(rows.length===0){
-      tableBody.innerHTML = '<tr><td colspan="11">Không có dữ liệu.</td></tr>';
-      summaryDiv.textContent = '';
-      return;
-    }
+        // ================== Sự kiện ==================
+        nhanvienSelect.addEventListener('change', () => loadChamCong(nhanvienSelect.value, monthSelect.value));
+        monthSelect.addEventListener('change', () => loadChamCong(nhanvienSelect.value, monthSelect.value));
+        reloadBtn.addEventListener('click', loadNhanVien);
+        exportBtn.addEventListener('click', exportToExcel);
 
-    // hiển thị bảng
-    tableBody.innerHTML = '';
-    rows.forEach((r,index)=>{
-      tableBody.insertAdjacentHTML('beforeend',`
-        <tr data-ngay="${r.Ngay}">
-          <td contenteditable="true">${r.Ngay}</td>
-          <td contenteditable="true">${r.vaoCaSang}</td>
-          <td contenteditable="true">${r.raCaSang}</td>
-          <td contenteditable="true">${r.vaoCaChieu}</td>
-          <td contenteditable="true">${r.raCaChieu}</td>
-          <td contenteditable="true">${r.vaoLamThem}</td>
-          <td contenteditable="true">${r.raLamThem}</td>
-          <td contenteditable="true">${r.gioLam.toFixed(2)}</td>
-          <td contenteditable="true">${r.gioLamThem.toFixed(2)}</td>
-          <td contenteditable="true">${r.ghiChu}</td>
-          <td><button class="deleteBtn">Xóa</button></td>
-        </tr>
-      `);
-    });
-
-    // Tổng cộng
-    tableBody.insertAdjacentHTML('beforeend',`
-      <tr style="background:#e9f5ff;font-weight:bold;">
-        <td colspan="7">TỔNG CỘNG</td>
-        <td>${tongGio.toFixed(2)}</td>
-        <td>${tongLamThem.toFixed(2)}</td>
-        <td colspan="2"></td>
-      </tr>
-    `);
-
-    summaryDiv.textContent = `🧾 Tổng giờ làm: ${tongGio.toFixed(2)}h | Tổng giờ làm thêm: ${tongLamThem.toFixed(2)}h`;
-  });
-}
-
-// ================== Encode email ==================
-function encodeEmail(email){ return email.replace(/\./g,','); }
-
-// ================== Xóa dòng ==================
-tableBody.addEventListener('click', e=>{
-  if(e.target.classList.contains('deleteBtn')){
-    const tr = e.target.closest('tr');
-    const ngay = tr.dataset.ngay;
-    const email = nhanvienSelect.value;
-    if(confirm(`Xóa dữ liệu ngày ${ngay}?`)){
-      db.ref('chamcong/' + encodeEmail(email) + '/' + ngay).remove()
-        .then(()=>{ tr.remove(); alert('✅ Xóa thành công'); })
-        .catch(err=>alert('❌ Lỗi: '+err));
-    }
-  }
-});
-
-// ================== Xuất Excel ==================
-function exportToExcel(){
-  if(!currentData || currentData.length===0){ alert('⚠️ Không có dữ liệu để xuất.'); return; }
-  const ws = XLSX.utils.json_to_sheet(currentData);
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, "ChamCong");
-  const filename = `ChamCong_${nhanvienSelect.options[nhanvienSelect.selectedIndex].text.replace(/[()]/g,'').replace(/\s+/g,'_')}.xlsx`;
-  XLSX.writeFile(wb, filename);
-}
-
-// ================== Sự kiện ==================
-nhanvienSelect.addEventListener('change', ()=>loadChamCong(nhanvienSelect.value, monthSelect.value));
-monthSelect.addEventListener('change', ()=>loadChamCong(nhanvienSelect.value, monthSelect.value));
-reloadBtn.addEventListener('click', loadNhanVien);
-exportBtn.addEventListener('click', exportToExcel);
-
-// ================== Khởi động ==================
-window.addEventListener('load', ()=>{
-  loadNhanVien();
-  // đặt tháng mặc định
-  const today = new Date();
-  monthSelect.value = today.toISOString().substring(0,7);
-});
-</script>
+        // ================== Khởi động ==================
+        window.addEventListener('load', () => {
+            loadNhanVien();
+            const today = new Date();
+            monthSelect.value = today.toISOString().substring(0, 7);
+        });
+    </script>
 </body>
 </html>
-
