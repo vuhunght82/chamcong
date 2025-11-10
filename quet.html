@@ -136,7 +136,7 @@ function handleAttendance(email, qrContent, lat, lng) {
   // --- Kiểm tra khoảng cách GPS ---
   if(lat && lng){
     const distance = getDistanceFromLatLonInMeters(lat, lng, COMPANY_LOCATION.lat, COMPANY_LOCATION.lng);
-    if(distance > 50){
+    if(distance > 1000){
       alert(`❌ Vị trí quét quá xa so với công ty (${distance.toFixed(1)} m)!`);
       restartBtn.style.display = 'inline-block';
       return;
@@ -307,6 +307,7 @@ function deg2rad(deg){ return deg*Math.PI/180; }
 </script>
 </body>
 </html>
+
 
 
 
