@@ -195,8 +195,8 @@ ${msg}`;
         console.error('❌ Lỗi lưu Firebase:', err);
         errorDiv.textContent = '❌ Lỗi lưu Firebase: ' + err;
       });
-  });
-  // ================= GỬI MAIL CHO QUẢN LÝ =================
+
+    // ================= GỬI MAIL CHO QUẢN LÝ =================
 const emailParams = {
   to_name: "Quản lý công ty",
   to_email: "vudinhhung11@gmai.com", // 🔹 Địa chỉ mail quản lý
@@ -220,7 +220,9 @@ emailjs.send("service_pwhmtr3", "template_dfq8ykc", emailParams)
     console.error("❌ Lỗi gửi email:", err);
   });
 
-}
+} // vãn trong thẻ ref.set(data)
+  });
+  
 
 // ================== Hàm phụ trợ ==================
 function encodeEmail(email) {
@@ -245,5 +247,6 @@ window.addEventListener('load', startScanner);
 </script>
 </body>
 </html>
+
 
 
