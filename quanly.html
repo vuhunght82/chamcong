@@ -110,6 +110,15 @@ function parseTime(timeStr){
   const [h,m,s=0] = timeStr.split(':').map(Number);
   return h + m/60 + s/3600;
 }
+function getMonthFromDateStr(dateStr){
+  const parts = dateStr.split('-'); // dd-mm-yyyy
+  if(parts.length===3){
+    return parts[2] + '-' + parts[1]; // yyyy-mm
+  }
+  return '';
+}
+
+if(info.email && info.email.trim() === email.trim() && (!month || getMonthFromDateStr(ngay) === month)){
 
 // ================== Hiển thị dữ liệu chấm công ==================
 function loadChamCong(email, month){
@@ -231,3 +240,4 @@ window.addEventListener('load', loadNhanVien);
 </script>
 </body>
 </html>
+
