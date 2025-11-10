@@ -202,24 +202,35 @@
                 tongLamThem += gioLamThem;
             });
 
-            // Cập nhật hoặc tạo dòng tổng cộng
+            // tạo hoặc cập nhật dòng tổng cộng
             let totalRow = tableBody.querySelector('tr.total-row');
             if (!totalRow) {
                 totalRow = document.createElement('tr');
                 totalRow.classList.add('total-row');
                 totalRow.style.background = "#e9f5ff";
                 totalRow.style.fontWeight = "bold";
-                totalRow.innerHTML = `<td colspan="7">TỔNG CỘNG</td><td>0</td><td>0</td><td colspan="2"></td>`;
+
+                // tạo đủ 11 cột
+                for (let i = 0; i < 11; i++) {
+                    const td = document.createElement('td');
+                    totalRow.appendChild(td);
+                }
                 tableBody.appendChild(totalRow);
             }
-            // đảm bảo đủ cột
-            if (totalRow.children.length >= 9) {
-                totalRow.children[7].textContent = tongGio.toFixed(2);
-                totalRow.children[8].textContent = tongLamThem.toFixed(2);
-            }
+
+            // gán giá trị
+            totalRow.children[0].textContent = "TỔNG CỘNG";
+            totalRow.children[7].textContent = tongGio.toFixed(2);
+            totalRow.children[8].textContent = tongLamThem.toFixed(2);
+
+            // các cột khác để trống
+            for (let i = 1; i < 7; i++) totalRow.children[i].textContent = "";
+            totalRow.children[9].textContent = "";
+            totalRow.children[10].textContent = "";
 
             summaryDiv.textContent = `🧾 Tổng giờ làm: ${tongGio.toFixed(2)}h | Tổng giờ làm thêm: ${tongLamThem.toFixed(2)}h`;
         }
+
 
         // ================== Hàm lấy tháng từ ngày ==================
         function getMonthFromDateStr(dateStr) {
