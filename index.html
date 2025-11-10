@@ -16,6 +16,7 @@ button { cursor:pointer; }
 <input type="email" id="email" placeholder="Email">
 <input type="password" id="password" placeholder="Mật khẩu">
 <button id="loginBtn">Đăng nhập</button>
+<button id="registerBtn">Đăng ký</button>
 <div id="error" style="color:red; margin-top:10px;"></div>
 
 <!-- Firebase -->
@@ -23,6 +24,10 @@ button { cursor:pointer; }
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 
 <script>
+   // ================== Chuyển sang trang đăng ký ==================
+  registerBtn.addEventListener('click', function() {
+    window.location.href = 'dangky.html';
+  });
   // ================== Firebase config ==================
  const firebaseConfig = {
   apiKey: "AIzaSyAb5AZOBvEVY3a_9ioEKTW-wuVMXdnRZGQ",
@@ -82,4 +87,5 @@ const db = firebase.database();
 
 </body>
 </html>
+
 
