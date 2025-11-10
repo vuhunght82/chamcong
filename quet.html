@@ -84,22 +84,23 @@ const viewBtn = document.getElementById('viewBtn');
 let scanner;
 
 // ================== Hàm quét ==================
-scanner = new QrScanner(videoElem, qrResult => {
-  navigator.geolocation.getCurrentPosition(
-    pos => handleAttendance(userEmail, qrResult.data, pos.coords.latitude, pos.coords.longitude),
-    err => {
-      console.warn('❌ Không lấy được vị trí:', err);
-      handleAttendance(userEmail, qrResult.data, null, null);
-    },
-    { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
-  );
-}, { highlightScanRegion: true, highlightCodeOutline: true });
+function startScanner() {
+  scanner = new QrScanner(videoElem, qrResult => {
+    navigator.geolocation.getCurrentPosition(
+      pos => handleAttendance(userEmail, qrResult.data, pos.coords.latitude, pos.coords.longitude),
+      err => {
+        console.warn('❌ Không lấy được vị trí:', err);
+        handleAttendance(userEmail, qrResult.data, null, null);
+      },
+      { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+    );
+  }, { highlightScanRegion: true, highlightCodeOutline: true });
 
-  
   scanner.start().catch(err => {
     console.error(err);
     errorDiv.textContent = '❌ Không thể mở camera: ' + err;
   });
+}
 
 // Vị trí công ty (kinh độ, vĩ độ)
 const COMPANY_LOCATION = { lat: 10.8527616, lng: 106.5811968 }; // Thay bằng tọa độ thật
@@ -292,6 +293,7 @@ function deg2rad(deg){ return deg*Math.PI/180; }
 </script>
 </body>
 </html>
+
 
 
 
