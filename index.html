@@ -1,98 +1,83 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-  <meta charset="UTF-8">
-  <title>Đăng nhập</title>
-  <style>
-    body { font-family: Arial; background:#f4f4f4; text-align:center; margin-top:100px; }
-    input, button { padding:10px; margin:5px; width:250px; font-size:16px; }
-    button { background:#28a745; color:#fff; border:none; border-radius:5px; cursor:pointer; }
-    button:hover { background:#1e7e34; }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Đăng nhập nhân viên</title>
+<style>
+body { font-family: Arial; text-align:center; padding:20px; background-color:#f0f2f5; }
+input, button { font-size:16px; padding:10px; margin:5px; width:90%; max-width:300px; }
+button { cursor:pointer; }
+</style>
 </head>
 <body>
-  <h2>🔐 Đăng nhập nhân viên</h2>
-  <input id="email" type="email" placeholder="Email"><br>
-  <input id="password" type="password" placeholder="Mật khẩu"><br>
- <div> <button id="loginBtn">Đăng nhập</button></div>
- <div> <button id="registerBtn">Đăng ký tài khoản mới</button></div>
-  
-  <div id="msg"></div>
+
+<h1>🔑 Đăng nhập nhân viên</h1>
+<input type="email" id="email" placeholder="Email">
+<input type="password" id="password" placeholder="Mật khẩu">
+<button id="loginBtn">Đăng nhập</button>
+<div id="error" style="color:red; margin-top:10px;"></div>
+
+<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 
 <script>
-  // Cấu hình Firebase
+  // ================== Firebase config ==================
   const firebaseConfig = {
-    apiKey: "AIzaSyAb5AZOBvEVY3a_9ioEKTW-wuVMXdnRZGQ",
-    authDomain: "sellglass-3ebe9.firebaseapp.com",
-    databaseURL: "https://sellglass-3ebe9-default-rtdb.asia-southeast1.firebasedatabase.app",
-    projectId: "sellglass-3ebe9",
-    storageBucket: "sellglass-3ebe9.appspot.com",
-    messagingSenderId: "513741829035",
-    appId: "1:513741829035:web:1b2c59dcf1a0be329358ee"
+    apiKey: "YOUR_API_KEY",
+    authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+    databaseURL: "https://YOUR_PROJECT_ID-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "YOUR_PROJECT_ID",
+    storageBucket: "YOUR_PROJECT_ID.appspot.com",
+    messagingSenderId: "YOUR_SENDER_ID",
+    appId: "YOUR_APP_ID"
   };
+  firebase.initializeApp(firebaseConfig);
 
-  if (!firebase.apps.length) {
-    firebase.initializeApp(firebaseConfig);
-  }
+  const loginBtn = document.getElementById('loginBtn');
+  const errorDiv = document.getElementById('error');
 
-  const db = firebase.database();
-  const auth = firebase.auth();
-
-  window.db = db;   // cho các file khác dùng
-  window.auth = auth;
-</script>
-  <script type="module">
-
-const loginBtn = document.getElementById('loginBtn');
   loginBtn.addEventListener('click', function() {
+    errorDiv.textContent = '';
     const emailInput = document.getElementById('email').value.trim();
     const passwordInput = document.getElementById('password').value.trim();
 
     if (!emailInput || !passwordInput) {
-      alert('Vui lòng nhập đầy đủ email và mật khẩu!');
+      errorDiv.textContent = 'Vui lòng nhập đầy đủ email và mật khẩu!';
       return;
     }
 
-    const usersRef = firebase.database().ref('nhanvien');
-    usersRef.orderByChild('email').equalTo(emailInput).once('value')
+    // Lấy bảng nhanvien trong Firebase
+    const nhanvienRef = firebase.database().ref('nhanvien');
+    nhanvienRef.orderByChild('email').equalTo(emailInput).once('value')
       .then(snapshot => {
         if (!snapshot.exists()) {
-          alert('❌ Email không tồn tại!');
+          errorDiv.textContent = '❌ Email không tồn tại!';
           return;
         }
 
         let valid = false;
         snapshot.forEach(child => {
           const user = child.val();
-          if (nhanvien.password === passwordInput) {
+          if (user.pass === passwordInput) {
             valid = true;
             sessionStorage.setItem('userEmail', emailInput);
+            sessionStorage.setItem('userName', user.ten);
             window.location.href = 'quet.html';
           }
         });
 
         if (!valid) {
-          alert('❌ Mật khẩu không đúng!');
+          errorDiv.textContent = '❌ Mật khẩu không đúng!';
         }
       })
       .catch(err => {
-        console.error('Lỗi Firebase:', err);
-        alert('❌ Lỗi truy vấn Firebase!');
+        console.error('❌ Lỗi Firebase:', err);
+        errorDiv.textContent = '❌ Lỗi truy vấn Firebase!';
       });
   });
-    // Chuyển sang trang đăng ký
-      registerBtn.addEventListener('click', () => {
-        window.location.href = "dangky.html";
-      });
-  </script>
+</script>
+
 </body>
 </html>
-
-
-
-
-
-
