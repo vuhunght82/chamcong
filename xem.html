@@ -18,7 +18,8 @@ button, select { padding:8px 12px; margin:5px; font-size:16px; }
 
 <h1>📋 Xem chấm công</h1>
 <button id="backBtn">⬅ Quay lại</button>
-
+<label for="useremail">Nhân viên:</label>
+<label for="monthSelect">Nhân viên:<div id="userName"></div></label>
 <label for="monthSelect">Chọn tháng:</label>
 <input type="month" id="monthSelect" />
 
@@ -68,7 +69,26 @@ const emailKey = encodeEmail(userEmail);
 
 const attendanceBody = document.getElementById('attendanceBody');
 const monthSelect = document.getElementById('monthSelect');
+const userNameDiv = document.getElementById('userName');
 
+if(userEmail){
+  const userKey = userEmail.replace(/\./g, ',');
+  firebase.database().ref('nhanvien/' + userKey).once('value')
+    .then(snapshot => {
+      const userData = snapshot.val();
+      if(userData && userData.ten){
+        userNameDiv.textContent = `Nhân viên: ${userData.ten}`;
+      } else {
+        userNameDiv.textContent = `Nhân viên: ${userEmail}`;
+      }
+    })
+    .catch(err => console.error("Lỗi lấy tên nhân viên:", err));
+} else {
+  userNameDiv.textContent = "Nhân viên chưa đăng nhập";
+}
+
+
+  
 // Quay lại
 document.getElementById('backBtn').addEventListener('click', ()=>{ window.history.back(); });
 
@@ -138,3 +158,4 @@ function encodeEmail(email){ return email.replace(/\./g,','); }
 
 </body>
 </html>
+
