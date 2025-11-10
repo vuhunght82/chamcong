@@ -117,9 +117,8 @@ function startScanner() {
 }
 
 // Vị trí công ty (kinh độ, vĩ độ)
-const COMPANY_LOCATION = { lat: 10.8496876, lng: 106.5857100 }; // Thay bằng tọa độ thật
-// 10.846208, Kinh độ: 106.594304
-  // 10.8527616,106.5811968
+const COMPANY_LOCATION = { lat: 10.849641858164617, lng: 106.58569113116769 }; // Thay bằng tọa độ thật
+// 10.849641858164617,106.58569113116769
 // Nội dung QR chuẩn
 const VALID_QR_CODE = "CHECKIN_GLASS_COMPANY";
 
@@ -137,10 +136,10 @@ function handleAttendance(email, qrContent, lat, lng) {
   // --- Kiểm tra khoảng cách GPS ---
   if(lat && lng){
     const distance = getDistanceFromLatLonInMeters(lat, lng, COMPANY_LOCATION.lat, COMPANY_LOCATION.lng);
-    if(distance > 5000){
-       console.log("Khoảng cách tới công ty:", distance.toFixed(1), "m");
+    if(distance > 100){
+      
 alert(`Khoảng cách tới công ty: ${distance.toFixed(1)} m`);
-      alert(`❌ Vị trí quét quá xa so với công ty (${distance.toFixed(1)} m)!`);
+  //    alert(`❌ Vị trí quét quá xa so với công ty (${distance.toFixed(1)} m)!`);
       restartBtn.style.display = 'inline-block';
       return;
     }
@@ -310,6 +309,7 @@ function deg2rad(deg){ return deg*Math.PI/180; }
 </script>
 </body>
 </html>
+
 
 
 
