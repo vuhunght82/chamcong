@@ -102,88 +102,12 @@ function loadNhanVien() {
 }
 
 // ================== Hàm hiển thị dữ liệu ==================
-function loadChamCong(email, month) {
-  if (!email) {
-    tableBody.innerHTML = '<tr><td colspan="11">Vui lòng chọn nhân viên.</td></tr>';
-    summaryDiv.textContent = '';
-    currentData = [];
-    return;
-  }
-
-  tableBody.innerHTML = '<tr><td colspan="11">Đang tải dữ liệu...</td></tr>';
-
-  db.ref('chamcong').once('value').then(snapshot => {
-    const data = snapshot.val();
-    const rows = [];
-    let tongGio = 0;
-    let tongLamThem = 0;
-
-    for (let key in data) {
-      const nhanvienData = data[key];
-      for (let ngay in nhanvienData) {
-        const info = nhanvienData[ngay];
-        if (info.email && info.email.includes(email) && (!month || ngay.startsWith(month))) {
-          const gioLam = parseFloat(info.gioLamTrongNgay || 0);
-          const gioLamThem = parseFloat(info.gioLamThem || 0);
-          rows.push({
-            key: key,
-            Ngày: ngay,
-            "Vào sáng": info.vaoCaSang || '-',
-            "Ra sáng": info.raCaSang || '-',
-            "Vào chiều": info.vaoCaChieu || '-',
-            "Ra chiều": info.raCaChieu || '-',
-            "Vào làm thêm": info.vaoLamThem || '-',
-            "Ra làm thêm": info.raLamThem || '-',
-            "Giờ làm (h)": gioLam,
-            "Giờ làm thêm (h)": gioLamThem,
-            "Ghi chú": info.ghiChu || ''
-          });
-          tongGio += gioLam;
-          tongLamThem += gioLamThem;
-        }
-      }
-    }
-
-    currentData = rows;
-
-    if (rows.length === 0) {
-      tableBody.innerHTML = '<tr><td colspan="11">Không có dữ liệu.</td></tr>';
-      summaryDiv.textContent = '';
-      return;
-    }
-
-    tableBody.innerHTML = '';
-    rows.forEach((r, index) => {
-      tableBody.insertAdjacentHTML('beforeend', `
-        <tr data-key="${r.key}">
-          <td contenteditable="true">${r["Ngày"]}</td>
-          <td contenteditable="true">${r["Vào sáng"]}</td>
-          <td contenteditable="true">${r["Ra sáng"]}</td>
-          <td contenteditable="true">${r["Vào chiều"]}</td>
-          <td contenteditable="true">${r["Ra chiều"]}</td>
-          <td contenteditable="true">${r["Vào làm thêm"]}</td>
-          <td contenteditable="true">${r["Ra làm thêm"]}</td>
-          <td contenteditable="true">${r["Giờ làm (h)"].toFixed(2)}</td>
-          <td contenteditable="true">${r["Giờ làm thêm (h)"].toFixed(2)}</td>
-          <td contenteditable="true">${r["Ghi chú"]}</td>
-          <td><button class="deleteBtn">Xóa</button></td>
-        </tr>
-      `);
-    });
-
-    // Tổng cộng
-    tableBody.insertAdjacentHTML('beforeend', `
-      <tr style="background:#e9f5ff;font-weight:bold;">
-        <td colspan="7">TỔNG CỘNG</td>
-        <td>${tongGio.toFixed(2)}</td>
-        <td>${tongLamThem.toFixed(2)}</td>
-        <td colspan="2"></td>
-      </tr>
-    `);
-
-    summaryDiv.textContent = `🧾 Tổng giờ làm: ${tongGio.toFixed(2)}h | Tổng giờ làm thêm: ${tongLamThem.toFixed(2)}h`;
-  });
-}
+chamcong
+ └─ email_comma (vd: user,example@gmail,com)
+      └─ 2025-11-10
+          vaoCaSang: "07:55"
+          raCaSang: "11:30"
+          ...
 
 // ================== Xóa dòng ==================
 tableBody.addEventListener('click', e => {
@@ -221,3 +145,4 @@ window.addEventListener('load', loadNhanVien);
 
 </body>
 </html>
+
