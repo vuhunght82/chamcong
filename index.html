@@ -3,58 +3,141 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Đăng nhập nhân viên</title>
+<title>🔑 Đăng nhập nhân viên</title>
 <style>
-body { font-family: Arial; text-align:center; padding:20px; background-color:#f0f2f5; }
-input, button { font-size:16px; padding:10px; margin:5px; width:90%; max-width:300px; }
-button { cursor:pointer; style="background-color:#ffcc66;" }
+body {
+  font-family: 'Segoe UI', Arial, sans-serif;
+  background: linear-gradient(135deg, #0099ff 0%, #66ccff 100%);
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+}
+
+.container {
+  background: #fff;
+  border-radius: 15px;
+  padding: 40px 25px;
+  width: 90%;
+  max-width: 350px;
+  box-shadow: 0 6px 15px rgba(0,0,0,0.15);
+  text-align: center;
+  animation: fadeIn 0.6s ease;
+}
+
+h1 {
+  color: #0099ff;
+  margin-bottom: 25px;
+  font-size: 24px;
+}
+
+input {
+  display: block;
+  width: 100%;
+  padding: 12px;
+  margin: 10px 0;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  font-size: 16px;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+input:focus {
+  border-color: #0099ff;
+  box-shadow: 0 0 5px rgba(0,153,255,0.5);
+}
+
+button {
+  width: 100%;
+  padding: 12px;
+  margin-top: 12px;
+  background-color: #0099ff;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+button:hover {
+  background-color: #007acc;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,153,255,0.3);
+}
+
+#registerBtn {
+  background-color: #66ccff;
+  color: #003366;
+}
+
+#registerBtn:hover {
+  background-color: #33b5ff;
+}
+
+#error {
+  color: red;
+  margin-top: 15px;
+  font-size: 14px;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-15px); }
+  to { opacity: 1; transform: translateY(0); }
+}
 </style>
 </head>
 <body>
 
-<h1>🔑 Đăng nhập nhân viên</h1>
-<input type="email" id="email" placeholder="Email">
-<input type="password" id="password" placeholder="Mật khẩu">
-<button id="loginBtn">Đăng nhập</button>
-<button id="registerBtn">Đăng ký</button>
-<div id="error" style="color:red; margin-top:10px;"></div>
+<div class="container">
+  <h1>🔑 Đăng nhập nhân viên</h1>
+  <input type="email" id="email" placeholder="📧 Email đăng nhập">
+  <input type="password" id="password" placeholder="🔒 Mật khẩu">
+  <button id="loginBtn">Đăng nhập</button>
+  <button id="registerBtn">Đăng ký</button>
+  <div id="error"></div>
+</div>
 
 <!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 
 <script>
-   // ================== Chuyển sang trang đăng ký ==================
-  registerBtn.addEventListener('click', function() {
-    window.location.href = 'dangky.html';
-  });
   // ================== Firebase config ==================
- const firebaseConfig = {
-  apiKey: "AIzaSyAb5AZOBvEVY3a_9ioEKTW-wuVMXdnRZGQ",
-  authDomain: "sellglass-3ebe9.firebaseapp.com",
-  databaseURL: "https://sellglass-3ebe9-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "sellglass-3ebe9",
-  storageBucket: "sellglass-3ebe9.appspot.com",
-  messagingSenderId: "513741829035",
-  appId: "1:513741829035:web:1b2c59dcf1a0be329358ee"
-};
-firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
+  const firebaseConfig = {
+    apiKey: "AIzaSyAb5AZOBvEVY3a_9ioEKTW-wuVMXdnRZGQ",
+    authDomain: "sellglass-3ebe9.firebaseapp.com",
+    databaseURL: "https://sellglass-3ebe9-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "sellglass-3ebe9",
+    storageBucket: "sellglass-3ebe9.appspot.com",
+    messagingSenderId: "513741829035",
+    appId: "1:513741829035:web:1b2c59dcf1a0be329358ee"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
 
   const loginBtn = document.getElementById('loginBtn');
+  const registerBtn = document.getElementById('registerBtn');
   const errorDiv = document.getElementById('error');
 
+  // ================== Chuyển sang trang đăng ký ==================
+  registerBtn.addEventListener('click', () => {
+    window.location.href = 'dangky.html';
+  });
+
+  // ================== Đăng nhập ==================
   loginBtn.addEventListener('click', function() {
     errorDiv.textContent = '';
     const emailInput = document.getElementById('email').value.trim();
     const passwordInput = document.getElementById('password').value.trim();
 
     if (!emailInput || !passwordInput) {
-      errorDiv.textContent = 'Vui lòng nhập đầy đủ email và mật khẩu!';
+      errorDiv.textContent = '⚠️ Vui lòng nhập đầy đủ email và mật khẩu!';
       return;
     }
 
-    // Lấy bảng nhanvien trong Firebase
     const nhanvienRef = firebase.database().ref('nhanvien');
     nhanvienRef.orderByChild('email').equalTo(emailInput).once('value')
       .then(snapshot => {
@@ -87,7 +170,3 @@ const db = firebase.database();
 
 </body>
 </html>
-
-
-
-
