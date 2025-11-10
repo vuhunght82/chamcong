@@ -89,7 +89,35 @@ const reloadBtn = document.getElementById('reloadBtn');
 const exportBtn = document.getElementById('exportBtn');
 
 let currentData = []; // dữ liệu đang hiển thị để xuất Excel
+// cập nhật tổng giờ 
+    function updateTotals() {
+        let tongGio = 0;
+        let tongLamThem = 0;
+        const trs = tableBody.querySelectorAll('tr');
+        trs.forEach(tr => {
+            if (tr.dataset.ngay) { // bỏ qua dòng tổng cộng
+                const gioLam = parseFloat(tr.children[7].textContent) || 0;
+                const gioLamThem = parseFloat(tr.children[8].textContent) || 0;
+                tongGio += gioLam;
+                tongLamThem += gioLamThem;
+            }
+        });
 
+        // Cập nhật dòng tổng cộng
+        const totalRow = tableBody.querySelector('tr:last-child');
+        totalRow.children[7].textContent = tongGio.toFixed(2);
+        totalRow.children[8].textContent = tongLamThem.toFixed(2);
+
+        summaryDiv.textContent = `🧾 Tổng giờ làm: ${tongGio.toFixed(2)}h | Tổng giờ làm thêm: ${tongLamThem.toFixed(2)}h`;
+    }
+    // sự  kiện cho bảng
+    tableBody.addEventListener('input', e => {
+        const tr = e.target.closest('tr');
+        if (tr && tr.dataset.ngay) {
+            calculateHours(tr);
+            updateTotals();
+        }
+    });
 // ================== Load danh sách nhân viên ==================
 function loadNhanVien() {
   db.ref('nhanvien').once('value').then(snapshot => {
@@ -245,3 +273,4 @@ window.addEventListener('load', ()=>{
 </script>
 </body>
 </html>
+
