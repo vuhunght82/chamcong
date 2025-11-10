@@ -11,7 +11,7 @@
   button { background-color:#007bff; color:white; cursor:pointer; }
   button:hover { background-color:#0056b3; }
   table { width:100%; max-width:1000px; margin:20px auto; border-collapse:collapse; box-shadow:0 4px 10px rgba(0,0,0,0.1); background-color:white; }
-  th { background-color:#007bff; color:white; padding:10px; }
+  th { background-color:#00aaff; color:white; padding:10px; }
   td { padding:8px; border:1px solid #ddd; text-align:center; }
   tr:hover { background-color:#f1f9ff; }
   .deleteBtn { background:#ff4d4f; color:white; padding:4px 8px; border:none; border-radius:5px; cursor:pointer; }
@@ -31,7 +31,7 @@
 
   <label for="monthSelect">Tháng:</label>
   <input type="month" id="monthSelect">
-  
+
   <button id="reloadBtn">🔄 Tải lại</button>
   <button id="exportBtn">📊 Xuất Excel</button>
 </div>
@@ -62,7 +62,6 @@
 <!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
-
 <!-- SheetJS -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
@@ -90,6 +89,10 @@ const exportBtn = document.getElementById('exportBtn');
 
 let currentData = []; // dữ liệu hiển thị
 
+// ================== Thiết lập tháng hiện tại ==================
+const now = new Date();
+monthSelect.value = now.toISOString().slice(0,7);
+
 // ================== Load danh sách nhân viên ==================
 function loadNhanVien() {
   db.ref('nhanvien').once('value').then(snapshot => {
@@ -101,69 +104,66 @@ function loadNhanVien() {
   });
 }
 
-// ================== Hàm tính giờ làm ==================
-function computeHours(info){
-  let gioLam=0, gioLamThem=0;
-  function toHour(time){
-    if(!time || time==='-') return 0;
-    const [h,m] = time.split(':');
-    return parseInt(h)+parseInt(m)/60;
-  }
-  if(info.vaoCaSang && info.raCaSang) gioLam += toHour(info.raCaSang)-toHour(info.vaoCaSang);
-  if(info.vaoCaChieu && info.raCaChieu) gioLam += toHour(info.raCaChieu)-toHour(info.vaoCaChieu);
-  if(info.vaoLamThem && info.raLamThem) gioLamThem += toHour(info.raLamThem)-toHour(info.vaoLamThem);
-  return {gioLam, gioLamThem};
+// ================== Hàm parse time ==================
+function parseTime(timeStr){
+  if(!timeStr || timeStr==='-') return 0;
+  const [h,m,s=0] = timeStr.split(':').map(Number);
+  return h + m/60 + s/3600;
 }
 
-// ================== Load dữ liệu chấm công ==================
+// ================== Hiển thị dữ liệu chấm công ==================
 function loadChamCong(email, month){
   if(!email){
-    tableBody.innerHTML='<tr><td colspan="11">Vui lòng chọn nhân viên.</td></tr>';
-    summaryDiv.textContent='';
-    currentData=[];
+    tableBody.innerHTML = '<tr><td colspan="11">Vui lòng chọn nhân viên.</td></tr>';
+    summaryDiv.textContent = '';
+    currentData = [];
     return;
   }
-  tableBody.innerHTML='<tr><td colspan="11">Đang tải dữ liệu...</td></tr>';
+
+  tableBody.innerHTML = '<tr><td colspan="11">Đang tải dữ liệu...</td></tr>';
 
   db.ref('chamcong').once('value').then(snapshot=>{
-    const data = snapshot.val();
-    const rows=[];
-    let tongGio=0, tongLamThem=0;
+    const data = snapshot.val() || {};
+    const rows = [];
+    let tongGio = 0;
+    let tongLamThem = 0;
 
     for(let key in data){
       const nhanvienData = data[key];
       for(let ngay in nhanvienData){
         const info = nhanvienData[ngay];
-        if(info.email && info.email.includes(email) && (!month || ngay.startsWith(month))){
-          const {gioLam, gioLamThem} = computeHours(info);
+        if(info.email && info.email === email && (!month || ngay.startsWith(month))){
+          const gioLam = parseFloat(info.gioLamTrongNgay || 0);
+          const gioLamThem = parseFloat(info.gioLamThem || 0);
           rows.push({
             key:key,
             Ngay:ngay,
-            vaoCaSang:info.vaoCaSang||'-',
-            raCaSang:info.raCaSang||'-',
-            vaoCaChieu:info.vaoCaChieu||'-',
-            raCaChieu:info.raCaChieu||'-',
-            vaoLamThem:info.vaoLamThem||'-',
-            raLamThem:info.raLamThem||'-',
-            gioLam, gioLamThem,
-            ghiChu:info.ghiChu||''
+            vaoCaSang: info.vaoCaSang||'-',
+            raCaSang: info.raCaSang||'-',
+            vaoCaChieu: info.vaoCaChieu||'-',
+            raCaChieu: info.raCaChieu||'-',
+            vaoLamThem: info.vaoLamThem||'-',
+            raLamThem: info.raLamThem||'-',
+            gioLam: gioLam,
+            gioLamThem: gioLamThem,
+            ghiChu: info.ghiChu||''
           });
-          tongGio+=gioLam;
-          tongLamThem+=gioLamThem;
+          tongGio += gioLam;
+          tongLamThem += gioLamThem;
         }
       }
     }
 
-    currentData=rows;
+    currentData = rows;
 
     if(rows.length===0){
-      tableBody.innerHTML='<tr><td colspan="11">Không có dữ liệu.</td></tr>';
+      tableBody.innerHTML = '<tr><td colspan="11">Không có dữ liệu.</td></tr>';
       summaryDiv.textContent='';
       return;
     }
 
-    tableBody.innerHTML='';
-    rows.forEach(r=>{
+    tableBody.innerHTML = '';
+    rows.forEach((r,index)=>{
       tableBody.insertAdjacentHTML('beforeend',`
         <tr data-key="${r.key}" data-ngay="${r.Ngay}">
           <td contenteditable="true">${r.Ngay}</td>
@@ -183,58 +183,17 @@ function loadChamCong(email, month){
 
     // Tổng cộng
     tableBody.insertAdjacentHTML('beforeend',`
-      <tr style="background:#e9f5ff;font-weight:bold;" id="totalRow">
+      <tr style="background:#e9f5ff;font-weight:bold;">
         <td colspan="7">TỔNG CỘNG</td>
         <td>${tongGio.toFixed(2)}</td>
         <td>${tongLamThem.toFixed(2)}</td>
         <td colspan="2"></td>
       </tr>
     `);
-    summaryDiv.textContent=`🧾 Tổng giờ làm: ${tongGio.toFixed(2)}h | Tổng giờ làm thêm: ${tongLamThem.toFixed(2)}h`;
+
+    summaryDiv.textContent = `🧾 Tổng giờ làm: ${tongGio.toFixed(2)}h | Tổng giờ làm thêm: ${tongLamThem.toFixed(2)}h`;
   });
 }
-
-// ================== Sửa dữ liệu trực tiếp ==================
-tableBody.addEventListener('blur', e=>{
-  if(!e.target.isContentEditable) return;
-  const tr = e.target.closest('tr');
-  if(!tr || !tr.dataset.key) return;
-  const key = tr.dataset.key;
-  const ngay = tr.dataset.ngay;
-  const cells = tr.children;
-
-  const updated={
-    vaoCaSang:cells[1].textContent.trim(),
-    raCaSang:cells[2].textContent.trim(),
-    vaoCaChieu:cells[3].textContent.trim(),
-    raCaChieu:cells[4].textContent.trim(),
-    vaoLamThem:cells[5].textContent.trim(),
-    raLamThem:cells[6].textContent.trim(),
-    ghiChu:cells[9].textContent.trim()
-  };
-
-  const {gioLam, gioLamThem} = computeHours(updated);
-  cells[7].textContent = gioLam.toFixed(2);
-  cells[8].textContent = gioLamThem.toFixed(2);
-
-  db.ref(`chamcong/${key}/${ngay}`).update(updated)
-    .then(()=>console.log('✅ Cập nhật Firebase thành công:', ngay))
-    .catch(err=>console.error('❌ Lỗi Firebase:', err));
-
-  // Cập nhật tổng cộng
-  let tongGio=0, tongLamThem=0;
-  tableBody.querySelectorAll('tr[data-key]').forEach(r=>{
-    const c=r.children;
-    tongGio+=parseFloat(c[7].textContent)||0;
-    tongLamThem+=parseFloat(c[8].textContent)||0;
-  });
-  const totalRow = document.getElementById('totalRow');
-  if(totalRow){
-    totalRow.children[7].textContent=tongGio.toFixed(2);
-    totalRow.children[8].textContent=tongLamThem.toFixed(2);
-  }
-  summaryDiv.textContent=`🧾 Tổng giờ làm: ${tongGio.toFixed(2)}h | Tổng giờ làm thêm: ${tongLamThem.toFixed(2)}h`;
-}, true);
 
 // ================== Xóa dòng ==================
 tableBody.addEventListener('click', e=>{
@@ -268,7 +227,7 @@ exportBtn.addEventListener('click', exportToExcel);
 
 // ================== Khởi động ==================
 window.addEventListener('load', loadNhanVien);
-</script>
 
+</script>
 </body>
 </html>
