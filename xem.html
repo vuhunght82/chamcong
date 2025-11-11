@@ -155,7 +155,7 @@ function loadData() {
       tongThem += gioThem;
       html += `
         <tr>
-          <td>${day}</td>
+          <td>$formatDate({day})</td>
           <td>${d.vaoCaSang || '-'}</td>
           <td>${d.raCaSang || '-'}</td>
           <td>${d.vaoCaChieu || '-'}</td>
@@ -179,7 +179,17 @@ function parseTime(str) {
   const [h, m, s=0] = str.split(':');
   return Number(h) + Number(m)/60 + Number(s)/3600;
 }
-
+  // định dạng ngày tháng
+function formatDate(dateStr) {
+  // Trường hợp dữ liệu từ Firebase lưu dạng yyyy-mm-dd
+  const d = new Date(dateStr);
+  if (isNaN(d)) return dateStr; // nếu không parse được thì trả nguyên chuỗi
+  
+  const day = String(d.getDate()).padStart(2, '0');
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const year = d.getFullYear();
+  return `${day}/${month}/${year}`;
+}
 monthFilter.addEventListener('change', loadData);
 window.addEventListener('load', loadData);
 
@@ -191,6 +201,7 @@ document.getElementById('exportBtn').addEventListener('click', () => {
 </script>
 </body>
 </html>
+
 
 
 
