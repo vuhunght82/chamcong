@@ -82,7 +82,7 @@ const db = firebase.database();
 // ================== Kiểm tra đăng nhập ==================
 const userEmail = sessionStorage.getItem('userEmail');
 if (!userEmail) {
-  alert('Vui lòng đăng nhập trước!'+userEmail);
+  alert('Vui lòng đăng nhập trước!');
   window.location.href = 'index.html';
 }
 
@@ -330,6 +330,7 @@ function deg2rad(deg){ return deg*Math.PI/180; }
 </script>
 </body>
 </html>
+
 
 
 
