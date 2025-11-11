@@ -114,7 +114,7 @@
             localStorage.removeItem("savedPass");
           }
           // Lưu email để dùng bên trang quét
-          localStorage.setItem("userEmail", email);
+          sessionStorage.setItem("userEmail", email);
           setTimeout(() => window.location.href = "quet.html", 1000);
         } else {
           statusDiv.textContent = "❌ Mật khẩu không đúng!";
@@ -150,4 +150,5 @@
   </script>
 </body>
 </html>
+
 
