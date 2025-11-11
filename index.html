@@ -3,170 +3,150 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>🔑 Đăng nhập nhân viên</title>
+<title>Đăng nhập</title>
 <style>
-body {
-  font-family: 'Segoe UI', Arial, sans-serif;
-  background: linear-gradient(135deg, #0099ff 0%, #66ccff 100%);
-  height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin: 0;
-}
-
-.container {
-  background: #fff;
-  border-radius: 15px;
-  padding: 40px 25px;
-  width: 90%;
-  max-width: 350px;
-  box-shadow: 0 6px 15px rgba(0,0,0,0.15);
-  text-align: center;
-  animation: fadeIn 0.6s ease;
-}
-
-h1 {
-  color: #0099ff;
-  margin-bottom: 25px;
-  font-size: 24px;
-}
-
-input {
-  display: block;
-  width: 100%;
-  padding: 12px;
-  margin: 10px 0;
-  border-radius: 8px;
-  border: 1px solid #ccc;
-  font-size: 16px;
-  outline: none;
-  transition: border-color 0.2s, box-shadow 0.2s;
-}
-
-input:focus {
-  border-color: #0099ff;
-  box-shadow: 0 0 5px rgba(0,153,255,0.5);
-}
-
-button {
-  width: 100%;
-  padding: 12px;
-  margin-top: 12px;
-  background-color: #0099ff;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  font-size: 16px;
-  cursor: pointer;
-  transition: all 0.3s;
-}
-
-button:hover {
-  background-color: #007acc;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0,153,255,0.3);
-}
-
-#registerBtn {
-  background-color: #66ccff;
-  color: #003366;
-}
-
-#registerBtn:hover {
-  background-color: #33b5ff;
-}
-
-#error {
-  color: red;
-  margin-top: 15px;
-  font-size: 14px;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(-15px); }
-  to { opacity: 1; transform: translateY(0); }
-}
+  body {
+    font-family: Arial, sans-serif;
+    background: linear-gradient(to right, #007bff, #00c6ff);
+    color: #333;
+    display: flex; justify-content: center; align-items: center;
+    height: 100vh;
+  }
+  .login-box {
+    background: #fff;
+    padding: 30px 40px;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    width: 320px;
+  }
+  h2 { text-align: center; color: #007bff; }
+  input[type="email"], input[type="password"] {
+    width: 100%; padding: 10px; margin: 8px 0;
+    border: 1px solid #ccc; border-radius: 5px;
+  }
+  button {
+    width: 100%; padding: 10px; background: #007bff;
+    color: white; border: none; border-radius: 5px;
+    cursor: pointer; font-size: 16px;
+  }
+  button:hover { background: #0056b3; }
+  .bottom {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-top: 10px;
+  }
+  label { font-size: 14px; }
+  a {
+    font-size: 14px; color: #007bff; text-decoration: none;
+  }
+  a:hover { text-decoration: underline; }
 </style>
 </head>
 <body>
+  <div class="login-box">
+    <h2>Đăng nhập</h2>
+    <input type="email" id="email" placeholder="Nhập email" required>
+    <input type="password" id="password" placeholder="Nhập mật khẩu" required>
+    
+    <div class="bottom">
+      <label><input type="checkbox" id="rememberMe"> Ghi nhớ đăng nhập</label>
+      <a href="dangky.html">Đăng ký</a>
+    </div>
+    
+    <button id="loginBtn">Đăng nhập</button>
+    <p id="status" style="color:red; text-align:center; margin-top:10px;"></p>
+  </div>
 
-<div class="container">
-  <h1>🔑 Đăng nhập nhân viên</h1>
-  <input type="email" id="email" placeholder="📧 Email đăng nhập">
-  <input type="password" id="password" placeholder="🔒 Mật khẩu">
-  <button id="loginBtn">Đăng nhập</button>
-  <button id="registerBtn">Đăng ký</button>
-  <div id="error"></div>
-</div>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+  <script>
+  // Cấu hình Firebase của bạn
+      const firebaseConfig = {
+          apiKey: "AIzaSyAb5AZOBvEVY3a_9ioEKTW-wuVMXdnRZGQ",
+          authDomain: "sellglass-3ebe9.firebaseapp.com",
+          databaseURL: "https://sellglass-3ebe9-default-rtdb.asia-southeast1.firebasedatabase.app",
+          projectId: "sellglass-3ebe9",
+          storageBucket: "sellglass-3ebe9.appspot.com",
+          messagingSenderId: "513741829035",
+          appId: "1:513741829035:web:1b2c59dcf1a0be329358ee"
+      };
+      firebase.initializeApp(firebaseConfig);
+      const db = firebase.database();
 
-<!-- Firebase -->
-<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+  const emailInput = document.getElementById("email");
+  const passInput = document.getElementById("password");
+  const rememberMe = document.getElementById("rememberMe");
+  const statusDiv = document.getElementById("status");
+  const loginBtn = document.getElementById("loginBtn");
 
-<script>
-  // ================== Firebase config ==================
-  const firebaseConfig = {
-    apiKey: "AIzaSyAb5AZOBvEVY3a_9ioEKTW-wuVMXdnRZGQ",
-    authDomain: "sellglass-3ebe9.firebaseapp.com",
-    databaseURL: "https://sellglass-3ebe9-default-rtdb.asia-southeast1.firebasedatabase.app",
-    projectId: "sellglass-3ebe9",
-    storageBucket: "sellglass-3ebe9.appspot.com",
-    messagingSenderId: "513741829035",
-    appId: "1:513741829035:web:1b2c59dcf1a0be329358ee"
-  };
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.database();
-
-  const loginBtn = document.getElementById('loginBtn');
-  const registerBtn = document.getElementById('registerBtn');
-  const errorDiv = document.getElementById('error');
-
-  // ================== Chuyển sang trang đăng ký ==================
-  registerBtn.addEventListener('click', () => {
-    window.location.href = 'dangky.html';
+  // Nếu trước đó có lưu thông tin -> tự động điền & đăng nhập
+  window.addEventListener("load", () => {
+    const savedEmail = localStorage.getItem("savedEmail");
+    const savedPass = localStorage.getItem("savedPass");
+    if (savedEmail && savedPass) {
+      emailInput.value = savedEmail;
+      passInput.value = savedPass;
+      rememberMe.checked = true;
+      autoLogin(savedEmail, savedPass);
+    }
   });
 
-  // ================== Đăng nhập ==================
-  loginBtn.addEventListener('click', function() {
-    errorDiv.textContent = '';
-    const emailInput = document.getElementById('email').value.trim();
-    const passwordInput = document.getElementById('password').value.trim();
+  loginBtn.addEventListener("click", async () => {
+    const email = emailInput.value.trim();
+    const pass = passInput.value.trim();
 
-    if (!emailInput || !passwordInput) {
-      errorDiv.textContent = '⚠️ Vui lòng nhập đầy đủ email và mật khẩu!';
+    if (!email || !pass) {
+      statusDiv.textContent = "⚠ Vui lòng nhập đầy đủ Email và Mật khẩu.";
       return;
     }
 
-    const nhanvienRef = firebase.database().ref('nhanvien');
-    nhanvienRef.orderByChild('email').equalTo(emailInput).once('value')
-      .then(snapshot => {
-        if (!snapshot.exists()) {
-          errorDiv.textContent = '❌ Email không tồn tại!';
-          return;
-        }
-
-        let valid = false;
-        snapshot.forEach(child => {
-          const user = child.val();
-          if (user.pass === passwordInput) {
-            valid = true;
-            sessionStorage.setItem('userEmail', emailInput);
-            sessionStorage.setItem('userName', user.ten);
-            window.location.href = 'quet.html';
+    try {
+      const snap = await db.ref("nhanvien").orderByChild("email").equalTo(email).once("value");
+      if (snap.exists()) {
+        const userData = Object.values(snap.val())[0];
+        if (userData.pass === pass) {
+          statusDiv.style.color = "green";
+          statusDiv.textContent = "✅ Đăng nhập thành công!";
+          if (rememberMe.checked) {
+            localStorage.setItem("savedEmail", email);
+            localStorage.setItem("savedPass", pass);
+          } else {
+            localStorage.removeItem("savedEmail");
+            localStorage.removeItem("savedPass");
           }
-        });
-
-        if (!valid) {
-          errorDiv.textContent = '❌ Mật khẩu không đúng!';
+          // Lưu email để dùng bên trang quét
+          localStorage.setItem("userEmail", email);
+          setTimeout(() => window.location.href = "quet.html", 1000);
+        } else {
+          statusDiv.textContent = "❌ Mật khẩu không đúng!";
         }
-      })
-      .catch(err => {
-        console.error('❌ Lỗi Firebase:', err);
-        errorDiv.textContent = '❌ Lỗi truy vấn Firebase!';
-      });
+      } else {
+        statusDiv.textContent = "❌ Không tìm thấy tài khoản này!";
+      }
+    } catch (err) {
+      statusDiv.textContent = "❌ Lỗi đăng nhập: " + err;
+    }
   });
-</script>
 
+  // Hàm tự động đăng nhập nếu đã lưu
+  //async function autoLogin(email, pass) {
+  //  try {
+  //    const snap = await db.ref("nhanvien").orderByChild("email").equalTo(email).once("value");
+  //    if (snap.exists()) {
+  //      const userData = Object.values(snap.val())[0];
+  //      if (userData.pass === pass) {
+  //        statusDiv.style.color = "green";
+  //        statusDiv.textContent = "🔁 Tự động đăng nhập...";
+  //        localStorage.setItem("userEmail", email);
+  //        setTimeout(() => window.location.href = "quet.html", 500);
+  //      } else {
+  //        localStorage.removeItem("savedEmail");
+  //        localStorage.removeItem("savedPass");
+  //      }
+  //    }
+  //  } catch (err) {
+  //    console.error("Auto login error:", err);
+  //  }
+  //}
+  </script>
 </body>
 </html>
