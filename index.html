@@ -19,8 +19,12 @@
     box-shadow: 0 4px 15px rgba(0,0,0,0.2);
     width: 320px;
   }
-  h2 { text-align: center; color: #007bff;font-size: 40px; }
-  input[type="email"], input[type="password"] {
+    h2 {
+        text-align: center;
+        color: #007bff;
+        font-size: 40px;
+    }
+    input[type="email"], input[type="password"] {
         width: 100%;
         padding: 10px;
         margin: 8px 0;
@@ -28,11 +32,17 @@
         border-radius: 5px;
         font-size: 18px;
     }
-  button {
-    width: 100%; padding: 15px; background: #007bff;
-    color: white; border: none; border-radius: 30px;
-    cursor: pointer; font-size: 16px;margin-top: 20px;
-  }
+    button {
+        width: 100%;
+        padding: 15px;
+        background: #007cff;
+        color: white;
+        border: none;
+        border-radius: 30px;
+        cursor: pointer;
+        font-size: 16px;
+        margin-top: 20px;
+    }
   button:hover { background: #0056b3; }
   .bottom {
     display: flex; justify-content: space-between; align-items: center;
@@ -48,7 +58,7 @@
 <body>
   <div class="login-box">
     <h2>ĐĂNG NHẬP</h2>
-    <input type="email" id="email" placeholder="Nhập tên đăng nhập" required>
+    <input type="email" id="email" placeholder="Nhập email" required>
     <input type="password" id="password" placeholder="Nhập mật khẩu" required>
     
     <div class="bottom">
@@ -90,7 +100,7 @@
       emailInput.value = savedEmail;
       passInput.value = savedPass;
       rememberMe.checked = true;
-     // autoLogin(savedEmail, savedPass);
+    //  autoLogin(savedEmail, savedPass);
     }
   });
 
@@ -104,10 +114,10 @@
     }
 
     try {
-      const snap = await db.ref("nhanvien").orderByChild("email").equalTo(email).once("value");
+      const snap = await db.ref("users").orderByChild("username").equalTo(email).once("value");
       if (snap.exists()) {
         const userData = Object.values(snap.val())[0];
-        if (userData.pass === pass) {
+        if (userData.password === pass) {
           statusDiv.style.color = "green";
           statusDiv.textContent = "✅ Đăng nhập thành công!";
           if (rememberMe.checked) {
@@ -118,7 +128,7 @@
             localStorage.removeItem("savedPass");
           }
           // Lưu email để dùng bên trang quét
-          sessionStorage.setItem("userEmail", email);
+            sessionStorage.setItem("userEmail", email);
           setTimeout(() => window.location.href = "quet.html", 1000);
         } else {
           statusDiv.textContent = "❌ Mật khẩu không đúng!";
@@ -154,8 +164,3 @@
   </script>
 </body>
 </html>
-
-
-
-
-
