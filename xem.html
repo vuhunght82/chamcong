@@ -163,7 +163,7 @@ function loadData() {
           <td>${d.vaoLamThem || '-'}</td>
           <td>${d.raLamThem || '-'}</td>
           <td>${gioThem.toFixed(2)}</td>
-          <td>${d.gioLamTrongNgay || '-'}</td>
+          <td>${(parseFloat(d.gioLamTrongNgay) || 0).toFixed(2)}</td>
           <td>${d.ghiChu || ''}</td>
         </tr>`;
     });
@@ -191,5 +191,6 @@ document.getElementById('exportBtn').addEventListener('click', () => {
 </script>
 </body>
 </html>
+
 
 
