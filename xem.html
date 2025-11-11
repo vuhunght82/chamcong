@@ -162,8 +162,8 @@ function loadData() {
           <td>${d.raCaSang || '-'}</td>
           <td>${d.vaoCaChieu || '-'}</td>
           <td>${d.raCaChieu || '-'}</td>
-          <td class="extra-col">${d.vaoLamThem || '-'}</td>
-          <td class="extra-col">${d.raLamThem || '-'}</td>
+          <td >${d.vaoLamThem || '-'}</td>
+          <td>${d.raLamThem || '-'}</td>
           <td>${gioThem.toFixed(2)}</td>
           <td>${(parseFloat(d.gioLamTrongNgay) || 0).toFixed(2)}</td>
           <td>${d.ghiChu || ''}</td>
@@ -203,6 +203,7 @@ document.getElementById('exportBtn').addEventListener('click', () => {
 </script>
 </body>
 </html>
+
 
 
 
