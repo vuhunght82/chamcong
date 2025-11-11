@@ -242,7 +242,7 @@ function handleAttendance(email, qrContent, lat, lng) {
     
 
   // Gán trực tiếp vào data trước khi set:
-  data.ghiChu = ghichucalam.trim();
+  data.ghiChu = ghichucalam;
       
         // --- Lưu dữ liệu Firebase ---
       ref.set(data)
@@ -330,6 +330,7 @@ function deg2rad(deg){ return deg*Math.PI/180; }
 </script>
 </body>
 </html>
+
 
 
 
