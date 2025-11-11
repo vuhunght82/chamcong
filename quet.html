@@ -176,6 +176,13 @@ alert(`Khoảng cách tới công ty: ${distance.toFixed(1)} m`);
           ghichucalam+='Về sớm ca sáng!';
         }
       }
+        if (currentHour < 7.5) {
+           data.vaoCaSang = currentTime;
+          msg += '⚠ Đi sớm ca sáng! ';
+          ghichucalam+='Đi sớm ca sáng!';
+        }
+
+        
       // --- Ca chiều ---
       else if (currentHour >= 13 && currentHour <= 17.5) {
         if (!data.vaoCaChieu) {
@@ -322,6 +329,7 @@ function deg2rad(deg){ return deg*Math.PI/180; }
 </script>
 </body>
 </html>
+
 
 
 
