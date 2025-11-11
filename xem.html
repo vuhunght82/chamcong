@@ -155,7 +155,7 @@ function loadData() {
       tongThem += gioThem;
       html += `
         <tr>
-          <td>$formatDate({day})</td>
+          <td>${formatDate(day)}</td>
           <td>${d.vaoCaSang || '-'}</td>
           <td>${d.raCaSang || '-'}</td>
           <td>${d.vaoCaChieu || '-'}</td>
@@ -201,6 +201,7 @@ document.getElementById('exportBtn').addEventListener('click', () => {
 </script>
 </body>
 </html>
+
 
 
 
