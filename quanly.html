@@ -113,9 +113,9 @@
                 <th>Ra chiều</th>
                 <th>Vào làm thêm</th>
                 <th>Ra làm thêm</th>
-                <th>Giờ làm thêm (h)</th>
-                <th>Giờ làm (h)</th>
                 
+                <th>Giờ làm (h)</th>
+                <th>Giờ làm thêm (h)</th>
                 <th>Ghi chú</th>
                 <th>Xóa</th>
             </tr>
@@ -304,7 +304,7 @@
               <td contenteditable="true" class="extra-col">${r.vaoLamThem}</td>
             <td contenteditable="true" class="extra-col">${r.raLamThem}</td>
               <td contenteditable="true">${r.gioLam.toFixed(2)}</td>
-              <td contenteditable="true">${r.gioLamThem.toFixed(2)}</td>
+              <td contenteditable="true" class="extra-col">${r.gioLamThem.toFixed(2)}</td>
               <td contenteditable="true">${r.ghiChu}</td>
               <td><button class="deleteBtn">Xóa</button></td>
             </tr>
@@ -386,6 +386,7 @@
     </script>
 </body>
 </html>
+
 
 
 
