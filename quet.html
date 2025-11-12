@@ -214,6 +214,13 @@ function handleAttendance(email, qrContent, lat, lng) {
         if (data.vaoCaSang && !data.raCaSang) {
           data.raCaSang = '11:30';
           msg += ' ⚠ Tự động chốt ra ca sáng 11:30.';
+         data.vaoLamThem =currentTime ;
+         msg += ` ℹ Giờ làm thêm từ 11:30 đến ${currentTime}.`;
+        if(data.vaolamthem && !data.raLamThem)
+        {
+        data.raLamThem =currentTime ;  
+        }      
+                
         }
 
         // Tự chốt ca chiều nếu chưa vào/ra và >17:30
@@ -229,6 +236,9 @@ function handleAttendance(email, qrContent, lat, lng) {
           data.raLamThem = currentTime;
           msg += ` ℹ Giờ làm thêm từ 17:30 đến ${currentTime}.`;
         }
+        
+        }
+              
       }
 
       // --- Tính tổng giờ làm ---
@@ -338,6 +348,7 @@ function deg2rad(deg){ return deg*Math.PI/180; }
 </script>
 </body>
 </html>
+
 
 
 
