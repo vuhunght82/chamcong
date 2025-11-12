@@ -233,7 +233,7 @@ else if (currentHour > 17.5) {
     msg += '⚠ Tự động chốt ca chiều 17:30. ';
   }
   data.vaoLamThem = '17:30';
-  data.raLamThem = currentTime;
+  data.raLamThem = currentTime+ '\n làm thêm';
 }
     
       // --- Tính tổng giờ làm ---
@@ -282,8 +282,11 @@ function encodeEmail(email) {
   return email.replace(/\./g, ',');
 }
 function parseTime(timeStr) {
-  const [h, m, s = 0] = timeStr.split(':');
-  return Number(h) + Number(m) / 60 + Number(s) / 3600;
+  if (!timeStr) return 0;
+  // Bỏ mọi ký tự không phải số hoặc dấu ':'
+  timeStr = timeStr.replace(/[^0-9:]/g, '');
+  const [h, m, s = 0] = timeStr.split(':').map(Number);
+  return h + (m || 0) / 60 + (s || 0) / 3600;
 }
 
 // ================== Sự kiện ==================
@@ -314,6 +317,7 @@ function deg2rad(deg){ return deg*Math.PI/180; }
 </script>
 </body>
 </html>
+
 
 
 
