@@ -164,7 +164,7 @@
                 nhanvienSelect.innerHTML = '<option value="">-- Chọn nhân viên --</option>';
                 snapshot.forEach(child => {
                     const nv = child.val();
-                    nhanvienSelect.insertAdjacentHTML('beforeend', `<option value="${nv.username}">${nv.hoten} (${nv.usename})</option>`);
+                    nhanvienSelect.insertAdjacentHTML('beforeend', `<option value="${nv.username}">${nv.hoten} (${nv.username})</option>`);
                 });
             });
         }
@@ -386,6 +386,7 @@
     </script>
 </body>
 </html>
+
 
 
 
