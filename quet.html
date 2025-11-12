@@ -216,13 +216,13 @@ function handleAttendance(email, qrContent, lat, lng) {
           msg += ' ⚠ Tự động chốt ra ca sáng 11:30.';
          
         }
-              if(!data.vaolamThem)
+              if(!data.vaoLamThem)
               {
                   data.vaoLamThem= currentTime; 
               }
               if(data.vaoLamThem && !data.raLamThem)
               {
-                      data.raoLamThem= currentTime; 
+                      data.raLamThem= currentTime; 
               }
          {
      //    msg += ` ℹ Giờ làm thêm từ 11:30 đến ${currentTime}.`;
@@ -324,6 +324,7 @@ function deg2rad(deg){ return deg*Math.PI/180; }
 </script>
 </body>
 </html>
+
 
 
 
