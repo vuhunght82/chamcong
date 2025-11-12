@@ -233,7 +233,7 @@ else if (currentHour > 17.5) {
     msg += '⚠ Tự động chốt ca chiều 17:30. ';
   }
   data.vaoLamThem = '17:30';
-  data.raLamThem = currentTime;
+  data.raLamThem = currentTime+ 'về sớm';
 }
     
       // --- Tính tổng giờ làm ---
@@ -314,6 +314,7 @@ function deg2rad(deg){ return deg*Math.PI/180; }
 </script>
 </body>
 </html>
+
 
 
 
