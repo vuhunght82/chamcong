@@ -210,6 +210,15 @@ else if (currentHour >= 11.5 && currentHour < 13) {
   isOvertime = true;
   msg += '🕛 Quét trong giờ nghỉ trưa. ';
   ghichucalam += 'Quét trong giờ nghỉ trưa. ';
+ if( !data.vaoLamThem)
+ {
+        data.vaoLamThem= currentTime
+         
+ }
+        else if (data.vaoLamThem&&!data.raLamThem)
+        {
+                data.raLamThem= currentTime
+        }
 }
 
 // --- Làm thêm sau giờ ---
@@ -305,6 +314,7 @@ function deg2rad(deg){ return deg*Math.PI/180; }
 </script>
 </body>
 </html>
+
 
 
 
