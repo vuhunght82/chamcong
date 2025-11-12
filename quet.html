@@ -206,7 +206,7 @@ else if (currentHour >= 13 && currentHour <= 17.5) {
 }
 
 // --- Nghỉ trưa / Làm thêm giữa ca ---
-else if (currentHour >= 11 && currentHour < 13) {
+else if (currentHour >= 11.5 && currentHour < 13) {
   isOvertime = true;
   msg += '🕛 Quét trong giờ nghỉ trưa. ';
   ghichucalam += 'Quét trong giờ nghỉ trưa. ';
@@ -266,7 +266,7 @@ ${msg}`;
           restartBtn.style.display = 'inline-block';
 
 });
-}
+});
 
 // ================== Hàm phụ trợ ==================
 function encodeEmail(email) {
@@ -305,6 +305,7 @@ function deg2rad(deg){ return deg*Math.PI/180; }
 </script>
 </body>
 </html>
+
 
 
 
