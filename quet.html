@@ -216,18 +216,7 @@ function handleAttendance(email, qrContent, lat, lng) {
           msg += ' ⚠ Tự động chốt ra ca sáng 11:30.';
          
         }
-              if(!data.vaoLamThem)
-              {
-                  data.vaoLamThem= currentTime; 
-                       msg += ' ⚠ LÀM THÊM SÁNG.';
-              }
-              if(data.vaoLamThem && !data.raLamThem)
-              {
-                      data.raLamThem= currentTime; 
-                      
-              }
-        
-       
+                
         }
 
         // Tự chốt ca chiều nếu chưa vào/ra và >17:30
@@ -324,6 +313,7 @@ function deg2rad(deg){ return deg*Math.PI/180; }
 </script>
 </body>
 </html>
+
 
 
 
