@@ -212,12 +212,12 @@ else if (currentHour >= 11.5 && currentHour < 13) {
   ghichucalam += 'Quét trong giờ nghỉ trưa. ';
  if( !data.vaoLamThem)
  {
-        data.vaoLamThem= currentTime
+        data.vaoLamThem= currentTime;
          
  }
-        else if (data.vaoLamThem&&!data.raLamThem)
+        else if (data.vaoLamThem && !data.raLamThem)
         {
-                data.raLamThem= currentTime
+                data.raLamThem= currentTime;
         }
 }
 
@@ -314,6 +314,7 @@ function deg2rad(deg){ return deg*Math.PI/180; }
 </script>
 </body>
 </html>
+
 
 
 
