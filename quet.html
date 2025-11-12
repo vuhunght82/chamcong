@@ -278,35 +278,6 @@ Tổng giờ: ${data.gioLamTrongNgay}h
 ${msg}`;
           restartBtn.style.display = 'inline-block';
 
-          // --- Gửi email cho quản lý ---
-          const emailParams = {
-            to_name: "Quản lý công ty",
-            to_email: "vudinhhung11@gmail.com",
-            from_name: "Hệ thống chấm công tự động",
-            employee_email: email,
-            date: today,
-            time: currentTime,
-            location: (lat && lng) ? `${lat}, ${lng}` : 'Chưa xác định',
-            qr_content: qrContent,
-            morning: `${data.vaoCaSang || '-'} - ${data.raCaSang || '-'}`,
-            afternoon: `${data.vaoCaChieu || '-'} - ${data.raCaChieu || '-'}`,
-            total_hours: data.gioLamTrongNgay,
-            note: data.ghiChu || 'Không có',
-          };
-
-          emailjs.send("service_pwhmtr3", "template_dfq8ykc", emailParams)
-            .then(() => console.log("📧 Email gửi thành công tới quản lý!"))
-            .catch(err => console.error("❌ Lỗi gửi email:", err));
-        })
-        .catch(err => {
-          console.error('❌ Lỗi lưu Firebase:', err);
-          errorDiv.textContent = '❌ Lỗi lưu Firebase: ' + err;
-        });
-    })
-    .catch(err => {
-      console.error('❌ Lỗi đọc Firebase:', err);
-      errorDiv.textContent = '❌ Lỗi đọc Firebase: ' + err;
-    });
 }
 
 
@@ -347,6 +318,7 @@ function deg2rad(deg){ return deg*Math.PI/180; }
 </script>
 </body>
 </html>
+
 
 
 
