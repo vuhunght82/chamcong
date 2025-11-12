@@ -219,14 +219,14 @@ function handleAttendance(email, qrContent, lat, lng) {
               if(!data.vaoLamThem)
               {
                   data.vaoLamThem= currentTime; 
+                       msg += ' ⚠ LÀM THÊM SÁNG.';
               }
               if(data.vaoLamThem && !data.raLamThem)
               {
                       data.raLamThem= currentTime; 
+                      
               }
-         {
-     //    msg += ` ℹ Giờ làm thêm từ 11:30 đến ${currentTime}.`;
-        }
+        
        
         }
 
@@ -324,6 +324,7 @@ function deg2rad(deg){ return deg*Math.PI/180; }
 </script>
 </body>
 </html>
+
 
 
 
