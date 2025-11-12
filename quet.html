@@ -201,7 +201,7 @@ else if (currentHour >= 13 && currentHour <= 17.5) {
   } else {
     data.raCaChieu = currentTime;
     if (currentHour < 17.5) msg += '⚠ Về sớm ca chiều! ';
-    data.raCaChieu = currentTime+'về Sớm';
+    data.raCaChieu = currentTime;
   }
 }
 
@@ -314,6 +314,7 @@ function deg2rad(deg){ return deg*Math.PI/180; }
 </script>
 </body>
 </html>
+
 
 
 
