@@ -216,6 +216,7 @@ function handleAttendance(email, qrContent, lat, lng) {
           msg += ' ⚠ Tự động chốt ra ca sáng 11:30.';
          data.vaoLamThem =currentTime ;
          msg += ` ℹ Giờ làm thêm từ 11:30 đến ${currentTime}.`;
+        }
         if(data.vaolamthem && !data.raLamThem)
         {
         data.raLamThem =currentTime ;  
@@ -238,9 +239,7 @@ function handleAttendance(email, qrContent, lat, lng) {
                                 }
         
         }
-    } 
-      }
-
+    
       // --- Tính tổng giờ làm ---
       let totalHours = 0;
       if (data.vaoCaSang && data.raCaSang) totalHours += parseTime(data.raCaSang) - parseTime(data.vaoCaSang);
@@ -348,6 +347,7 @@ function deg2rad(deg){ return deg*Math.PI/180; }
 </script>
 </body>
 </html>
+
 
 
 
