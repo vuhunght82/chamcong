@@ -196,7 +196,25 @@ function distance(a, b, c, d) {
     let s = Math.sin(x/2)**2 + Math.cos(a*Math.PI/180)*Math.cos(c*Math.PI/180)*Math.sin(y/2)**2;
     return R * 2 * Math.atan2(Math.sqrt(s), Math.sqrt(1 - s));
 }
+function timeDiff(a, b) {
+    if (!a || !b) return 0;
 
+    // chỉ lấy HH:MM
+    a = a.replace(/[^0-9:]/g, "");
+    b = b.replace(/[^0-9:]/g, "");
+
+    if (!a.includes(":") || !b.includes(":")) return 0;
+
+    const pa = a.split(":").map(Number);
+    const pb = b.split(":").map(Number);
+
+    if (pa.length < 2 || pb.length < 2) return 0;
+    if (isNaN(pa[0]) || isNaN(pa[1]) || isNaN(pb[0]) || isNaN(pb[1])) return 0;
+
+    const t1 = pa[0] + pa[1] / 60;
+    const t2 = pb[0] + pb[1] / 60;
+    return t2 - t1;
+}
 /* ===================== LƯU CHẤM CÔNG ===================== */
 function saveAttendance(lat, lng) {
 
@@ -241,14 +259,13 @@ function saveAttendance(lat, lng) {
 
         // TÍNH GIỜ
         let total = 0;
-        if (d.vaoCaSang && d.raCaSang) total += timeDiff(d.vaoCaSang, d.raCaSang);
-        if (d.vaoCaTrua && d.raCaTrua) total += timeDiff(d.vaoCaTrua, d.raCaTrua);
-        if (d.vaoCaChieu && d.raCaChieu) total += timeDiff(d.vaoCaChieu, d.raCaChieu);
-        d.gioLamTrongNgay = total.toFixed(2);
+total += timeDiff(d.vaoCaSang, d.raCaSang);
+total += timeDiff(d.vaoCaTrua, d.raCaTrua);
+total += timeDiff(d.vaoCaChieu, d.raCaChieu);
+d.gioLamTrongNgay = total.toFixed(2);
 
-        let ot = 0;
-        if (d.vaoLamThem && d.raLamThem) ot = timeDiff(d.vaoLamThem, d.raLamThem);
-        d.gioLamThem = ot.toFixed(2);
+let ot = timeDiff(d.vaoLamThem, d.raLamThem);
+d.gioLamThem = ot.toFixed(2);
 
         d.diaDiemQuet = `${lat},${lng}`;
 
@@ -289,4 +306,5 @@ startCamera();
 
 </body>
 </html>
+
 
