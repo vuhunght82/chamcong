@@ -170,7 +170,7 @@ function handleAttendance(email, qrContent, lat, lng) {
       let msg = '';
       let isOvertime = false;
  
-    let ghichucalam = data.ghiChu || ''; // giữ ghi chú cũ
+    let ghichucalam;
 
       // --- Ca sáng ---
 if (currentHour >= 7.5 && currentHour <= 11.5) {
@@ -182,6 +182,18 @@ if (currentHour >= 7.5 && currentHour <= 11.5) {
     data.raCaSang = currentTime;
     if (currentHour < 11.5) msg += '⚠ Về sớm ca sáng! ';
     ghichucalam += 'Về sớm ca sáng! ';
+  }
+}
+
+        // ca trua
+        if (currentHour > 11.5 && currentHour <13) {
+  if (!data.vaoCaTrua) {
+    data.vaoCaTrua = currentTime;
+    ghichucalam += 'Làm trưa';
+  } else {
+    data.raCaTrua = currentTime;
+    
+    ghichucalam += 'Làm trưa! ';
   }
 }
 
@@ -255,7 +267,7 @@ else if (currentHour > 17.5) {
     
 
   // Gán trực tiếp vào data trước khi set:
-  data.ghiChu = ghichucalam;
+  data.noteCaTrua = ghichucalam;
       
         // --- Lưu dữ liệu Firebase ---
       ref.set(data)
@@ -317,6 +329,7 @@ function deg2rad(deg){ return deg*Math.PI/180; }
 </script>
 </body>
 </html>
+
 
 
 
