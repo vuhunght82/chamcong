@@ -170,15 +170,15 @@ function handleAttendance(email, qrContent, lat, lng) {
       let msg = '';
       let isOvertime = false;
  
-    let ghichucalam;
-let noteVaoCaSang;
-            let noteRaCaSang;
-            let noteVaoCaTrua;
-            let noteRaCaTrua;
-            let noteVaoChieu;
-            let noteRaCaChieu;
-            let noteVaoLamThem;
-            let noteRaLamThem;
+    let ghichucalam="";
+let noteVaoCaSang="";
+            let noteRaCaSang="";
+            let noteVaoCaTrua="";
+            let noteRaCaTrua="";
+            let noteVaoChieu="";
+            let noteRaCaChieu="";
+            let noteVaoLamThem="";
+            let noteRaLamThem="";
             
              
       // --- Ca sáng ---
@@ -190,7 +190,7 @@ if (currentHour >= 7.5 && currentHour <= 11.5) {
   } else {
     data.raCaSang = currentTime;
     if (currentHour < 11.5) msg += '⚠ Về sớm ca sáng! ';
-    ghichucalam += 'Về sớm ca sáng! ';
+    noteRaCaSang += 'Về sớm ca sáng! ';
   }
 }
 
@@ -198,10 +198,10 @@ if (currentHour >= 7.5 && currentHour <= 11.5) {
      else  if (currentHour > 11.5 && currentHour < 13) {
   if (!data.vaoCaTrua) {
     data.vaoCaTrua = currentTime;
-   data.noteCaTrua = 'vào Làm trưa';
+   noteVaoCaTrua = 'vào Làm trưa';
   } else {
     data.raCaTrua = currentTime;
-   data.noteCaTrua="làm thêm trưa"
+   noteRaCaTrua="làm thêm trưa"
   }
 }
 
@@ -339,6 +339,7 @@ function deg2rad(deg){ return deg*Math.PI/180; }
 </script>
 </body>
 </html>
+
 
 
 
