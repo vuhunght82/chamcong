@@ -189,7 +189,7 @@ if (currentHour >= 7.5 && currentHour <= 11.5) {
      else  if (currentHour > 11.5 && currentHour < 13) {
   if (!data.vaoCaTrua) {
     data.vaoCaTrua = currentTime;
-    ghichucalam = 'vào Làm trưa';
+   data.noteCaTrua = 'vào Làm trưa';
   } else {
     data.raCaTrua = currentTime;
    data.noteCaTrua="làm thêm trưa"
@@ -328,6 +328,7 @@ function deg2rad(deg){ return deg*Math.PI/180; }
 </script>
 </body>
 </html>
+
 
 
 
