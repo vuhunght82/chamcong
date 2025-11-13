@@ -1,38 +1,40 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>📸 Quét QR Chấm Công</title>
 
 <style>
 body {
-    font-family: Arial;
-    text-align: center;
-    background: linear-gradient(to right, #00ffff, #00c6ff);
-    margin: 0;
+  font-family: Arial;
+  background: linear-gradient(to right,#00ffff,#00c6ff);
+  text-align:center;
+  margin:0;
+  padding:10px;
 }
+h2 { color:#fff; }
 #video-container {
-    width: 100%;
-    max-width: 350px;
-    margin: 20px auto;
-    border: 2px solid #00aaff;
-    border-radius: 10px;
+  width:100%; max-width:360px;
+  margin:20px auto;
+  border:2px solid #0099ff;
+  border-radius:12px;
+  overflow:hidden;
 }
-video { width: 100%; }
-#result { font-weight: bold; margin-top: 10px; color: green; }
+video { width:100%; }
+#result { white-space:pre-line; font-weight:bold; margin-top:10px; }
 button {
-    margin-top: 15px;
-    padding: 12px 20px;
-    border-radius: 10px;
-    font-size: 16px;
-    background: green;
-    color: white;
-    border: none;
+  margin-top:12px;
+  padding:12px 20px;
+  border:none;
+  background:green;
+  color:white;
+  font-size:16px;
+  border-radius:8px;
 }
 </style>
 
-<!-- jsQR decode không cần worker -->
+<!-- jsQR -->
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
 
 <!-- Firebase -->
@@ -45,66 +47,59 @@ button {
 <h2>📸 Quét QR Chấm Công</h2>
 
 <div id="video-container">
-    <video id="video" autoplay playsinline></video>
+  <video id="video" autoplay playsinline></video>
 </div>
 
 <div id="result">Đang chờ quét...</div>
-
 <button id="retry">🔄 Quét lại</button>
 
 <script>
-/* ========== CAMERA ========== */
+/* ===================== CAMERA ===================== */
 const video = document.getElementById("video");
 const resultDiv = document.getElementById("result");
 const retryBtn = document.getElementById("retry");
 
 let scanning = false;
 
-async function startCamera() {
-    try {
-        const stream = await navigator.mediaDevices.getUserMedia({
-            video: { facingMode: "environment" }
-        });
-        video.srcObject = stream;
-        video.play();
-        scanning = true;
-        scanFrame();
-    } catch (e) {
-        resultDiv.textContent = "Không mở được camera!";
-        console.error(e);
-    }
-}
-
-function scanFrame() {
-    if (!scanning) return;
-
-    const canvas = document.createElement("canvas");
-    const ctx = canvas.getContext("2d");
-
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-
-    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-    const img = ctx.getImageData(0, 0, canvas.width, canvas.height);
-
-    const code = jsQR(img.data, img.width, img.height);
-
-    if (code) {
-        scanning = false;
-        handleScan(code.data);
-        return;
-    }
-    requestAnimationFrame(scanFrame);
-}
-
-retryBtn.onclick = () => {
+async function startCamera(){
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video:{ facingMode:"environment" }
+    });
+    video.srcObject = stream;
     scanning = true;
-    resultDiv.textContent = "Đang chờ quét...";
-    scanFrame();
-};
+    scanLoop();
+  } catch (e){
+    resultDiv.textContent = "❌ Không mở được camera";
+  }
+}
 
-/* ========== FIREBASE ========== */
-const firebaseConfig = {
+function scanLoop(){
+  if(!scanning) return;
+
+  const canvas = document.createElement("canvas");
+  const ctx = canvas.getContext("2d");
+
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+
+  ctx.drawImage(video,0,0,canvas.width,canvas.height);
+  const frame = ctx.getImageData(0,0,canvas.width,canvas.height);
+  const code = jsQR(frame.data, frame.width, frame.height);
+
+  if(code){
+    scanning = false;
+    decodeQR(code.data);
+    return;
+  }
+  requestAnimationFrame(scanLoop);
+}
+
+retryBtn.onclick = ()=>{ scanning = true; resultDiv.textContent="Đang chờ quét..."; scanLoop(); };
+
+
+/* ===================== FIREBASE ===================== */
+firebase.initializeApp({
   apiKey: "AIzaSyAb5AZOBvEVY3a_9ioEKTW-wuVMXdnRZGQ",
   authDomain: "sellglass-3ebe9.firebaseapp.com",
   databaseURL: "https://sellglass-3ebe9-default-rtdb.asia-southeast1.firebasedatabase.app",
@@ -112,45 +107,185 @@ const firebaseConfig = {
   storageBucket: "sellglass-3ebe9.appspot.com",
   messagingSenderId: "513741829035",
   appId: "1:513741829035:web:1b2c59dcf1a0be329358ee"
-};
-
-firebase.initializeApp(firebaseConfig);
+});
 const db = firebase.database();
 
-function encodeEmail(email) {
-    return email.replace(/\./g, ",");
+function encodeEmail(e){ return e.replace(/\./g,","); }
+
+
+/* ===================== XỬ LÝ QR ===================== */
+
+const VALID_QR = "CHECKIN_GLASS_COMPANY";
+
+// GPS công ty
+const COMPANY = { lat:10.84964185816, lng:106.58569113116 };
+
+function decodeQR(text){
+  if(text !== VALID_QR){
+    alert("❌ QR không hợp lệ");
+    return;
+  }
+
+  // lấy GPS user
+  navigator.geolocation.getCurrentPosition(
+    pos=>{
+      const lat = pos.coords.latitude;
+      const lng = pos.coords.longitude;
+
+      saveAttendance(lat,lng);
+    },
+    err=>{
+      alert("❌ Không lấy được GPS");
+    },
+    { enableHighAccuracy:true, timeout:5000 }
+  );
 }
 
-/* ========== HANDLE QR ========== */
-function handleScan(text) {
-    resultDiv.textContent = "Đã quét: " + text;
 
-    if (text !== "CHECKIN_GLASS_COMPANY") {
-        alert("❌ Mã QR không hợp lệ!");
-        return;
+/* ===================== LƯU CHẤM CÔNG ===================== */
+
+function saveAttendance(lat,lng){
+  const email = sessionStorage.getItem("userEmail");
+  if(!email){
+    alert("Bạn chưa đăng nhập");
+    return;
+  }
+
+  const key = encodeEmail(email);
+  const now = new Date();
+  const day = now.toISOString().slice(0,10);
+  const time = now.toLocaleTimeString();
+  const hour = now.getHours() + now.getMinutes()/60;
+
+  // kiểm tra khoảng cách
+  const d = getDistance(lat,lng, COMPANY.lat, COMPANY.lng);
+  if(d > 100){
+    alert("❌ Bạn đang quá xa công ty (" + d.toFixed(1) + "m)");
+    return;
+  }
+
+  const ref = db.ref("chamcong/"+key+"/"+day);
+
+  ref.once("value").then(snap=>{
+    const data = snap.val() || {};
+
+    // tạo note rỗng
+    data.noteVaoCaSang = data.noteVaoCaSang || "";
+    data.noteRaCaSang = data.noteRaCaSang || "";
+    data.noteVaoCaTrua = data.noteVaoCaTrua || "";
+    data.noteRaCaTrua = data.noteRaCaTrua || "";
+    data.noteVaoCaChieu = data.noteVaoCaChieu || "";
+    data.noteRaCaChieu = data.noteRaCaChieu || "";
+    data.noteVaoOT = data.noteVaoOT || "";
+    data.noteRaOT = data.noteRaOT || "";
+    data.ghiChu = data.ghiChu || "";
+
+    let msg = "";
+
+    /* ==== CA SÁNG (7h30 → 11h30) ==== */
+    if(hour >= 7.5 && hour <= 11.5){
+      if(!data.vaoCaSang){
+        data.vaoCaSang = time;
+        if(hour > 7.5) data.noteVaoCaSang += "Đi muộn. ";
+        msg="Vào ca sáng";
+      } else {
+        data.raCaSang = time;
+        if(hour < 11.5) data.noteRaCaSang += "Ra sớm. ";
+        msg="Ra ca sáng";
+      }
     }
 
-    const email = sessionStorage.getItem("userEmail");
-    if (!email) {
-        alert("Bạn chưa đăng nhập!");
-        return;
+    /* ==== CA TRƯA (11h30 → 13h) ==== */
+    else if(hour >= 11.5 && hour < 13){
+      if(!data.vaoCaTrua){
+        data.vaoCaTrua = time;
+        data.noteVaoCaTrua += "Bắt đầu ca trưa. ";
+        msg="Vào ca trưa";
+      }
+      else if(!data.raCaTrua){
+        data.raCaTrua = time;
+        data.noteRaCaTrua += "Kết thúc ca trưa. ";
+        msg="Ra ca trưa";
+      }
     }
 
-    const key = encodeEmail(email);
-    const now = new Date();
-    const day = now.toISOString().slice(0, 10);
-    const time = now.toLocaleTimeString();
+    /* ==== CA CHIỀU (13h → 17h30) ==== */
+    else if(hour >= 13 && hour <= 17.5){
+      if(!data.vaoCaChieu){
+        data.vaoCaChieu = time;
+        if(hour>13) data.noteVaoCaChieu += "Đi muộn ca chiều. ";
+        msg="Vào ca chiều";
+      }
+      else {
+        data.raCaChieu = time;
+        if(hour < 17.5) data.noteRaCaChieu += "Ra sớm. ";
+        msg="Ra ca chiều";
+      }
+    }
 
-    const ref = db.ref("chamcong/" + key + "/" + day);
+    /* ==== LÀM THÊM (sau 17h30) ==== */
+    else if(hour > 17.5){
+      if(!data.vaoLamThem){
+        data.vaoLamThem = time;
+        data.noteVaoOT += "Bắt đầu OT. ";
+        msg="Vào tăng ca";
+      }
+      else {
+        data.raLamThem = time;
+        data.noteRaOT += "Kết thúc OT. ";
+        msg="Ra tăng ca";
+      }
+    }
 
-    ref.once("value").then(snap => {
-        const d = snap.val() || {};
+    /* ==== Tính tổng giờ ==== */
+    let total = 0;
+    if(data.vaoCaSang && data.raCaSang)
+      total += parseTime(data.raCaSang) - parseTime(data.vaoCaSang);
+    if(data.vaoCaTrua && data.raCaTrua)
+      total += parseTime(data.raCaTrua) - parseTime(data.vaoCaTrua);
+    if(data.vaoCaChieu && data.raCaChieu)
+      total += parseTime(data.raCaChieu) - parseTime(data.vaoCaChieu);
 
-        if (!d.vaoCaSang) d.vaoCaSang = time;
-        else if (!d.raCaSang) d.raCaSang = time;
+    data.gioLamTrongNgay = total.toFixed(2);
 
-        ref.set(d).then(() => alert("✔ Chấm công thành công!"));
+    let ot=0;
+    if(data.vaoLamThem && data.raLamThem)
+      ot = parseTime(data.raLamThem)-parseTime(data.vaoLamThem);
+
+    data.gioLamThem = ot.toFixed(2);
+
+    // lưu GPS
+    data.diaDiemQuet = lat+", "+lng;
+
+    ref.set(data).then(()=>{
+      alert("✔ "+msg);
+      resultDiv.textContent = JSON.stringify(data, null, 2);
+      scanning=false;
     });
+
+  });
+}
+
+
+/* ===================== HÀM PHỤ ===================== */
+function parseTime(t){
+  if(!t) return 0;
+  t = t.replace(/[^0-9:]/g,"");
+  const [h,m] = t.split(":").map(Number);
+  return h + m/60;
+}
+
+// Tính khoảng cách theo mét
+function getDistance(lat1,lon1,lat2,lon2){
+  const R = 6371000;
+  const dLat = (lat2-lat1)*Math.PI/180;
+  const dLon = (lon2-lon1)*Math.PI/180;
+  const a = 
+    Math.sin(dLat/2)**2 +
+    Math.cos(lat1*Math.PI/180)*
+    Math.cos(lat2*Math.PI/180)*
+    Math.sin(dLon/2)**2;
+  return R * 2 * Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
 }
 
 startCamera();
