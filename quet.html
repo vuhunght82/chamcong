@@ -6,39 +6,17 @@
 <title>📸 Quét QR Chấm Công</title>
 
 <style>
-body {
-  font-family: Arial;
-  background: linear-gradient(to right,#00ffff,#00c6ff);
-  text-align:center;
-  margin:0; padding:10px;
-}
+body { font-family: Arial; text-align:center; background:#00c6ff; margin:0; padding:10px; }
 h2 { color:#fff; }
-#video-container {
-  width:100%; max-width:360px;
-  margin:20px auto;
-  border:2px solid #0099ff;
-  border-radius:12px;
-  overflow:hidden;
-}
+#video-container { width:100%; max-width:350px; margin:auto; border:2px solid #fff; border-radius:10px; overflow:hidden; }
 video { width:100%; }
-#result { white-space:pre-line; font-weight:bold; margin-top:10px; }
-button {
-  margin-top:12px;
-  padding:12px 20px;
-  border:none;
-  background:green;
-  color:white;
-  font-size:16px;
-  border-radius:8px;
-  width:90%;
-  max-width:320px;
-}
+#result { color:#fff; margin-top:10px; white-space:pre-line; }
+button { margin-top:12px; padding:12px; width:90%; max-width:300px; border:none; border-radius:10px; color:white; font-size:16px; }
 #logoutBtn { background:#ff3333; }
 #viewBtn { background:#005ae0; }
-#retry { background:#ffaa00; }
 </style>
 
-<!-- jsQR -->
+<!-- QR decode -->
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
 
 <!-- Firebase -->
@@ -48,77 +26,26 @@ button {
 </head>
 <body>
 
-<h2>📸 QUÉT MÃ QR CHẤM CÔNG</h2>
+<h2>📸 QUÉT MÃ QR</h2>
 
-<div id="video-container">
-  <video id="video" autoplay playsinline></video>
-</div>
-
+<div id="video-container"><video id="video" autoplay playsinline></video></div>
 <div id="result">Đang mở camera...</div>
 
-<button id="retry">🔄 Quét lại</button>
 <button id="viewBtn">📋 Xem chấm công</button>
 <button id="logoutBtn">🚪 Đăng xuất</button>
 
 <script>
-/* =========== KHỞI ĐỘNG =========== */
+/* ================== LOGIN ================== */
 const userEmail = sessionStorage.getItem("userEmail");
-if(!userEmail){
-  alert("Bạn chưa đăng nhập");
-  window.location.href = "index.html";
-}
+if(!userEmail){ window.location.href="index.html"; }
 
+/* ================== VIDEO ================== */
 const video = document.getElementById("video");
 const resultDiv = document.getElementById("result");
-const retryBtn = document.getElementById("retry");
-const viewBtn = document.getElementById("viewBtn");
-const logoutBtn = document.getElementById("logoutBtn");
 
 let scanning = false;
 
-/* =========== BẬT CAMERA TỰ ĐỘNG =========== */
-async function startCamera(){
-  try {
-    const stream = await navigator.mediaDevices.getUserMedia({
-      video:{ facingMode:"environment" }
-    });
-    video.srcObject = stream;
-    scanning = true;
-    resultDiv.textContent="Đang quét mã...";
-    requestAnimationFrame(scanLoop);
-  } catch (e){
-    resultDiv.textContent="❌ Không mở được camera!";
-  }
-}
-
-function scanLoop(){
-  if(!scanning) return;
-
-  const canvas = document.createElement("canvas");
-  const ctx = canvas.getContext("2d");
-
-  canvas.width = video.videoWidth;
-  canvas.height = video.videoHeight;
-  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-  const img = ctx.getImageData(0,0,canvas.width,canvas.height);
-  const qr = jsQR(img.data, img.width, img.height);
-
-  if(qr){
-    scanning = false;
-    handleQR(qr.data);
-    return;
-  }
-  requestAnimationFrame(scanLoop);
-}
-
-retryBtn.onclick = ()=>{
-  resultDiv.textContent="Đang quét lại...";
-  scanning = true;
-  requestAnimationFrame(scanLoop);
-};
-
-/* =========== FIREBASE =========== */
+/* ================== FIREBASE ================== */
 firebase.initializeApp({
   apiKey: "AIzaSyAb5AZOBvEVY3a_9ioEKTW-wuVMXdnRZGQ",
   authDomain: "sellglass-3ebe9.firebaseapp.com",
@@ -128,175 +55,165 @@ firebase.initializeApp({
   messagingSenderId: "513741829035",
   appId: "1:513741829035:web:1b2c59dcf1a0be329358ee"
 });
-
 const db = firebase.database();
+
+/* ================== AUTO START CAMERA ================== */
+async function startCamera(){
+  try{
+    const stream = await navigator.mediaDevices.getUserMedia({ video:{ facingMode:"environment" } });
+    video.srcObject = stream;
+
+    video.onloadeddata = () => {
+      scanning = true;
+      resultDiv.textContent = "Đang quét...";
+      scanLoop();
+    };
+
+  }catch(e){
+    resultDiv.textContent = "❌ Không mở được camera!";
+  }
+}
+
+/* ================== AUTO SCAN LOOP ================== */
+function scanLoop(){
+  if(!scanning) return;
+
+  const w = video.videoWidth;
+  const h = video.videoHeight;
+
+  if(w === 0 || h === 0){
+    // Camera chưa load → thử lại
+    return requestAnimationFrame(scanLoop);
+  }
+
+  const cvs = document.createElement("canvas");
+  const ctx = cvs.getContext("2d");
+  cvs.width = w; cvs.height = h;
+  ctx.drawImage(video,0,0,w,h);
+
+  const img = ctx.getImageData(0,0,w,h);
+  const code = jsQR(img.data, w, h);
+
+  if(code){
+    scanning = false;
+    handleScan(code.data);
+    return;
+  }
+
+  requestAnimationFrame(scanLoop);
+}
+
+/* ================== QR CHECK ================== */
 const VALID_QR = "CHECKIN_GLASS_COMPANY";
 const COMPANY = { lat:10.84964185816, lng:106.58569113116 };
 
 function encodeEmail(e){ return e.replace(/\./g,","); }
 
-/* =========== XỬ LÝ QR =========== */
-function handleQR(text){
+function handleScan(text){
   if(text !== VALID_QR){
-    alert("❌ Mã QR không hợp lệ!");
+    resultDiv.textContent = "❌ Mã QR sai!";
+    setTimeout(()=>{ scanning=true; scanLoop(); }, 1500);
     return;
   }
 
-  resultDiv.textContent = "Đang lấy vị trí GPS...";
+  resultDiv.textContent="Đang lấy GPS...";
 
   navigator.geolocation.getCurrentPosition(
-    pos => saveAttendance(pos.coords.latitude, pos.coords.longitude),
-    err => alert("❌ Không lấy được GPS!"),
+    pos => saveAttendance(pos.coords.latitude,pos.coords.longitude),
+    err => {
+      alert("Không lấy được GPS");
+      scanning = true;
+      scanLoop();
+    },
     { enableHighAccuracy:true, timeout:5000 }
   );
 }
 
-/* =========== TÍNH GIỜ =========== */
-function timeDiff(t1,t2){
-  const p1 = t1.replace(/[^0-9:]/g,"").split(":").map(Number);
-  const p2 = t2.replace(/[^0-9:]/g,"").split(":").map(Number);
-  const h1 = p1[0] + p1[1]/60;
-  const h2 = p2[0] + p2[1]/60;
-  return h2 - h1;
+/* ================== TÍNH GIỜ ================== */
+function diff(a,b){
+  a = a.replace(/[^0-9:]/g,"").split(":").map(Number);
+  b = b.replace(/[^0-9:]/g,"").split(":").map(Number);
+  return (b[0]+b[1]/60) - (a[0]+a[1]/60);
+}
+function distance(a,b,c,d){
+  const R=6371000;
+  let x=(c-a)*Math.PI/180, y=(d-b)*Math.PI/180;
+  let s=Math.sin(x/2)**2 + Math.cos(a*Math.PI/180)*Math.cos(c*Math.PI/180)*Math.sin(y/2)**2;
+  return R*2*Math.atan2(Math.sqrt(s),Math.sqrt(1-s));
 }
 
-function getDistance(lat1,lon1,lat2,lon2){
-  const R = 6371000;
-  const x = (lat2-lat1)*Math.PI/180;
-  const y = (lon2-lon1)*Math.PI/180;
-  const a = Math.sin(x/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(y/2)**2;
-  return R * 2 * Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
-}
-
-/* =========== LƯU CHẤM CÔNG =========== */
-function saveAttendance(lat, lng){
-  const email = userEmail;
-  const key = encodeEmail(email);
-
+/* ================== LƯU CHẤM CÔNG ================== */
+function saveAttendance(lat,lng){
+  const emailKey = encodeEmail(userEmail);
   const now = new Date();
   const day = now.toISOString().slice(0,10);
   const time = now.toLocaleTimeString();
   const hour = now.getHours() + now.getMinutes()/60;
 
-  // kiểm tra GPS
-  const d = getDistance(lat, lng, COMPANY.lat, COMPANY.lng);
-  if(d > 100){
-    alert("❌ Bạn đang quá xa công ty: " + d.toFixed(1) + "m");
-    return;
+  // check GPS
+  if(distance(lat,lng,COMPANY.lat,COMPANY.lng) > 100){
+    alert("❌ Bạn đang quá xa công ty!");
+    scanning = true;
+    return scanLoop();
   }
 
-  const ref = db.ref("chamcong/"+key+"/"+day);
+  const ref = db.ref("chamcong/"+emailKey+"/"+day);
 
   ref.once("value").then(snap=>{
-    const data = snap.val() || {};
+    const d = snap.val() || {};
 
-    // đảm bảo có field ghi chú
-    data.noteVaoCaSang ??= "";
-    data.noteRaCaSang ??= "";
-    data.noteVaoCaTrua ??= "";
-    data.noteRaCaTrua ??= "";
-    data.noteVaoCaChieu ??= "";
-    data.noteRaCaChieu ??= "";
-    data.noteVaoOT ??= "";
-    data.noteRaOT ??= "";
-    data.ghiChu ??= "";
+    d.vaoCaSang ??= "";
+    d.raCaSang ??= "";
+    d.vaoCaTrua ??= "";
+    d.raCaTrua ??= "";
+    d.vaoCaChieu ??= "";
+    d.raCaChieu ??= "";
+    d.vaoLamThem ??= "";
+    d.raLamThem ??= "";
+    d.ghiChu ??= "";
 
     let msg="";
 
-    /* ===== CA SÁNG ===== */
     if(hour>=7.5 && hour<=11.5){
-      if(!data.vaoCaSang){
-        data.vaoCaSang = time;
-        if(hour>7.5) data.noteVaoCaSang += "Đi muộn. ";
-        msg="Vào ca sáng";
-      } else {
-        data.raCaSang = time;
-        if(hour<11.5) data.noteRaCaSang += "Ra sớm. ";
-        msg="Ra ca sáng";
-      }
+      !d.vaoCaSang ? (d.vaoCaSang=time,msg="Vào ca sáng") : (d.raCaSang=time,msg="Ra ca sáng");
     }
-
-    /* ===== CA TRƯA ===== */
     else if(hour>=11.5 && hour<13){
-      if(!data.vaoCaTrua){
-        data.vaoCaTrua = time;
-        data.noteVaoCaTrua += "Bắt đầu ca trưa. ";
-        msg="Vào ca trưa";
-      } else {
-        data.raCaTrua = time;
-        data.noteRaCaTrua += "Kết thúc ca trưa. ";
-        msg="Ra ca trưa";
-      }
+      !d.vaoCaTrua ? (d.vaoCaTrua=time,msg="Vào ca trưa") : (d.raCaTrua=time,msg="Ra ca trưa");
     }
-
-    /* ===== CA CHIỀU ===== */
     else if(hour>=13 && hour<=17.5){
-      if(!data.vaoCaChieu){
-        data.vaoCaChieu = time;
-        if(hour>13) data.noteVaoCaChieu += "Đi muộn ca chiều. ";
-        msg="Vào ca chiều";
-      } else {
-        data.raCaChieu = time;
-        if(hour<17.5) data.noteRaCaChieu += "Ra sớm. ";
-        msg="Ra ca chiều";
-      }
+      !d.vaoCaChieu ? (d.vaoCaChieu=time,msg="Vào ca chiều") : (d.raCaChieu=time,msg="Ra ca chiều");
     }
-
-    /* ===== TĂNG CA ===== */
     else if(hour>17.5){
-      if(!data.vaoLamThem){
-        data.vaoLamThem = time;
-        data.noteVaoOT += "Bắt đầu tăng ca. ";
-        msg="Vào OT";
-      } else {
-        data.raLamThem = time;
-        data.noteRaOT += "Kết thúc tăng ca. ";
-        msg="Ra OT";
-      }
+      !d.vaoLamThem ? (d.vaoLamThem=time,msg="Vào tăng ca") : (d.raLamThem=time,msg="Ra tăng ca");
     }
 
-    /* ===== TÍNH GIỜ ===== */
     let total = 0;
-
-    if(data.vaoCaSang && data.raCaSang)
-      total += timeDiff(data.vaoCaSang, data.raCaSang);
-
-    if(data.vaoCaTrua && data.raCaTrua)
-      total += timeDiff(data.vaoCaTrua, data.raCaTrua);
-
-    if(data.vaoCaChieu && data.raCaChieu)
-      total += timeDiff(data.vaoCaChieu, data.raCaChieu);
-
-    data.gioLamTrongNgay = total.toFixed(2);
+    if(d.vaoCaSang && d.raCaSang) total += diff(d.vaoCaSang,d.raCaSang);
+    if(d.vaoCaTrua && d.raCaTrua) total += diff(d.vaoCaTrua,d.raCaTrua);
+    if(d.vaoCaChieu && d.raCaChieu) total += diff(d.vaoCaChieu,d.raCaChieu);
+    d.gioLamTrongNgay = total.toFixed(2);
 
     let ot = 0;
-    if(data.vaoLamThem && data.raLamThem)
-      ot = timeDiff(data.vaoLamThem, data.raLamThem);
-    data.gioLamThem = ot.toFixed(2);
+    if(d.vaoLamThem && d.raLamThem) ot = diff(d.vaoLamThem,d.raLamThem);
+    d.gioLamThem = ot.toFixed(2);
 
-    data.diaDiemQuet = lat + ", " + lng;
+    d.diaDiemQuet = lat+","+lng;
 
-    ref.set(data).then(()=>{
-      alert("✔ " + msg);
-      resultDiv.textContent = "✔ Đã lưu chấm công\n";
+    ref.set(d).then(()=>{
+      resultDiv.textContent = "✔ " + msg;
+      setTimeout(()=>{ scanning=true; scanLoop(); }, 1500);
     });
 
   });
 }
 
-/* =========== BUTTONS =========== */
-viewBtn.onclick = ()=>{
-  window.location.href = "xem.html?user="+userEmail;
-};
-logoutBtn.onclick = ()=>{
-  sessionStorage.removeItem("userEmail");
-  window.location.href = "index.html";
-};
+/* ================== BUTTONS ================== */
+viewBtn.onclick = ()=> window.location.href="xem.html?user="+userEmail;
+logoutBtn.onclick = ()=>{ sessionStorage.clear(); window.location.href="index.html"; };
 
-/* ======= AUTO START CAMERA ======= */
+/* ================== AUTO START ================== */
 window.onload = startCamera;
 </script>
 
 </body>
 </html>
-
