@@ -270,6 +270,7 @@ d.gioLamThem = ot.toFixed(2);
         d.diaDiemQuet = `${lat},${lng}`;
 
         ref.set(d).then(() => {
+          scanning = false; // NGĂN CAMERA QUÉT TIẾP
             alert(
                 "✔ Chấm công thành công!\n" +
                 "📅 Ngày: "+day+"\n"+
@@ -278,8 +279,10 @@ d.gioLamThem = ot.toFixed(2);
                 "🌙 Tăng ca: "+d.gioLamThem+"h"
             );
 
-            restartScan();
-        });
+            setTimeout(() => {
+                restartScan();
+                }, 1500); // đợi người dùng bấm OK xong
+                });
     });
 }
 
@@ -306,6 +309,7 @@ startCamera();
 
 </body>
 </html>
+
 
 
 
