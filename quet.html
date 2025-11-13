@@ -149,21 +149,157 @@ function handleScan(text) {
   Xử lý chấm công
 ===========================*/
 function handleAttendance() {
-  const emailKey = userEmail.replace(/\./g, ",");
+    
   const now = new Date();
-  const today = now.toISOString().split("T")[0];
-  const time = now.toLocaleTimeString();
+  const today = now.toISOString().split('T')[0]; // YYYY-MM-DD
+  const currentTime = now.toLocaleTimeString('en-GB'); // HH:MM:SS 24h preferable
+  const currentHour = now.getHours() + now.getMinutes()/60;
+  const emailKey = encodeEmail(email);
+  const ref = db.ref('chamcong/' + emailKey + '/' + today);
 
-  const ref = db.ref("chamcong/" + emailKey + "/" + today);
+  // khởi tạo các chuỗi ghi chú
+  let ghichucalam = "";
+  let noteVaoCaSang = "";
+  let noteRaCaSang = "";
+  let noteVaoCaTrua = "";
+  let noteRaCaTrua = "";
+  let noteVaoCaChieu = "";
+  let noteRaCaChieu = "";
+  let noteVaoLamThem = "";
+  let noteRaLamThem = "";
 
-  ref.once("value").then(snap => {
-    const data = snap.val() || {};
+  ref.once('value').then(snapshot=>{
+    const data = snapshot.val() || {};
 
-    if (!data.vaoCaSang) data.vaoCaSang = time;
-    else if (!data.raCaSang) data.raCaSang = time;
+    let msg = '';
+    let isOvertime = false;
 
-    ref.set(data).then(() => {
-      alert("✅ Chấm công thành công!");
+    // --- Ca sáng ---
+    if (currentHour >= 7.5 && currentHour <= 11.5) {
+      if (!data.vaoCaSang) {
+        data.vaoCaSang = currentTime;
+        if (currentHour > 7.5) {
+          msg += '⚠ Đi muộn ca sáng! ';
+          noteVaoCaSang += 'Đi muộn ca sáng! ';
+          ghichucalam += 'Đi muộn ca sáng! ';
+        }
+      } else {
+        data.raCaSang = currentTime;
+        if (currentHour < 11.5) {
+          msg += '⚠ Về sớm ca sáng! ';
+          noteRaCaSang += 'Về sớm ca sáng! ';
+          ghichucalam += 'Về sớm ca sáng! ';
+        }
+      }
+    }
+    // --- Đi sớm ca sáng (trường hợp quét trước 7:30) ---
+    else if (currentHour < 7.5) {
+      data.vaoCaSang = currentTime;
+      msg += '✅ Đi sớm ca sáng! ';
+      ghichucalam += 'Đi sớm ca sáng! ';
+    }
+    // --- Nghỉ trưa / Làm thêm giữa ca (11:30 - 13:00) ---
+    else if (currentHour >= 11.5 && currentHour < 13) {
+      // nếu chưa có vào trưa thì ghi vào trưa
+      if (!data.vaoCaTrua) {
+        data.vaoCaTrua = currentTime;
+        noteVaoCaTrua += 'Vào trưa';
+        ghichucalam += 'Vào trưa ';
+        msg += '⏱ Vào trưa / tạm nghỉ. ';
+      } else if (data.vaoCaTrua && !data.raCaTrua) {
+        data.raCaTrua = currentTime;
+        noteRaCaTrua += 'Ra trưa';
+        ghichucalam += 'Ra trưa ';
+        msg += '⏱ Ra trưa. ';
+      } else {
+        // nếu đã có cả vao/ra trưa, thì tính làm thêm giữa ca
+        isOvertime = true;
+        msg += 'ℹ Làm thêm trong giờ trưa. ';
+        if (!data.vaoLamThem) data.vaoLamThem = currentTime;
+        else if (data.vaoLamThem && !data.raLamThem) data.raLamThem = currentTime;
+      }
+    }
+    // --- Ca chiều ---
+    else if (currentHour >= 13 && currentHour <= 17.5) {
+      if (!data.vaoCaChieu) {
+        data.vaoCaChieu = currentTime;
+        if (currentHour > 13) {
+          msg += '⚠ Đi muộn ca chiều! ';
+          noteVaoCaChieu += 'Đi muộn ca chiều! ';
+          ghichucalam += 'Đi muộn ca chiều! ';
+        }
+      } else {
+        data.raCaChieu = currentTime;
+        if (currentHour < 17.5) {
+          msg += '⚠ Về sớm ca chiều! ';
+          noteRaCaChieu += 'Về sớm ca chiều! ';
+          ghichucalam += 'Về sớm ca chiều! ';
+        }
+      }
+    }
+    // --- Làm thêm sau giờ ---
+    else if (currentHour > 17.5) {
+      isOvertime = true;
+      msg += 'ℹ Giờ làm thêm sau giờ hành chính. ';
+      if (!data.raCaChieu) {
+        data.raCaChieu = '17:30';
+        msg += '⚠ Tự động chốt ca chiều 17:30. ';
+        ghichucalam += 'Tự động chốt ca chiều 17:30. ';
+      }
+      if (!data.vaoLamThem) data.vaoLamThem = '17:30';
+      data.raLamThem = currentTime + ' (làm thêm)';
+      noteVaoLamThem += 'Bắt đầu OT';
+      noteRaLamThem += 'Kết thúc OT';
+    }
+
+    // --- Tính tổng giờ làm (chỉ tính từ giờ hh:mm, bỏ phần chữ nếu có) ---
+    let totalHours = 0;
+    try {
+      if (data.vaoCaSang && data.raCaSang) totalHours += (parseTime(data.raCaSang) - parseTime(data.vaoCaSang));
+      if (data.vaoCaTrua && data.raCaTrua) totalHours += (parseTime(data.raCaTrua) - parseTime(data.vaoCaTrua));
+      if (data.vaoCaChieu && data.raCaChieu) totalHours += (parseTime(data.raCaChieu) - parseTime(data.vaoCaChieu));
+    } catch(e){
+      console.warn('parseTime error', e);
+    }
+    data.gioLamTrongNgay = Number(totalHours.toFixed(2));
+
+    // --- nội dung quét & vị trí ---
+    data.noiDungMaQuet = qrContent;
+    data.diadiemQuet = (lat && lng) ? `${lat},${lng}` : 'Chưa lấy GPS';
+
+    // combine ghi chú (không ghi đè, ghép thêm)
+    data.ghiChu = (data.ghiChu || "") + (ghichucalam ? ghichucalam + " " : "") 
+      + (noteVaoCaSang ? noteVaoCaSang + " " : "")
+      + (noteRaCaSang ? noteRaCaSang + " " : "")
+      + (noteVaoCaTrua ? noteVaoCaTrua + " " : "")
+      + (noteRaCaTrua ? noteRaCaTrua + " " : "")
+      + (noteVaoCaChieu ? noteVaoCaChieu + " " : "")
+      + (noteRaCaChieu ? noteRaCaChieu + " " : "")
+      + (noteVaoLamThem ? noteVaoLamThem + " " : "")
+      + (noteRaLamThem ? noteRaLamThem + " " : "");
+
+    // nếu làm thêm thì hỏi ghi chú bổ sung
+    if (isOvertime) {
+      const note = prompt("📝 Bạn có giờ làm thêm, vui lòng nhập ghi chú (bỏ trống nếu không):");
+      if (note) data.ghiChu = (data.ghiChu || "") + note + " ";
+    }
+
+    / lưu vào Firebase
+    ref.set(data)
+      .then(()=>{
+        // play beep
+        try { beep.play().catch(()=>{}); } catch(e){}
+
+        alert('✅ Chấm công thành công!\n' + msg + (isOvertime ? '\nGhi chú: '+(data.ghiChu||'') : ''));
+
+        resultDiv.textContent = `Nhân viên: ${email}
+Sáng: ${data.vaoCaSang||'-'} - ${data.raCaSang||'-'}
+Trưa: ${data.vaoCaTrua||'-'} - ${data.raCaTrua||'-'}
+Chiều: ${data.vaoCaChieu||'-'} - ${data.raCaChieu||'-'}
+Tổng giờ: ${data.gioLamTrongNgay}h
+${msg}`;
+
+       
       restartBtn.style.display = "block";
     });
   });
@@ -184,3 +320,4 @@ window.onload = startScanner;
 
 </body>
 </html>
+
