@@ -199,11 +199,48 @@ function saveAttendance(lat,lng){
 
     d.diaDiemQuet = lat+","+lng;
 
-    ref.set(d).then(()=>{
-      resultDiv.textContent = "✔ " + msg;
-      alert(msg);
-      setTimeout(()=>{ scanning=true; scanLoop(); }, 1500);
-    });
+   ref.set(d).then(() => {
+
+    // ===== TẠO THÔNG BÁO HOÀN CHỈNH =====
+    let alertMessage =  "✔ CHẤM CÔNG THÀNH CÔNG!\n";
+    alertMessage += "------------------------------\n";
+    alertMessage += "🧑 Nhân viên: " + email + "\n";
+    alertMessage += "📅 Ngày: " + day + "\n";
+    alertMessage += "⏰ Giờ quét: " + time + "\n";
+    alertMessage += "------------------------------\n";
+
+    // GHI CHÚ THEO TỪNG CA
+    if (msg) alertMessage += "📌 " + msg + "\n";
+
+    if (d.noteVaoCaSang) alertMessage += "🌅 Ca sáng: " + d.noteVaoCaSang + "\n";
+    if (d.noteRaCaSang) alertMessage += "🌅 Ra sáng: " + d.noteRaCaSang + "\n";
+
+    if (d.noteVaoCaTrua) alertMessage += "🍱 Vào ca trưa: " + d.noteVaoCaTrua + "\n";
+    if (d.noteRaCaTrua) alertMessage += "🍱 Ra ca trưa: " + d.noteRaCaTrua + "\n";
+
+    if (d.noteVaoCaChieu) alertMessage += "🌇 Vào ca chiều: " + d.noteVaoCaChieu + "\n";
+    if (d.noteRaCaChieu) alertMessage += "🌇 Ra ca chiều: " + d.noteRaCaChieu + "\n";
+
+    if (d.noteVaoLamThem) alertMessage += "🌙 Vào làm thêm: " + d.noteVaoLamThem + "\n";
+    if (d.noteRaLamThem) alertMessage += "🌙 Ra làm thêm: " + d.noteRaLamThem + "\n";
+
+    alertMessage += "------------------------------\n";
+    alertMessage += "⏳ Tổng giờ: " + d.gioLamTrongNgay + "h\n";
+    alertMessage += "⏳ Giờ tăng ca: " + d.gioLamThem + "h\n";
+
+    // HIỆN ALERT
+    alert(alertMessage);
+
+    // Hiện ra màn hình
+    resultDiv.textContent = "✔ " + msg;
+
+    // 1.5s sau quét lại
+    setTimeout(() => {
+        scanning = true;
+        scanLoop();
+    }, 1500);
+});
+
 
   });
 }
@@ -218,4 +255,5 @@ window.onload = startCamera;
 
 </body>
 </html>
+
 
