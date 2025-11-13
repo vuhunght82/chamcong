@@ -5,40 +5,39 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>📸 Quét QR Chấm Công</title>
 <style>
-body {
-  font-family: Arial;
-  text-align: center;
-  background: linear-gradient(to right, #00ffcc, #00c6ff);
-  margin: 0;
-  padding: 0 10px;
-}
+    body {
+        font-family: Arial;
+        text-align: center;
+        background: linear-gradient(to right, #00ffff, #00c6ff);
+        margin: 0;
+        padding: 0 10px;
+    }
 h1 { color:#ffffff; margin: 15px 0; }
 #video-container { margin:20px auto; width:100%; max-width:360px; border:2px solid #007bff; border-radius:10px; overflow:hidden; }
 video { width:100%; height:auto; }
 #result { font-weight:bold; color:green; margin-top:20px; white-space: pre-line; }
 #error { color:red; margin-top:10px; }
-button {
-  margin: 5px;
-  padding: 12px 18px;
-  font-size: 16px;
-  border-radius: 10px;
-  background-color:green;
-  color:#fff;
-  border-color:#fff;
-}
+    button {
+        margin: 5px;
+        padding: 20px 30px;
+        font-size: 16px;
+        border-radius: 10px;
+        background-color:green;
+        color:#fff;
+        border-color:#fff;
+    }
 @media (max-width:480px){
   button, input { width:95%; font-size:1em; }
 }
 </style>
-
-<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
 <script>
   (function() {
-    emailjs.init("zw8NnWti6A--Pyys9"); // giữ public key EmailJS của bạn
+    emailjs.init("zw8NnWti6A--Pyys9"); // 🔹 Thay YOUR_PUBLIC_KEY bằng mã trong EmailJS Dashboard
   })();
 </script>
 </head>
-
+  
 <body>
 <audio id="beepSound" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg" preload="auto"></audio>
 
@@ -54,10 +53,12 @@ button {
 <button id="viewBtn">📋 Xem chấm công</button>
 <button id="logoutBtn">🚪 Đăng xuất</button>
 <button onclick="checkLocation()">Kiểm tra vị trí</button>
-
 <script>
 function checkLocation() {
-  if (!navigator.geolocation) { alert('Trình duyệt không hỗ trợ geolocation!'); return; }
+  if (!navigator.geolocation) {
+    alert('Trình duyệt không hỗ trợ geolocation!');
+    return;
+  }
   navigator.geolocation.getCurrentPosition(
     pos => alert(`Vĩ độ: ${pos.coords.latitude}, Kinh độ: ${pos.coords.longitude}`),
     err => alert(`Lỗi: ${err.code} - ${err.message}`),
@@ -65,7 +66,6 @@ function checkLocation() {
   );
 }
 </script>
-
 <!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
@@ -74,7 +74,7 @@ function checkLocation() {
 <script type="module">
 import QrScanner from 'https://cdn.jsdelivr.net/npm/qr-scanner@1.4.2/qr-scanner.min.js';
 
-// ===== Firebase config =====
+// ================== Firebase ==================
 const firebaseConfig = {
   apiKey: "AIzaSyAb5AZOBvEVY3a_9ioEKTW-wuVMXdnRZGQ",
   authDomain: "sellglass-3ebe9.firebaseapp.com",
@@ -87,308 +87,294 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
-// ===== check login =====
-const userEmail = sessionStorage.getItem('userEmail');
-if (!userEmail) {
-  alert('Vui lòng đăng nhập trước!');
-  window.location.href = 'index.html';
-}
+// ================== Kiểm tra đăng nhập ==================
+//const userEmail = sessionStorage.getItem('userEmail');
+//    if (!userEmail) {
+//        alert('Vui lòng đăng nhập trước!' + userEmail);
+//  window.location.href = 'dangnhap.html';
+//}
 
-// ===== elements =====
+// ================== Elements ==================
 const videoElem = document.getElementById('qr-video');
 const resultDiv = document.getElementById('result');
 const errorDiv = document.getElementById('error');
 const restartBtn = document.getElementById('restartBtn');
 const logoutBtn = document.getElementById('logoutBtn');
 const viewBtn = document.getElementById('viewBtn');
-const beep = document.getElementById('beepSound');
 
-let scanner = null;
+let scanner;
 
-// ===== scanner start =====
-function startScanner(){
-  resultDiv.textContent = 'Đang chờ quét QR...';
-  errorDiv.textContent = '';
-  restartBtn.style.display = 'none';
-
-  // QrScanner callback trả về string decoded text
-  scanner = new QrScanner(videoElem, (decodedText) => {
-    console.log('QR decoded:', decodedText);
-    // Lấy vị trí rồi xử lý
-    if (!navigator.geolocation) {
-      // Nếu không có geolocation API thì vẫn gọi xử lý nhưng sẽ báo thiếu vị trí
-      handleAttendance(userEmail, decodedText, null, null);
-      return;
-    }
+// ================== Hàm quét ==================
+function startScanner() {
+  scanner = new QrScanner(videoElem, qrResult => {
     navigator.geolocation.getCurrentPosition(
-      pos => handleAttendance(userEmail, decodedText, pos.coords.latitude, pos.coords.longitude),
+      pos => handleAttendance(userEmail, qrResult.data, pos.coords.latitude, pos.coords.longitude),
       err => {
-        console.warn('Không lấy được vị trí:', err);
-        // nếu user từ chối vị trí, bạn có thể quyết định từ chối hoặc vẫn lưu; hiện đang từ chối và yêu cầu vị trí
-        handleAttendance(userEmail, decodedText, null, null);
+       
+        console.warn('❌ Không lấy được vị trí:', err);
+        handleAttendance(userEmail, qrResult.data, null, null);
       },
-      { enableHighAccuracy:true, timeout:7000, maximumAge:0 }
+      { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
     );
-  }, { highlightScanRegion:true, highlightCodeOutline:true });
+  }, { highlightScanRegion: true, highlightCodeOutline: true });
 
-  scanner.start().then(()=> {
-    console.log('Scanner started');
-  }).catch(err=>{
-    console.error('Cannot start scanner', err);
-    errorDiv.textContent = '❌ Không thể mở camera: '+err;
+  scanner.start().catch(err => {
+    console.error(err);
+    errorDiv.textContent = '❌ Không thể mở camera: ' + err;
   });
 }
 
-// ===== company config =====
-const COMPANY_LOCATION = { lat: 10.849641858164617, lng: 106.58569113116769 };
+// Vị trí công ty (kinh độ, vĩ độ)
+const COMPANY_LOCATION = { lat: 10.849641858164617, lng: 106.58569113116769 }; // Thay bằng tọa độ thật
+// 10.849641858164617,106.58569113116769
+// Nội dung QR chuẩn
 const VALID_QR_CODE = "CHECKIN_GLASS_COMPANY";
 
-// ===== handle attendance =====
-function handleAttendance(email, qrContent, lat, lng){
-  // bảo đảm scanner tồn tại trước khi stop
-  if (scanner && typeof scanner.stop === 'function') {
-    try { scanner.stop(); } catch(e){ console.warn('scanner.stop error', e); }
-  }
+// ================== Xử lý chấm công ==================
+function handleAttendance(email, qrContent, lat, lng) {
+  scanner.stop();
 
-  console.log('handleAttendance', {email, qrContent, lat, lng});
-  if (!qrContent) {
-    alert('❌ Không đọc được nội dung QR!');
-    restartBtn.style.display = 'inline-block';
-    return;
-  }
-
-  if (qrContent !== VALID_QR_CODE) {
+// --- Kiểm tra QR ---
+  if(qrContent !== VALID_QR_CODE){
     alert('❌ Mã QR không hợp lệ!');
     restartBtn.style.display = 'inline-block';
     return;
   }
 
-  // Kiểm tra vị trí (nếu bạn bắt buộc phải có vị trí)
-  if (lat != null && lng != null) {
+  // --- Kiểm tra khoảng cách GPS ---
+  if(lat && lng){
     const distance = getDistanceFromLatLonInMeters(lat, lng, COMPANY_LOCATION.lat, COMPANY_LOCATION.lng);
-    console.log('distance', distance);
-    if (distance > 100) {
+    if(distance > 100){
+      
+
       alert(`❌ Vị trí quét quá xa so với công ty (${distance.toFixed(1)} m)!`);
       restartBtn.style.display = 'inline-block';
       return;
     }
   } else {
-    // nếu bạn muốn TỪ CHỐI khi thiếu GPS: hiện thông báo và dừng
-    alert('❌ Không xác định được vị trí quét! Vui lòng cho phép vị trí hoặc thử lại.');
+    alert('❌ Không xác định được vị trí quét!');
     restartBtn.style.display = 'inline-block';
     return;
   }
-
+  
   const now = new Date();
-  const today = now.toISOString().split('T')[0]; // YYYY-MM-DD
-  const currentTime = now.toLocaleTimeString('en-GB'); // HH:MM:SS 24h preferable
-  const currentHour = now.getHours() + now.getMinutes()/60;
+  const today = now.toISOString().split('T')[0];
+  const currentTime = now.toLocaleTimeString();
+  const currentHour = now.getHours() + now.getMinutes() / 60;
   const emailKey = encodeEmail(email);
   const ref = db.ref('chamcong/' + emailKey + '/' + today);
+  
+  ref.once('value')
+    .then(snapshot => {
+      const data = snapshot.val() || {};
+      let msg = '';
+      let isOvertime = false;
+ 
+    let ghichucalam = data.ghiChu || ''; // giữ ghi chú cũ
 
-  // khởi tạo các chuỗi ghi chú
-  let ghichucalam = "";
-  let noteVaoCaSang = "";
-  let noteRaCaSang = "";
-  let noteVaoCaTrua = "";
-  let noteRaCaTrua = "";
-  let noteVaoCaChieu = "";
-  let noteRaCaChieu = "";
-  let noteVaoLamThem = "";
-  let noteRaLamThem = "";
-
-  ref.once('value').then(snapshot=>{
-    const data = snapshot.val() || {};
-
-    let msg = '';
-    let isOvertime = false;
-
-    // --- Ca sáng ---
-    if (currentHour >= 7.5 && currentHour <= 11.5) {
-      if (!data.vaoCaSang) {
-        data.vaoCaSang = currentTime;
-        if (currentHour > 7.5) {
-          msg += '⚠ Đi muộn ca sáng! ';
-          noteVaoCaSang += 'Đi muộn ca sáng! ';
-          ghichucalam += 'Đi muộn ca sáng! ';
-        }
-      } else {
-        data.raCaSang = currentTime;
-        if (currentHour < 11.5) {
-          msg += '⚠ Về sớm ca sáng! ';
-          noteRaCaSang += 'Về sớm ca sáng! ';
-          ghichucalam += 'Về sớm ca sáng! ';
+      // --- Ca sáng ---
+      if (currentHour >= 7.5 && currentHour <= 11.5) {
+        if (!data.vaoCaSang) {
+          data.vaoCaSang = currentTime;
+          if (currentHour > 7.5) msg += '⚠ Đi muộn ca sáng! ';
+          ghichucalam+='Đi muộn ca sáng!';
+        } else {
+          data.raCaSang = currentTime;
+          if (currentHour < 11.5) msg += '⚠ Về sớm ca sáng! ';
+          ghichucalam+='Về sớm ca sáng!';
         }
       }
-    }
-    // --- Đi sớm ca sáng (trường hợp quét trước 7:30) ---
-    else if (currentHour < 7.5) {
-      data.vaoCaSang = currentTime;
-      msg += '✅ Đi sớm ca sáng! ';
-      ghichucalam += 'Đi sớm ca sáng! ';
-    }
-    // --- Nghỉ trưa / Làm thêm giữa ca (11:30 - 13:00) ---
-    else if (currentHour >= 11.5 && currentHour < 13) {
-      // nếu chưa có vào trưa thì ghi vào trưa
-      if (!data.vaoCaTrua) {
-        data.vaoCaTrua = currentTime;
-        noteVaoCaTrua += 'Vào trưa';
-        ghichucalam += 'Vào trưa ';
-        msg += '⏱ Vào trưa / tạm nghỉ. ';
-      } else if (data.vaoCaTrua && !data.raCaTrua) {
-        data.raCaTrua = currentTime;
-        noteRaCaTrua += 'Ra trưa';
-        ghichucalam += 'Ra trưa ';
-        msg += '⏱ Ra trưa. ';
-      } else {
-        // nếu đã có cả vao/ra trưa, thì tính làm thêm giữa ca
+      // đi sớm ca sáng
+        if (currentHour < 7.5) {
+           data.vaoCaSang = currentTime;
+          msg += '✅ Đi sớm ca sáng! ';
+          ghichucalam+='Đi sớm ca sáng!';
+        }
+
+        
+      // --- Ca chiều ---
+      else if (currentHour >= 13 && currentHour <= 17.5) {
+        if (!data.vaoCaChieu) {
+          data.vaoCaChieu = currentTime;
+          if (currentHour > 13) msg += '⚠ Đi muộn ca chiều! ';
+          ghichucalam+='Đi muộn ca chiều!';
+        } else {
+          data.raCaChieu = currentTime;
+          if (currentHour < 17.5) msg += '⚠ Về sớm ca chiều! ';
+          ghichucalam+='Về sớm ca chiều!';
+        }
+      }
+      // --- Làm thêm / tự chốt ---
+      else if ((currentHour > 11.5 && currentHour < 13) || currentHour > 17.5) {
         isOvertime = true;
-        msg += 'ℹ Làm thêm trong giờ trưa. ';
-        if (!data.vaoLamThem) data.vaoLamThem = currentTime;
-        else if (data.vaoLamThem && !data.raLamThem) data.raLamThem = currentTime;
-      }
-    }
-    // --- Ca chiều ---
-    else if (currentHour >= 13 && currentHour <= 17.5) {
-      if (!data.vaoCaChieu) {
-        data.vaoCaChieu = currentTime;
-        if (currentHour > 13) {
-          msg += '⚠ Đi muộn ca chiều! ';
-          noteVaoCaChieu += 'Đi muộn ca chiều! ';
-          ghichucalam += 'Đi muộn ca chiều! ';
+        msg += 'ℹ Giờ làm thêm!';
+        ghichucalam+='giờ làm thêm!';
+
+        // Tự chốt ca sáng nếu chưa có ra
+        if (data.vaoCaSang && !data.raCaSang) {
+          data.raCaSang = '11:30';
+          msg += ' ⚠ Tự động chốt ra ca sáng 11:30.';
         }
-      } else {
-        data.raCaChieu = currentTime;
-        if (currentHour < 17.5) {
-          msg += '⚠ Về sớm ca chiều! ';
-          noteRaCaChieu += 'Về sớm ca chiều! ';
-          ghichucalam += 'Về sớm ca chiều! ';
+
+        // Tự chốt ca chiều nếu chưa vào/ra và >17:30
+        if (!data.vaoCaChieu && !data.raCaChieu && currentHour > 17.5) {
+          data.vaoCaChieu = '13:00';
+          data.raCaChieu = '17:30';
+          msg += ' ⚠ Tự động tính ca chiều 13:00–17:30.';
+        }
+
+        // Ghi giờ làm thêm
+        if (currentHour > 17.5) {
+          data.vaoLamThem = '17:30';
+          data.raLamThem = currentTime;
+          msg += ` ℹ Giờ làm thêm từ 17:30 đến ${currentTime}.`;
         }
       }
-    }
-    // --- Làm thêm sau giờ ---
-    else if (currentHour > 17.5) {
-      isOvertime = true;
-      msg += 'ℹ Giờ làm thêm sau giờ hành chính. ';
-      if (!data.raCaChieu) {
-        data.raCaChieu = '17:30';
-        msg += '⚠ Tự động chốt ca chiều 17:30. ';
-        ghichucalam += 'Tự động chốt ca chiều 17:30. ';
+
+      // --- Tính tổng giờ làm ---
+      let totalHours = 0;
+      if (data.vaoCaSang && data.raCaSang) totalHours += parseTime(data.raCaSang) - parseTime(data.vaoCaSang);
+      if (data.vaoCaChieu && data.raCaChieu) totalHours += parseTime(data.raCaChieu) - parseTime(data.vaoCaChieu);
+      data.gioLamTrongNgay = totalHours.toFixed(2);
+
+      data.noiDungMaQuet = qrContent;
+      data.diadiemQuet = (lat && lng) ? `${lat},${lng}` : 'Chưa lấy GPS';
+
+      // Nhập ghi chú nếu làm thêm
+      if (isOvertime) {
+        const note = prompt("📝 Bạn có giờ làm thêm, vui lòng nhập ghi chú:");
+         if (note) ghiChu += note + ' ';
+       
       }
-      if (!data.vaoLamThem) data.vaoLamThem = '17:30';
-      data.raLamThem = currentTime + ' (làm thêm)';
-      noteVaoLamThem += 'Bắt đầu OT';
-      noteRaLamThem += 'Kết thúc OT';
-    }
 
-    // --- Tính tổng giờ làm (chỉ tính từ giờ hh:mm, bỏ phần chữ nếu có) ---
-    let totalHours = 0;
-    try {
-      if (data.vaoCaSang && data.raCaSang) totalHours += (parseTime(data.raCaSang) - parseTime(data.vaoCaSang));
-      if (data.vaoCaTrua && data.raCaTrua) totalHours += (parseTime(data.raCaTrua) - parseTime(data.vaoCaTrua));
-      if (data.vaoCaChieu && data.raCaChieu) totalHours += (parseTime(data.raCaChieu) - parseTime(data.vaoCaChieu));
-    } catch(e){
-      console.warn('parseTime error', e);
-    }
-    data.gioLamTrongNgay = Number(totalHours.toFixed(2));
+    
 
-    // --- nội dung quét & vị trí ---
-    data.noiDungMaQuet = qrContent;
-    data.diadiemQuet = (lat && lng) ? `${lat},${lng}` : 'Chưa lấy GPS';
+  // Gán trực tiếp vào data trước khi set:
+  data.ghiChu = ghichucalam;
+      
+        // --- Lưu dữ liệu Firebase ---
+      ref.set(data)
+        .then(() => {
+         
+          // Hiển thị thông báo
+          alert('✅ Chấm công thành công!\n' + msg + (isOvertime ? '\nGhi chú: ' + (data.ghiChu || ''): ''));
 
-    // combine ghi chú (không ghi đè, ghép thêm)
-    data.ghiChu = (data.ghiChu || "") + (ghichucalam ? ghichucalam + " " : "") 
-      + (noteVaoCaSang ? noteVaoCaSang + " " : "")
-      + (noteRaCaSang ? noteRaCaSang + " " : "")
-      + (noteVaoCaTrua ? noteVaoCaTrua + " " : "")
-      + (noteRaCaTrua ? noteRaCaTrua + " " : "")
-      + (noteVaoCaChieu ? noteVaoCaChieu + " " : "")
-      + (noteRaCaChieu ? noteRaCaChieu + " " : "")
-      + (noteVaoLamThem ? noteVaoLamThem + " " : "")
-      + (noteRaLamThem ? noteRaLamThem + " " : "");
 
-    // nếu làm thêm thì hỏi ghi chú bổ sung
-    if (isOvertime) {
-      const note = prompt("📝 Bạn có giờ làm thêm, vui lòng nhập ghi chú (bỏ trống nếu không):");
-      if (note) data.ghiChu = (data.ghiChu || "") + note + " ";
-    }
-
-    // lưu vào Firebase
-    ref.set(data)
-      .then(()=>{
-        // play beep
-        try { beep.play().catch(()=>{}); } catch(e){}
-
-        alert('✅ Chấm công thành công!\n' + msg + (isOvertime ? '\nGhi chú: '+(data.ghiChu||'') : ''));
-
-        resultDiv.textContent = `Nhân viên: ${email}
-Sáng: ${data.vaoCaSang||'-'} - ${data.raCaSang||'-'}
-Trưa: ${data.vaoCaTrua||'-'} - ${data.raCaTrua||'-'}
-Chiều: ${data.vaoCaChieu||'-'} - ${data.raCaChieu||'-'}
+          
+          // Cập nhật trên trang
+          resultDiv.textContent = `Nhân viên: ${email}
+Sáng: ${data.vaoCaSang || '-'} - ${data.raCaSang || '-'}
+Chiều: ${data.vaoCaChieu || '-'} - ${data.raCaChieu || '-'}
 Tổng giờ: ${data.gioLamTrongNgay}h
 ${msg}`;
+          restartBtn.style.display = 'inline-block';
 
-        restartBtn.style.display = 'inline-block';
+          // --- Gửi email cho quản lý ---
+          const emailParams = {
+            to_name: "Quản lý công ty",
+            to_email: "vudinhhung11@gmail.com",
+            from_name: "Hệ thống chấm công tự động",
+            employee_email: email,
+            date: today,
+            time: currentTime,
+            location: (lat && lng) ? `${lat}, ${lng}` : 'Chưa xác định',
+            qr_content: qrContent,
+            morning: `${data.vaoCaSang || '-'} - ${data.raCaSang || '-'}`,
+            afternoon: `${data.vaoCaChieu || '-'} - ${data.raCaChieu || '-'}`,
+            total_hours: data.gioLamTrongNgay,
+            note: data.ghiChu || 'Không có',
+          };
 
-        // gửi mail cho quản lý (nếu muốn)
-        const emailParams = {
-          to_name: "Quản lý",
-          to_email: "vudinhhung11@gmail.com",
-          from_name: "Hệ thống chấm công",
-          employee_email: email,
-          date: today,
-          time: currentTime,
-          location: data.diadiemQuet,
-          note: data.ghiChu || ''
-        };
-        emailjs.send("service_pwhmtr3","template_dfq8ykc", emailParams)
-          .then(()=>console.log('Email gửi thành công'))
-          .catch(e=>console.warn('Email lỗi', e));
-      })
-      .catch(err=>{
-        console.error('Lỗi lưu Firebase', err);
-        errorDiv.textContent = '❌ Lỗi lưu Firebase: ' + err;
-        restartBtn.style.display = 'inline-block';
-      });
-  }).catch(err=>{
-    console.error('Lỗi đọc Firebase', err);
-    errorDiv.textContent = '❌ Lỗi đọc Firebase: '+err;
-    restartBtn.style.display = 'inline-block';
-  });
+          emailjs.send("service_pwhmtr3", "template_dfq8ykc", emailParams)
+            .then(() => console.log("📧 Email gửi thành công tới quản lý!"))
+            .catch(err => console.error("❌ Lỗi gửi email:", err));
+        })
+        .catch(err => {
+          console.error('❌ Lỗi lưu Firebase:', err);
+          errorDiv.textContent = '❌ Lỗi lưu Firebase: ' + err;
+        });
+    })
+    .catch(err => {
+      console.error('❌ Lỗi đọc Firebase:', err);
+      errorDiv.textContent = '❌ Lỗi đọc Firebase: ' + err;
+    });
 }
 
-// ===== helper =====
-function encodeEmail(email) { return String(email).replace(/\./g,','); }
+
+// ================== Hàm phụ trợ ==================
+function encodeEmail(email) {
+  return email.replace(/\./g, ',');
+}
 function parseTime(timeStr) {
-  if (!timeStr) return 0;
-  // loại bỏ ký tự không phải số hoặc ':', giữ HH:MM[:SS]
-  timeStr = String(timeStr).trim().replace(/[^0-9:]/g,'');
-  const parts = timeStr.split(':').map(s=>Number(s||0));
-  const h = parts[0]||0;
-  const m = parts[1]||0;
-  const s = parts[2]||0;
-  return h + m/60 + s/3600;
+  const [h, m, s = 0] = timeStr.split(':');
+  return Number(h) + Number(m) / 60 + Number(s) / 3600;
 }
 
-// ===== events =====
-restartBtn.addEventListener('click', ()=>{ startScanner(); });
-logoutBtn.addEventListener('click', ()=>{ sessionStorage.removeItem('userEmail'); window.location.href='index.html'; });
-viewBtn.addEventListener('click', ()=>{ window.location.href='xem.html'; });
+// ================== Sự kiện ==================
+restartBtn.addEventListener('click', startScanner);
+logoutBtn.addEventListener('click', () => {
+  sessionStorage.removeItem('userEmail');
+  window.location.href = 'index.html';
+});
+viewBtn.addEventListener('click', () => {
+  window.location.href = 'xem.html';
+});
 
 window.addEventListener('load', startScanner);
-
-// Hàm tính khoảng cách (m)
+  // Hàm tính khoảng cách giữa 2 điểm (m)
 function getDistanceFromLatLonInMeters(lat1,lon1,lat2,lon2){
-  const R = 6371000;
+  const R = 6371000; // bán kính Trái Đất (m)
   const dLat = deg2rad(lat2-lat1);
   const dLon = deg2rad(lon2-lon1);
-  const a = Math.sin(dLat/2)*Math.sin(dLat/2) + Math.cos(deg2rad(lat1))*Math.cos(deg2rad(lat2))*Math.sin(dLon/2)*Math.sin(dLon/2);
+  const a = 
+    Math.sin(dLat/2)*Math.sin(dLat/2)+
+    Math.cos(deg2rad(lat1))*Math.cos(deg2rad(lat2))*
+    Math.sin(dLon/2)*Math.sin(dLon/2);
   const c = 2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
   return R*c;
 }
-function deg2rad(deg){ return deg * Math.PI/180; }
 
+function deg2rad(deg){ return deg*Math.PI/180; }
 </script>
 </body>
 </html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
