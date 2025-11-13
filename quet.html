@@ -56,8 +56,17 @@ button {
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 
 <!-- QR Scanner -->
-<script type="module">
-import QrScanner from "https://cdn.jsdelivr.net/npm/qr-scanner@1.4.2/qr-scanner.min.js";
+<script src="https://cdn.jsdelivr.net/npm/qr-scanner@1.4.2/qr-scanner.umd.min.js"></script>
+
+<script>
+  const scanner = new QrScanner(
+      document.getElementById("qr-video"),
+      result => onScan(result),
+      { highlightScanRegion: true, highlightCodeOutline: true }
+  );
+  
+  scanner.start();
+</script>
 
 /* ================== Firebase ================== */
 const firebaseConfig = {
@@ -238,3 +247,4 @@ startScanner();
 </script>
 </body>
 </html>
+
