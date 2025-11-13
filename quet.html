@@ -195,15 +195,15 @@ if (currentHour >= 7.5 && currentHour <= 11.5) {
 }
 
         // ca trua
-     else  if (currentHour > 11.5 && currentHour < 13) {
-  if (!data.vaoCaTrua) {
-    data.vaoCaTrua = currentTime;
-   noteVaoCaTrua = 'vào Làm trưa';
-  } else {
-    data.raCaTrua = currentTime;
-   noteRaCaTrua="làm thêm trưa"
-  }
-}
+   //  else  if (currentHour > 11.5 && currentHour < 13) {
+//  if (!data.vaoCaTrua) {
+//    data.vaoCaTrua = currentTime;
+//   noteVaoCaTrua = 'vào Làm trưa';
+//  } else {
+//    data.raCaTrua = currentTime;
+//   noteRaCaTrua="làm thêm trưa"
+//  }
+// }
 
 // --- Đi sớm ca sáng ---
 else if (currentHour < 7.5) {
@@ -230,7 +230,8 @@ else if (currentHour >= 13 && currentHour <= 17.5) {
 else if (currentHour >= 11.5 && currentHour < 13) {
   isOvertime = true;
   msg += '🕛 Quét trong giờ nghỉ trưa. ';
-  ghichucalam += 'Quét trong giờ nghỉ trưa. ';
+        noteVaoCaTrua += 'vào Làm trưa';
+ 
  if( !data.vaoLamThem)
  {
         data.vaoLamThem= currentTime;
@@ -339,6 +340,7 @@ function deg2rad(deg){ return deg*Math.PI/180; }
 </script>
 </body>
 </html>
+
 
 
 
