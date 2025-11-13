@@ -1,52 +1,55 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>📸 Quét QR Chấm Công</title>
 
 <style>
-body { font-family: Arial; text-align:center; background:#00c6ff; margin:0; padding:10px; }
-h2 { color:#fff; }
-#video-container { width:100%; max-width:350px; margin:auto; border:2px solid #fff; border-radius:10px; overflow:hidden; }
-video { width:100%; }
-#result { color:#fff; margin-top:10px; white-space:pre-line; }
-button { margin-top:12px; padding:12px; width:90%; max-width:300px; border:none; border-radius:10px; color:white; font-size:16px; }
-#logoutBtn { background:#ff3333; }
-#viewBtn { background:#005ae0; }
+  body{font-family:Arial,Helvetica,sans-serif;background:linear-gradient(135deg,#00c6ff,#007bff);color:#fff;margin:0;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:18px}
+  h1{margin:10px 0}
+  #video-container{width:100%;max-width:420px;border-radius:12px;overflow:hidden;border:3px solid rgba(255,255,255,0.25);background:#000}
+  video{width:100%;display:block}
+  #result{margin-top:12px;white-space:pre-line;text-align:left;max-width:420px;background:rgba(255,255,255,0.06);padding:10px;border-radius:8px}
+  .controls{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;justify-content:center}
+  button{padding:10px 14px;border-radius:10px;border:none;cursor:pointer;font-weight:600}
+  #viewBtn{background:#0066ff;color:#fff}
+  #logoutBtn{background:#ff4d4f;color:#fff}
+  #restartBtn{background:#ffd966;color:#000;display:none}
+  small{opacity:.9}
 </style>
 
-<!-- QR decode -->
+<!-- jsQR -->
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
-
-<!-- Firebase -->
+<!-- EmailJS (optional) -->
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+<!-- Firebase compat -->
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
-
 </head>
 <body>
 
-<h2>📸 QUÉT MÃ QR</h2>
+<h1>📸 Quét QR - Chấm công</h1>
 
-<div id="video-container"><video id="video" autoplay playsinline></video></div>
-<div id="result">Đang mở camera...</div>
+<div id="video-container">
+  <video id="video" autoplay playsinline muted></video>
+</div>
 
-<button id="viewBtn">📋 Xem chấm công</button>
-<button id="logoutBtn">🚪 Đăng xuất</button>
+<div id="result">Đang mở camera... <br><small>Chờ quét QR hợp lệ...</small></div>
+
+<div class="controls">
+  <button id="viewBtn">📋 Xem chấm công</button>
+  <button id="restartBtn">🔄 Quét lại</button>
+  <button id="logoutBtn">🚪 Đăng xuất</button>
+</div>
+
+<!-- beep sound -->
+<audio id="beep" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg" preload="auto"></audio>
 
 <script>
-/* ================== LOGIN ================== */
-const userEmail = sessionStorage.getItem("userEmail");
-if(!userEmail){ window.location.href="index.html"; }
-
-/* ================== VIDEO ================== */
-const video = document.getElementById("video");
-const resultDiv = document.getElementById("result");
-
-let scanning = false;
-
-/* ================== FIREBASE ================== */
-firebase.initializeApp({
+/* ================== CẤU HÌNH ================== */
+// Firebase config (giữ nguyên của bạn)
+const firebaseConfig = {
   apiKey: "AIzaSyAb5AZOBvEVY3a_9ioEKTW-wuVMXdnRZGQ",
   authDomain: "sellglass-3ebe9.firebaseapp.com",
   databaseURL: "https://sellglass-3ebe9-default-rtdb.asia-southeast1.firebasedatabase.app",
@@ -54,206 +57,371 @@ firebase.initializeApp({
   storageBucket: "sellglass-3ebe9.appspot.com",
   messagingSenderId: "513741829035",
   appId: "1:513741829035:web:1b2c59dcf1a0be329358ee"
-});
+};
+firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
-/* ================== AUTO START CAMERA ================== */
+// EmailJS (nếu muốn gửi mail, hãy thay PUBLIC_KEY & khởi tạo)
+try{ emailjs.init("zw8NnWti6A--Pyys9"); }catch(e){ /* optional */ }
+
+// QR & company
+const VALID_QR = "CHECKIN_GLASS_COMPANY"; // nội dung QR chuẩn
+const COMPANY_LOCATION = { lat: 10.849641858164617, lng: 106.58569113116769 }; // thay tọa độ thật (lat,lng)
+const MAX_DISTANCE_METERS = 100; // khoảng cách chấp nhận được
+
+/* ================== NGƯỜI DÙNG ================== */
+const userEmail = sessionStorage.getItem('userEmail'); // username/email đã login
+if(!userEmail){
+  alert('Vui lòng đăng nhập trước.'); 
+  window.location.href = 'index.html';
+}
+
+/* ================== ELEM ================== */
+const video = document.getElementById('video');
+const resultDiv = document.getElementById('result');
+const restartBtn = document.getElementById('restartBtn');
+const logoutBtn = document.getElementById('logoutBtn');
+const viewBtn = document.getElementById('viewBtn');
+const beep = document.getElementById('beep');
+
+/* ================== Canvas tái sử dụng cho jsQR ================== */
+const canvas = document.createElement('canvas');
+const ctx = canvas.getContext('2d');
+
+/* ================== Trạng thái quét ================== */
+let scanning = false;
+let streamRef = null;
+
+/* ================== HỖ TRỢ TIME/GPS ================== */
+function formatTime(now){
+  const hh = String(now.getHours()).padStart(2,'0');
+  const mm = String(now.getMinutes()).padStart(2,'0');
+  const ss = String(now.getSeconds()).padStart(2,'0');
+  return `${hh}:${mm}:${ss}`;
+}
+function toHourDecimal(hhmm){
+  if(!hhmm) return 0;
+  const parts = hhmm.replace(/[^0-9:]/g,'').split(':').map(Number);
+  if(parts.length<2) return 0;
+  return parts[0] + (parts[1]||0)/60;
+}
+function distanceMeters(lat1, lon1, lat2, lon2){
+  const R = 6371000;
+  const dLat = (lat2-lat1)*Math.PI/180;
+  const dLon = (lon2-lon1)*Math.PI/180;
+  const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
+  const c = 2*Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  return R*c;
+}
+
+/* ================== CAMERA START/STOP ================== */
 async function startCamera(){
   try{
-    const stream = await navigator.mediaDevices.getUserMedia({ video:{ facingMode:"environment" } });
-    video.srcObject = stream;
-
-    video.onloadeddata = () => {
-      scanning = true;
-      resultDiv.textContent = "Đang quét...";
-      scanLoop();
-    };
-
-  }catch(e){
-    resultDiv.textContent = "❌ Không mở được camera!";
+    const s = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false });
+    streamRef = s;
+    video.srcObject = s;
+    video.play();
+    resultDiv.textContent = 'Đang quét...';
+    scanning = true;
+    requestAnimationFrame(scanLoop);
+  }catch(err){
+    console.error(err);
+    resultDiv.textContent = '❌ Không thể mở camera. Hãy cấp quyền và thử lại.';
+  }
+}
+function stopCamera(){
+  scanning = false;
+  if(streamRef){
+    streamRef.getTracks().forEach(t=>t.stop());
+    streamRef = null;
   }
 }
 
-/* ================== AUTO SCAN LOOP ================== */
+/* ================== SCAN LOOP (jsQR) ================== */
 function scanLoop(){
   if(!scanning) return;
-
-  const w = video.videoWidth;
-  const h = video.videoHeight;
-
-  if(w === 0 || h === 0){
-    // Camera chưa load → thử lại
-    return requestAnimationFrame(scanLoop);
+  const w = video.videoWidth, h = video.videoHeight;
+  if(!w || !h){
+    requestAnimationFrame(scanLoop);
+    return;
   }
-
-  const cvs = document.createElement("canvas");
-  const ctx = cvs.getContext("2d");
-  cvs.width = w; cvs.height = h;
-  ctx.drawImage(video,0,0,w,h);
-
+  // resize canvas only when size changed (cheaper)
+  if(canvas.width !== w || canvas.height !== h){
+    canvas.width = w; canvas.height = h;
+  }
+  ctx.drawImage(video, 0, 0, w, h);
   const img = ctx.getImageData(0,0,w,h);
-  const code = jsQR(img.data, w, h);
-
-  if(code){
+  const code = jsQR(img.data, w, h, { inversionAttempts: "attemptBoth" });
+  if(code && code.data){
     scanning = false;
     handleScan(code.data);
     return;
   }
-
   requestAnimationFrame(scanLoop);
 }
 
-/* ================== QR CHECK ================== */
-const VALID_QR = "CHECKIN_GLASS_COMPANY";
-const COMPANY = { lat:10.84964185816, lng:106.58569113116 };
-
-function encodeEmail(e){ return e.replace(/\./g,","); }
-
+/* ================== HANDLER ================== */
 function handleScan(text){
+  // quick UI
+  resultDiv.textContent = 'Mã đọc được: ' + text;
+  // check QR
   if(text !== VALID_QR){
-    resultDiv.textContent = "❌ Mã QR sai!";
-    setTimeout(()=>{ scanning=true; scanLoop(); }, 1500);
+    resultDiv.textContent = '❌ Mã QR không hợp lệ';
+    beepFailure();
+    setTimeout(()=>{ scanning = true; requestAnimationFrame(scanLoop); }, 1200);
     return;
   }
-
-  resultDiv.textContent="Đang lấy GPS...";
-
+  // get GPS then save
+  resultDiv.textContent = '✅ QR hợp lệ — Lấy vị trí...';
   navigator.geolocation.getCurrentPosition(
-    pos => saveAttendance(pos.coords.latitude,pos.coords.longitude),
-    err => {
-      alert("Không lấy được GPS");
-      scanning = true;
-      scanLoop();
+    pos => {
+      const lat = pos.coords.latitude;
+      const lng = pos.coords.longitude;
+      // check distance
+      const d = distanceMeters(lat,lng, COMPANY_LOCATION.lat, COMPANY_LOCATION.lng);
+      if(d > MAX_DISTANCE_METERS){
+        resultDiv.textContent = `❌ Quá xa công ty: ${d.toFixed(1)} m`;
+        beepFailure();
+        setTimeout(()=>{ scanning = true; requestAnimationFrame(scanLoop); }, 1500);
+        return;
+      }
+      // OK -> lưu
+      saveAttendance(lat,lng);
     },
-    { enableHighAccuracy:true, timeout:5000 }
+    err => {
+      console.warn('GPS error', err);
+      alert('Không lấy được vị trí. Hãy cấp quyền vị trí hoặc thử lại.');
+      scanning = true;
+      setTimeout(()=>requestAnimationFrame(scanLoop), 800);
+    },
+    { enableHighAccuracy:true, timeout:6000, maximumAge:0 }
   );
 }
 
-/* ================== TÍNH GIỜ ================== */
-function diff(a,b){
-  a = a.replace(/[^0-9:]/g,"").split(":").map(Number);
-  b = b.replace(/[^0-9:]/g,"").split(":").map(Number);
-  return (b[0]+b[1]/60) - (a[0]+a[1]/60);
-}
-function distance(a,b,c,d){
-  const R=6371000;
-  let x=(c-a)*Math.PI/180, y=(d-b)*Math.PI/180;
-  let s=Math.sin(x/2)**2 + Math.cos(a*Math.PI/180)*Math.cos(c*Math.PI/180)*Math.sin(y/2)**2;
-  return R*2*Math.atan2(Math.sqrt(s),Math.sqrt(1-s));
-}
+/* ================== TÍNH GIỜ + LƯU ================== */
+function encodeEmail(e){ return String(e).replaceAll('.',' ,').replace(/\s+/g,''); } // đơn giản hóa khóa
+function safeStr(s){ return (s===undefined || s===null || s==='')? '' : String(s); }
 
-/* ================== LƯU CHẤM CÔNG ================== */
-function saveAttendance(lat,lng){
-  const emailKey = encodeEmail(userEmail);
+function saveAttendance(lat, lng){
   const now = new Date();
-  const day = now.toISOString().slice(0,10);
-  const time = now.toLocaleTimeString();
-  const hour = now.getHours() + now.getMinutes()/60;
+  const dayKey = now.toISOString().slice(0,10); // yyyy-mm-dd
+  const timeStr = formatTime(now);
+  const hourDecimal = now.getHours() + now.getMinutes()/60;
+  const userKey = encodeEmail(userEmail);
+  const ref = db.ref('chamcong/' + userKey + '/' + dayKey);
 
-  // check GPS
-  if(distance(lat,lng,COMPANY.lat,COMPANY.lng) > 100){
-    alert("❌ Bạn đang quá xa công ty!");
-    scanning = true;
-    return scanLoop();
-  }
+  ref.once('value').then(snapshot => {
+    const data = snapshot.val() || {};
 
-  const ref = db.ref("chamcong/"+emailKey+"/"+day);
+    // ensure fields exist
+    data.vaoCaSang = safeStr(data.vaoCaSang);
+    data.raCaSang = safeStr(data.raCaSang);
+    data.vaoCaTrua = safeStr(data.vaoCaTrua);
+    data.raCaTrua = safeStr(data.raCaTrua);
+    data.vaoCaChieu = safeStr(data.vaoCaChieu);
+    data.raCaChieu = safeStr(data.raCaChieu);
+    data.vaoLamThem = safeStr(data.vaoLamThem);
+    data.raLamThem = safeStr(data.raLamThem);
+    data.ghiChu = safeStr(data.ghiChu);
 
-  ref.once("value").then(snap=>{
-    const d = snap.val() || {};
+    // notes for each ca (append, không ghi đè)
+    data.noteVaoCaSang = safeStr(data.noteVaoCaSang);
+    data.noteRaCaSang = safeStr(data.noteRaCaSang);
+    data.noteVaoCaTrua = safeStr(data.noteVaoCaTrua);
+    data.noteRaCaTrua = safeStr(data.noteRaCaTrua);
+    data.noteVaoCaChieu = safeStr(data.noteVaoCaChieu);
+    data.noteRaCaChieu = safeStr(data.noteRaCaChieu);
+    data.noteVaoLamThem = safeStr(data.noteVaoLamThem);
+    data.noteRaLamThem = safeStr(data.noteRaLamThem);
 
-    d.vaoCaSang ??= "";
-    d.raCaSang ??= "";
-    d.vaoCaTrua ??= "";
-    d.raCaTrua ??= "";
-    d.vaoCaChieu ??= "";
-    d.raCaChieu ??= "";
-    d.vaoLamThem ??= "";
-    d.raLamThem ??= "";
-    d.ghiChu ??= "";
+    let msgForAlert = '';
 
-    let msg="";
+    // --- Quy tắc ca ---
+    // Ca sáng: 07:30 - 11:30  (7.5 -> 11.5)
+    // Giờ trưa: 11:30 - 13:00 (11.5 -> 13)
+    // Ca chiều: 13:00 - 17:30 (13 -> 17.5)
+    // OT: >17.5
 
-    if(hour>=7.5 && hour<=11.5){
-      !d.vaoCaSang ? (d.vaoCaSang=time,msg="Vào ca sáng") : (d.raCaSang=time,msg="Ra ca sáng");
+    if(hourDecimal >= 7.5 && hourDecimal <= 11.5){
+      // xử lý vào/ra sáng
+      if(!data.vaoCaSang){
+        data.vaoCaSang = timeStr;
+        data.noteVaoCaSang += (data.noteVaoCaSang ? ' | ' : '') + (hourDecimal>7.5 ? 'Đi muộn' : 'Vào đúng giờ') + ' ' + timeStr;
+        msgForAlert = 'Vào ca sáng';
+      } else {
+        data.raCaSang = timeStr;
+        data.noteRaCaSang += (data.noteRaCaSang ? ' | ' : '') + (hourDecimal<11.5 ? 'Về sớm' : 'Ra đúng giờ') + ' ' + timeStr;
+        msgForAlert = 'Ra ca sáng';
+      }
     }
-    else if(hour>=11.5 && hour<13){
-      !d.vaoCaTrua ? (d.vaoCaTrua=time,msg="Vào ca trưa") : (d.raCaTrua=time,msg="Ra ca trưa");
+    else if(hourDecimal > 11.5 && hourDecimal < 13){
+      // trưa (có thể vào trưa hoặc ra trưa)
+      if(!data.vaoCaTrua){
+        // nếu chưa có raCaSang và quét trưa thì tự chốt raCaSang 11:30 và tính trưa từ 11:30->now
+        if(data.vaoCaSang && !data.raCaSang){
+          data.raCaSang = '11:30:00';
+          data.noteRaCaSang += (data.noteRaCaSang ? ' | ' : '') + 'Tự chốt ra sáng 11:30';
+        }
+        data.vaoCaTrua = timeStr;
+        data.noteVaoCaTrua += (data.noteVaoCaTrua ? ' | ' : '') + 'Vào trưa ' + timeStr;
+        msgForAlert = 'Vào ca trưa';
+      } else {
+        data.raCaTrua = timeStr;
+        data.noteRaCaTrua += (data.noteRaCaTrua ? ' | ' : '') + 'Ra trưa ' + timeStr;
+        msgForAlert = 'Ra ca trưa';
+      }
     }
-    else if(hour>=13 && hour<=17.5){
-      !d.vaoCaChieu ? (d.vaoCaChieu=time,msg="Vào ca chiều") : (d.raCaChieu=time,msg="Ra ca chiều");
+    else if(hourDecimal >= 13 && hourDecimal <= 17.5){
+      // chiều
+      if(!data.vaoCaChieu){
+        // nếu chưa có vaoCaTrua but raCaTrua exists? we simply set vaoCaChieu
+        data.vaoCaChieu = timeStr;
+        data.noteVaoCaChieu += (data.noteVaoCaChieu ? ' | ' : '') + (hourDecimal>13 ? 'Đi muộn' : 'Vào đúng giờ') + ' ' + timeStr;
+        msgForAlert = 'Vào ca chiều';
+      } else {
+        data.raCaChieu = timeStr;
+        data.noteRaCaChieu += (data.noteRaCaChieu ? ' | ' : '') + (hourDecimal<17.5 ? 'Về sớm' : 'Ra đúng giờ') + ' ' + timeStr;
+        msgForAlert = 'Ra ca chiều';
+      }
     }
-    else if(hour>17.5){
-      !d.vaoLamThem ? (d.vaoLamThem=time,msg="Vào tăng ca") : (d.raLamThem=time,msg="Ra tăng ca");
+    else { // trước 7.5 hoặc >17.5 (xử lý OT hoặc vào quá sớm)
+      if(hourDecimal <= 7.5){
+        // very early come -> ghi vào vào sáng
+        if(!data.vaoCaSang){
+          data.vaoCaSang = timeStr;
+          data.noteVaoCaSang += (data.noteVaoCaSang ? ' | ' : '') + 'Đi sớm ' + timeStr;
+          msgForAlert = 'Vào sớm ca sáng';
+        } else {
+          // fallback
+          msgForAlert = 'Quét vào giờ sớm';
+        }
+      } else {
+        // OT (sau 17:30)
+        if(!data.vaoLamThem){
+          // tự chốt ca chiều nếu chưa có raCaChieu
+          if(!data.raCaChieu && data.vaoCaChieu){
+            data.raCaChieu = '17:30:00';
+            data.noteRaCaChieu += (data.noteRaCaChieu ? ' | ' : '') + 'Tự chốt ra chiều 17:30';
+          }
+          data.vaoLamThem = timeStr;
+          data.noteVaoLamThem += (data.noteVaoLamThem ? ' | ' : '') + 'Bắt đầu OT ' + timeStr;
+          msgForAlert = 'Bắt đầu làm thêm';
+        } else {
+          data.raLamThem = timeStr;
+          data.noteRaLamThem += (data.noteRaLamThem ? ' | ' : '') + 'Kết thúc OT ' + timeStr;
+          msgForAlert = 'Kết thúc làm thêm';
+        }
+      }
     }
 
+    // tính giờ tổng trong ngày: cộng các ca có đủ vào+ra (sáng/trưa/chiều)
     let total = 0;
-    if(d.vaoCaSang && d.raCaSang) total += diff(d.vaoCaSang,d.raCaSang);
-    if(d.vaoCaTrua && d.raCaTrua) total += diff(d.vaoCaTrua,d.raCaTrua);
-    if(d.vaoCaChieu && d.raCaChieu) total += diff(d.vaoCaChieu,d.raCaChieu);
-    d.gioLamTrongNgay = total.toFixed(2);
+    try{
+      if(data.vaoCaSang && data.raCaSang) total += toHourDecimal(data.raCaSang) - toHourDecimal(data.vaoCaSang);
+      if(data.vaoCaTrua && data.raCaTrua) total += toHourDecimal(data.raCaTrua) - toHourDecimal(data.vaoCaTrua);
+      if(data.vaoCaChieu && data.raCaChieu) total += toHourDecimal(data.raCaChieu) - toHourDecimal(data.vaoCaChieu);
+    }catch(e){
+      console.warn('calc total err', e);
+    }
+    data.gioLamTrongNgay = (isNaN(total) ? 0 : Number(total.toFixed(2)));
 
+    // giờ OT
     let ot = 0;
-    if(d.vaoLamThem && d.raLamThem) ot = diff(d.vaoLamThem,d.raLamThem);
-    d.gioLamThem = ot.toFixed(2);
+    try{
+      if(data.vaoLamThem && data.raLamThem) ot = toHourDecimal(data.raLamThem) - toHourDecimal(data.vaoLamThem);
+    }catch(e){}
+    data.gioLamThem = (isNaN(ot) ? 0 : Number(ot.toFixed(2)));
 
-    d.diaDiemQuet = lat+","+lng;
+    // vị trí & qr
+    data.diaDiemQuet = `${lat},${lng}`;
+    data.noiDungMaQuet = VALID_QR;
 
-   ref.set(d).then(() => {
+    // ghi chú chung (append)
+    const noteAppend = (msgForAlert ? (msgForAlert + ' @' + timeStr) : '');
+    data.ghiChu = (data.ghiChu ? data.ghiChu + ' | ' : '') + noteAppend;
 
-    // ===== TẠO THÔNG BÁO HOÀN CHỈNH =====
-    let alertMessage =  "✔ CHẤM CÔNG THÀNH CÔNG!\n";
-    alertMessage += "------------------------------\n";
-    alertMessage += "🧑 Nhân viên: " + email + "\n";
-    alertMessage += "📅 Ngày: " + day + "\n";
-    alertMessage += "⏰ Giờ quét: " + time + "\n";
-    alertMessage += "------------------------------\n";
+    // lưu
+    ref.set(data).then(()=>{
+      // beep
+      try{ beep.currentTime = 0; beep.play(); }catch(e){}
 
-    // GHI CHÚ THEO TỪNG CA
-    if (msg) alertMessage += "📌 " + msg + "\n";
+      // xây alert message hiển thị chi tiết note từng ca
+      let out = '✔ CHẤM CÔNG THÀNH CÔNG\n';
+      out += '----------------------------\n';
+      out += `Nhân viên: ${userEmail}\n`;
+      out += `Ngày: ${dayKey}\n`;
+      out += `Giờ quét: ${timeStr}\n`;
+      out += '----------------------------\n';
+      if(msgForAlert) out += `> ${msgForAlert}\n`;
+      if(data.noteVaoCaSang) out += `Ca sáng vào: ${data.noteVaoCaSang}\n`;
+      if(data.noteRaCaSang) out += `Ca sáng ra: ${data.noteRaCaSang}\n`;
+      if(data.noteVaoCaTrua) out += `Ca trưa vào: ${data.noteVaoCaTrua}\n`;
+      if(data.noteRaCaTrua) out += `Ca trưa ra: ${data.noteRaCaTrua}\n`;
+      if(data.noteVaoCaChieu) out += `Ca chiều vào: ${data.noteVaoCaChieu}\n`;
+      if(data.noteRaCaChieu) out += `Ca chiều ra: ${data.noteRaCaChieu}\n`;
+      if(data.noteVaoLamThem) out += `OT vào: ${data.noteVaoLamThem}\n`;
+      if(data.noteRaLamThem) out += `OT ra: ${data.noteRaLamThem}\n`;
+      out += '----------------------------\n';
+      out += `Tổng giờ: ${data.gioLamTrongNgay} h\n`;
+      out += `Giờ OT: ${data.gioLamThem} h\n`;
 
-    if (d.noteVaoCaSang) alertMessage += "🌅 Ca sáng: " + d.noteVaoCaSang + "\n";
-    if (d.noteRaCaSang) alertMessage += "🌅 Ra sáng: " + d.noteRaCaSang + "\n";
+      alert(out);
+      // Update UI
+      resultDiv.textContent = `✔ ${msgForAlert}\nTổng: ${data.gioLamTrongNgay} h | OT: ${data.gioLamThem} h`;
 
-    if (d.noteVaoCaTrua) alertMessage += "🍱 Vào ca trưa: " + d.noteVaoCaTrua + "\n";
-    if (d.noteRaCaTrua) alertMessage += "🍱 Ra ca trưa: " + d.noteRaCaTrua + "\n";
+      // send email optional (if you configured EmailJS & template)
+      try{
+        const emailParams = {
+          to_name: "Quản lý",
+          to_email: "vudinhhung11@gmail.com",
+          from_name: "Hệ thống chấm công",
+          employee_email: userEmail,
+          date: dayKey,
+          time: timeStr,
+          location: data.diaDiemQuet,
+          note: data.ghiChu
+        };
+        emailjs.send("service_pwhmtr3","template_dfq8ykc", emailParams)
+          .then(()=> console.log('Email gửi OK'))
+          .catch(()=> console.log('EmailJS send fail (bỏ qua)'));
+      }catch(e){}
 
-    if (d.noteVaoCaChieu) alertMessage += "🌇 Vào ca chiều: " + d.noteVaoCaChieu + "\n";
-    if (d.noteRaCaChieu) alertMessage += "🌇 Ra ca chiều: " + d.noteRaCaChieu + "\n";
-
-    if (d.noteVaoLamThem) alertMessage += "🌙 Vào làm thêm: " + d.noteVaoLamThem + "\n";
-    if (d.noteRaLamThem) alertMessage += "🌙 Ra làm thêm: " + d.noteRaLamThem + "\n";
-
-    alertMessage += "------------------------------\n";
-    alertMessage += "⏳ Tổng giờ: " + d.gioLamTrongNgay + "h\n";
-    alertMessage += "⏳ Giờ tăng ca: " + d.gioLamThem + "h\n";
-
-    // HIỆN ALERT
-    alert(alertMessage);
-
-    // Hiện ra màn hình
-    resultDiv.textContent = "✔ " + msg;
-
-    // 1.5s sau quét lại
-    setTimeout(() => {
-        scanning = true;
-        scanLoop();
-    }, 1500);
-});
-
-
+      // resume scan after short delay
+      restartBtn.style.display = 'inline-block';
+      setTimeout(()=>{ scanning = true; requestAnimationFrame(scanLoop); restartBtn.style.display = 'none'; }, 1200);
+    }).catch(err=>{
+      console.error('Lỗi lưu firebase', err);
+      alert('❌ Lỗi lưu dữ liệu: ' + err);
+      scanning = true;
+      setTimeout(()=>requestAnimationFrame(scanLoop), 800);
+    });
+  }).catch(err=>{
+    console.error('Lỗi đọc firebase', err);
+    alert('❌ Lỗi đọc dữ liệu: ' + err);
+    scanning = true;
+    setTimeout(()=>requestAnimationFrame(scanLoop), 800);
   });
 }
 
-/* ================== BUTTONS ================== */
-viewBtn.onclick = ()=> window.location.href="xem.html?user="+userEmail;
-logoutBtn.onclick = ()=>{ sessionStorage.clear(); window.location.href="index.html"; };
+/* ================== UI BUTTONS ================== */
+restartBtn.addEventListener('click', ()=>{ if(!scanning){ scanning=true; requestAnimationFrame(scanLoop); restartBtn.style.display='none'; } });
+logoutBtn.addEventListener('click', ()=>{ sessionStorage.clear(); stopCamera(); window.location.href='index.html'; });
+viewBtn.addEventListener('click', ()=>{ // dùng email làm param để xem trang xem.html
+  const q = encodeURIComponent(userEmail);
+  window.location.href = 'xem.html?user=' + q;
+});
+
+/* ================== beep failure small ================== */
+function beepFailure(){
+  // short tone by reusing beep but lower volume (best-effort)
+  try{ beep.currentTime = 0; beep.play(); }catch(e){}
+}
 
 /* ================== AUTO START ================== */
-window.onload = startCamera;
+window.addEventListener('load', ()=> {
+  startCamera();
+});
 </script>
 
 </body>
 </html>
-
-
