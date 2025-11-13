@@ -278,7 +278,7 @@ function saveAttendance(lat, lng){
 
     ref.set(data).then(()=>{
       alert("✔ " + msg);
-      resultDiv.textContent = "✔ Đã lưu chấm công\n" + JSON.stringify(data,null,2);
+      resultDiv.textContent = "✔ Đã lưu chấm công\n";
     });
 
   });
@@ -299,3 +299,4 @@ window.onload = startCamera;
 
 </body>
 </html>
+
