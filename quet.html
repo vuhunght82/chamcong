@@ -108,8 +108,8 @@ async function startCamera() {
         video.srcObject = stream;
 
         video.onloadedmetadata = () => {
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
+            canvas.width = video.clientWidth;
+canvas.height = video.clientHeight;
             scanning = true;
             resultDiv.textContent = "Đang quét...";
             scanLoop();
@@ -123,7 +123,7 @@ async function startCamera() {
 /* ===================== SCAN LOOP ===================== */
 function scanLoop() {
     if (!scanning) return;
-
+ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
     let imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
@@ -306,5 +306,6 @@ startCamera();
 
 </body>
 </html>
+
 
 
