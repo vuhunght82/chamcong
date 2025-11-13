@@ -49,6 +49,7 @@ button {
 }
 #logoutBtn { background: #ff3333; }
 #viewBtn { background: #005ae0; }
+    #Local { background: green; }
 </style>
 
 <!-- jsQR -->
@@ -72,8 +73,22 @@ button {
 
 <button id="viewBtn">📋 Xem chấm công</button>
 <button id="logoutBtn">🚪 Đăng xuất</button>
+<button  id="Local" onclick="checkLocation()">Kiểm tra vị trí</button>
 
 <script>
+
+
+    function checkLocation() {
+  if (!navigator.geolocation) {
+    alert('Trình duyệt không hỗ trợ geolocation!');
+    return;
+  }
+  navigator.geolocation.getCurrentPosition(
+    pos => alert(`Vĩ độ: ${pos.coords.latitude}, Kinh độ: ${pos.coords.longitude}`),
+    err => alert(`Lỗi: ${err.code} - ${err.message}`),
+    { enableHighAccuracy: true, timeout: 10000 }
+  );
+}
 /* ===================== LOGIN ===================== */
 const userEmail = sessionStorage.getItem("userEmail");
 if (!userEmail) location.href = "index.html";
@@ -309,6 +324,7 @@ startCamera();
 
 </body>
 </html>
+
 
 
 
