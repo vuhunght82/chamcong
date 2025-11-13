@@ -267,7 +267,7 @@ function saveAttendance(lat, lng) {
             !d.vaoCaTrua ? (d.vaoCaTrua = time, msg="Vào ca trưa") : (d.raCaTrua = time, msg="Ra ca trưa");
 
         else if (hour >= 13 && hour <= 17.5)
-            !d.vaoCaChieu ? (d.vaoCaChieu = time, msg="Vào ca chiều") : (d.raCaChieu = time, msg="Ra ca chiều");
+            !d.vaoCaChieu ? (d.vaoCaChieu = time, msg="Vào ca chiều") : (d.raCaChieu = time, msg="Ra ca chiều",d.noteRaCaChieu="về sớm");
 
         else if (hour > 17.5)
             !d.vaoLamThem ? (d.vaoLamThem = time, msg="Vào tăng ca") : (d.raLamThem = time, msg="Ra tăng ca");
@@ -324,6 +324,7 @@ startCamera();
 
 </body>
 </html>
+
 
 
 
