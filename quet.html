@@ -201,6 +201,7 @@ function saveAttendance(lat,lng){
 
     ref.set(d).then(()=>{
       resultDiv.textContent = "✔ " + msg;
+      alert(msg);
       setTimeout(()=>{ scanning=true; scanLoop(); }, 1500);
     });
 
@@ -217,3 +218,4 @@ window.onload = startCamera;
 
 </body>
 </html>
+
