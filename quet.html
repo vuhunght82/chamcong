@@ -269,7 +269,7 @@ else if (currentHour > 17.5) {
       // Nhập ghi chú nếu làm thêm
       if (isOvertime) {
         const note = prompt("📝 Bạn có giờ làm thêm, vui lòng nhập ghi chú:");
-         if (note) ghiChu += note + ' ';
+         if (note) data.ghiChu = (data.ghiChu || "") + note + " ";
        
       }
 
@@ -339,6 +339,7 @@ function deg2rad(deg){ return deg*Math.PI/180; }
 </script>
 </body>
 </html>
+
 
 
 
