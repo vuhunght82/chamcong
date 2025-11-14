@@ -364,22 +364,30 @@ function saveAttendance(lat, lng) {
         }
       }
             
-        else if (hour > 11.5 && hour < 13){
-            if(!d.raCaSang)
-            {
-                 d.raCaSang="11:30";
-                d.noteRaCaSang="đúng giờ"
-            }
-           else if(!d.vaoCaTrua)
-            {
-            
-             d.vaoCaTrua = "11:30";   
-             d.raCaTrua = time;
-             msg="tăng ca trưa"
-            d.noteVaoCaTrua="tăng ca trưa";
-            }
-            
+        // ======= CA TRƯA =======
+else if (hour >= 11.5 && hour <= 13) {
+
+    // Nếu chưa chấm ra sáng → auto chấm đúng 11:30
+    if (!d.raCaSang && d.vaoCaSang) {
+        d.raCaSang = "11:30";
+        d.noteRaCaSang = "đúng giờ";
+    }
+
+    // Nếu chưa vào ca trưa → đây là lần quét VÀO TRƯA
+    if (!d.vaoCaTrua) {
+        d.vaoCaTrua = "11:30";   // chuẩn giờ
+        msg = "Vào ca trưa";
+    }
+    // Nếu đã vào nhưng chưa ra ca trưa → đây là lần quét RA TRƯA
+    else if (!d.raCaTrua) {
+        d.raCaTrua = time;
+        msg = "Ra ca trưa";
+
+        if (hour < 12) {
+            d.noteRaCaTrua = "ra sớm";
         }
+    }
+}
             
 
        else if (hour >= 13 && hour <= 17.5) {
@@ -478,6 +486,7 @@ startCamera();
 
 </body>
 </html>
+
 
 
 
