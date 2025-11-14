@@ -50,7 +50,7 @@ button {
 #logoutBtn { background: #ff3333; }
 #viewBtn { background: #005ae0; }
     #Local { background: green; }
-    #reset { background: ##ffcc33;; }
+    #reset { background: ##ff2233;; }
 </style>
 
 <!-- jsQR -->
@@ -273,7 +273,13 @@ function saveAttendance(lat, lng) {
             {
                 d.vaoCaSang = time;
                 msg="Vào ca sáng";
+                msg="đi muộn!"
                 d.noteVaoCaSang = "đi muộn";
+            }
+            else{
+                 d.raCaSang = time;
+                msg="Về sớm!"
+                d.noteRaCaSang = "về sớm";
             }
              
         }
@@ -281,32 +287,64 @@ function saveAttendance(lat, lng) {
         if(!d.vaoCaSang)
         {
             d.vaoCaSang = time;
-            msg="Vào ca sáng";
+            msg="Sáng đi sớm";
              d.noteVaoCaSang = "đi sớm";
         }
       }
             
-        else if (hour >= 11.5 && hour < 13)
-            !d.vaoCaTrua ? (d.vaoCaTrua = time, msg="Vào ca trưa") : (d.raCaTrua = time, msg="Ra ca trưa");
+        else if (hour >= 11.5 && hour < 13){
+            if(!d.raCaSang)
+            {
+                 d.raCaSang="11:30";
+            }
+           else if(!d.vaoCaTrua)
+            {
+            
+             d.vaoCaTrua = "11:30";   
+             d.raCaTrua = time;
+             msg="Vào ca trưa"
+            d.noteVaoCaTrua="vào ca trưa";
+            }
+            
+        }
             
 
        else if (hour >= 13 && hour <= 17.5) {
-    if (!d.vaoCaChieu) {
-        d.vaoCaChieu = time;
-        msg = "Vào ca chiều";
-    } else {
-        d.raCaChieu = time;
-        msg = "Ra ca chiều";
-
-        // 👉 Ghi chú ca chiều (ra sớm)
-        if (hour < 17.5) {
-            d.noteRaCaChieu = "Về sớm";
+        if (!d.vaoCaChieu) {
+            d.vaoCaChieu = time;
+            msg = "Vào ca chiều";
+            d.noteVaoCaChieu="chiều đi muộn ";
         }
-    }
+        else  {
+                    d.raCaChieu = time;
+                    msg = "Ra ca chiều";
+            
+                    // 👉 Ghi chú ca chiều (ra sớm)
+            if (hour < 17.5) {
+                            d.noteRaCaChieu = "Về sớm";
+                            }
+            }
 }
            
         else if (hour > 17.5)
-            !d.vaoLamThem ? (d.vaoLamThem = time, msg="Vào tăng ca") : (d.raLamThem = time, msg="Ra tăng ca");
+        {
+           if(!d.raCaChieu)
+           {
+               d.raCaChieu="17:30";
+           }
+            else if(!d.vaoLamThem){
+                    d.vaoLamThem = "17:30";
+                msg="Vào tăng ca";
+               
+            }
+            else
+            {
+                d.raLamThem = time;
+                msg="Vào tăng ca";
+                d.noteRaLamThem="tăng ca tối"
+            }
+
+        }
 
         // TÍNH GIỜ
         let total = 0;
@@ -315,7 +353,7 @@ total += timeDiff(d.vaoCaTrua, d.raCaTrua);
 total += timeDiff(d.vaoCaChieu, d.raCaChieu);
 d.gioLamTrongNgay = total.toFixed(2);
 
-let ot = timeDiff(d.vaoLamThem, d.raLamThem);
+let ot = timeDiff(d.vaoLamThem, d.raLamThem)+timeDiff(d.vaoCaTrua,d.raCaTrua);
 d.gioLamThem = ot.toFixed(2);
 
         d.diaDiemQuet = `${lat},${lng}`;
@@ -325,7 +363,7 @@ d.gioLamThem = ot.toFixed(2);
             alert(
                 "✔ Chấm công thành công!\n" +
                 "📅 Ngày: "+day+"\n"+
-                "⏰ "+msg+"\n"+
+                "⏰ "+time+"\n"+
                 "⏳ Giờ làm: "+d.gioLamTrongNgay+"h\n"+
                 "🌙 Tăng ca: "+d.gioLamThem+"h"
             );
@@ -360,6 +398,7 @@ startCamera();
 
 </body>
 </html>
+
 
 
 
