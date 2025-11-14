@@ -327,7 +327,7 @@ function saveAttendance(lat, lng) {
             {
                 d.vaoCaSang = time;
                 msg="Vào ca sáng";
-                msg="đi muộn!"
+               
                 d.noteVaoCaSang = "đi muộn";
             }
             else{
@@ -383,16 +383,18 @@ else if (hour >= 13.0 && hour <= 17.5)
         msg = "Vào ca chiều";
     
     }
-    else 
+    else if (!d.raCaChieu)
     {
      d.raCaChieu   = time;
      //   msg = "ra ca chiều";
 
     }
+    else{
     msg = "quét ca chiều";
+    }
 }
            
-        else if (hour > 17.5)
+else if (hour > 17.5)
         {
            if(!d.raCaChieu)
            {
@@ -465,6 +467,7 @@ document.getElementById("logoutBtn").onclick = () => {
 
 </body>
 </html>
+
 
 
 
