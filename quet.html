@@ -72,27 +72,9 @@ function checkLocation() {
 
 <!-- QR Scanner -->
 <script type="module">
-import { initScanner } from './scanner.js';
-
-const videoElem = document.getElementById('qr-video');
-let scanner;
-
-window.addEventListener('load', () => {
-    scanner = initScanner(
-        videoElem,
-        (result) => {
-            console.log("QR:", result.data);
-            alert("QR: " + result.data);
-            scanner.stop();
-        },
-        (err) => {
-            console.error(err);
-            alert("Không thể mở camera: " + err);
-        }
-    );
-});
-</script>
-
+import QrScanner from 'https://cdn.jsdelivr.net/npm/qr-scanner@1.4.2/qr-scanner.min.js';
+    // FIX QUAN TRỌNG: NẾU KHÔNG CÓ DÒNG NÀY SẼ KHÔNG QUÉT ĐƯỢC
+QrScanner.WORKER_PATH = 'https://cdn.jsdelivr.net/npm/qr-scanner@1.4.2/qr-scanner-worker.min.js';
 <script>
 
 
@@ -361,6 +343,7 @@ function deg2rad(deg){ return deg*Math.PI/180; }
 </script>
 </body>
 </html>
+
 
 
 
