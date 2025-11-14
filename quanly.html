@@ -77,6 +77,7 @@
 
             .deleteBtn:hover {
                 background: #c82333;
+               
             }
 
         #summary {
@@ -109,11 +110,13 @@
                 <th>Ngày</th>
                 <th>Vào sáng</th>
                 <th>Ra sáng</th>
+                <th>Vào trưa</th>
+                <th>Ra trưa</th>
                 <th>Vào chiều</th>
                 <th>Ra chiều</th>
+
                 <th>Vào làm thêm</th>
                 <th>Ra làm thêm</th>
-                
                 <th>Giờ làm (h)</th>
                 <th>Giờ làm thêm (h)</th>
                 <th>Ghi chú</th>
@@ -169,10 +172,13 @@
             });
         }
 
+       
+
         // ================== Hàm parse giờ hh:mm -> số giờ ==================
         function parseHour(timeStr) {
             if (!timeStr || timeStr === '-') return 0;
             const [h, m] = timeStr.split(':').map(Number);
+            if (isNaN(h) || isNaN(m)) return 0;
             return h + m / 60;
         }
 
@@ -180,16 +186,18 @@
         function calculateHours(tr) {
             const vaoSang = parseHour(tr.children[1].textContent.trim());
             const raSang = parseHour(tr.children[2].textContent.trim());
-            const vaoChieu = parseHour(tr.children[3].textContent.trim());
-            const raChieu = parseHour(tr.children[4].textContent.trim());
-            const vaoLamThem = parseHour(tr.children[5].textContent.trim());
-            const raLamThem = parseHour(tr.children[6].textContent.trim());
+            const vaoTrua = parseHour(tr.children[3].textContent.trim());
+            const raTrua = parseHour(tr.children[4].textContent.trim());
+            const vaoChieu = parseHour(tr.children[5].textContent.trim());
+            const raChieu = parseHour(tr.children[6].textContent.trim());
+            const vaoLamThem = parseHour(tr.children[7].textContent.trim());
+            const raLamThem = parseHour(tr.children[8].textContent.trim());
 
             const gioLam = (raSang - vaoSang) + (raChieu - vaoChieu);
-            const gioLamThem = raLamThem - vaoLamThem;
+            const gioLamThem =  (raTrua - vaoTrua) +( raLamThem - vaoLamThem);
 
-            tr.children[7].textContent = gioLam.toFixed(2);
-            tr.children[8].textContent = gioLamThem.toFixed(2);
+          tr.children[9].textContent = gioLam.toFixed(2);
+          tr.children[10].textContent = gioLamThem.toFixed(2);
 
             return { gioLam, gioLamThem };
         }
@@ -214,8 +222,8 @@
                 totalRow.style.background = "#e9f5ff";
                 totalRow.style.fontWeight = "bold";
 
-                // tạo đủ 11 cột
-                for (let i = 0; i < 11; i++) {
+                // tạo đủ 13 cột
+                for (let i = 0; i < 13; i++) {
                     const td = document.createElement('td');
                     totalRow.appendChild(td);
                 }
@@ -226,11 +234,13 @@
         //    totalRow.children[0].textContent = "TỔNG CỘNG";
         //    totalRow.children[7].textContent = tongGio.toFixed(2);
        //     totalRow.children[8].textContent = tongLamThem.toFixed(2);
+           
 
-            // các cột khác để trống
-            for (let i = 1; i < 7; i++) totalRow.children[i].textContent = "";
-            totalRow.children[9].textContent = "";
-            totalRow.children[10].textContent = "";
+           //  các cột khác để trống
+            //for (let i = 1; i < 7; i++) totalRow.children[i].textContent = "";
+            //totalRow.children[11].textContent = "";
+            //totalRow.children[12].textContent = "";
+           
 
             summaryDiv.textContent = `🧾 Tổng giờ làm: ${tongGio.toFixed(2)}h | Tổng giờ làm thêm: ${tongLamThem.toFixed(2)}h`;
         }
@@ -270,15 +280,29 @@
                         rows.push({
                             Ngay: ngay,
                             vaoCaSang: info.vaoCaSang || '-',
+                            noteVaoCaSang: info.noteVaoCaSang || '-',
+
                             raCaSang: info.raCaSang || '-',
+                            noteRaCaSang: info.noteRaCaSang || '-',
+
+                            vaoCaTrua: info.vaoCaTrua || '-',
+                            noteVaoCaTrua: info.noteVaoCaTrua || '',
+                            raCaTrua: info.raCaTrua || '-',
+                            noteRaCaTrua:info.noteRaCaTrua || '-',
+
                             vaoCaChieu: info.vaoCaChieu || '-',
-                            raCaChieu: info.raCaChieu || '-',
-                            vaoLamThem: info.vaoLamThem || '-',
-                            raLamThem: info.raLamThem || '-',
-                           gioLamThem: gioLamThem,
-                            gioLam: gioLam,
+                            noteVaoCaChieu: info.noteVaoCaChieu || '-',
                            
-                            ghiChu: info.ghiChu || ''
+                            raCaChieu: info.raCaChieu || '-',
+                            noteRaCaChieu: info.noteRaCaChieu || '-',
+
+                            vaoLamThem: info.vaoLamThem || '-',
+                            noteVaoLamThem: info.noteVaoLamThem||'-',
+                            raLamThem: info.raLamThem || '-',
+                            noteRaLamThem: info.noteRaLamThem||'-',
+                            gioLam: gioLam,
+                            gioLamThem: gioLamThem,
+                            ghiChu: info.ghiChu || '-'
                         });
                     }
                 }
@@ -295,23 +319,46 @@
                 tableBody.innerHTML = '';
                 rows.forEach((r) => {
                     tableBody.insertAdjacentHTML('beforeend', `
-            <tr data-ngay="${r.Ngay}">
-              <td contenteditable="true">${r.Ngay}</td>
-              <td contenteditable="true">${r.vaoCaSang}</td>
-              <td contenteditable="true">${r.raCaSang}</td>
-              <td contenteditable="true">${r.vaoCaChieu}</td>
-              <td contenteditable="true">${r.raCaChieu}</td>
-              <td contenteditable="true" class="extra-col">${r.vaoLamThem}</td>
-            <td contenteditable="true" class="extra-col">${r.raLamThem}</td>
-              <td contenteditable="true">${r.gioLam.toFixed(2)}</td>
-              <td contenteditable="true" class="extra-col">${r.gioLamThem.toFixed(2)}</td>
-              <td contenteditable="true">${r.ghiChu}</td>
-              <td><button class="deleteBtn">Xóa</button></td>
-            </tr>
+           <!-- Dòng chính -->
+        <tr data-ngay="${r.Ngay}" class="main-row">
+          <td contenteditable="true" >${r.Ngay}</td>
+          <td contenteditable="true">${r.vaoCaSang}</td>
+          <td contenteditable="true">${r.raCaSang}</td>
+           <td contenteditable="true" style="background-color: #ffcc33;">${r.vaoCaTrua}</td>
+          <td contenteditable="true" style="background-color: #ffcc33;">${r.raCaTrua}</td>
+
+          <td contenteditable="true">${r.vaoCaChieu}</td>
+          <td contenteditable="true">${r.raCaChieu}</td>
+          <td contenteditable="true" class="extra-col">${r.vaoLamThem}</td>
+          <td contenteditable="true" class="extra-col">${r.raLamThem}</td>
+          <td contenteditable="true" rowspan="2"  >${r.gioLam.toFixed(2)}</td>
+          <td contenteditable="true" rowspan="2">${r.gioLamThem.toFixed(2)}</td>
+          <td contenteditable="true" rowspan="2"> ${r.ghiChu || ''}</td>
+
+          <td><button class="deleteBtn">Xóa</button></td>
+        </tr>
+
+        <!-- Dòng ghi chú thêm -->
+        <tr class="note-row" style="background-color: #f4e191;">
+    <td style="font-size:12px">trạng thái</td>
+    <td contenteditable="true">${r.noteVaoCaSang}</td>
+    <td contenteditable="true">${r.noteRaCaSang}</td>
+    <td contenteditable="true">${r.noteVaoCaTrua}</td>
+    <td contenteditable="true">${r.noteRaCaTrua}</td>
+    <td contenteditable="true">${r.noteVaoCaChieu}</td>
+    <td contenteditable="true">${r.noteRaCaChieu}</td>
+    <td contenteditable="true">${r.noteVaoLamThem}</td>
+    <td contenteditable="true">${r.noteRaLamThem}</td>
+
+    <!-- 3 cột cuối để trống để tổng = 13 cột -->
+    
+</tr>
+            
           `);
                 });
 
                 updateTotals(); // tính tổng sau khi hiển thị
+                highlightNoteRows();
             });
         }
 
@@ -321,31 +368,88 @@
         // ================== Cập nhật dữ liệu khi sửa bảng ==================
         tableBody.addEventListener('input', e => {
             const tr = e.target.closest('tr');
+
+            // ============================================
+            // 🟦 1) NẾU LÀ DÒNG CHÍNH (có data-ngay)
+            // ============================================
             if (tr && tr.dataset.ngay) {
                 const ngay = tr.dataset.ngay;
                 const email = nhanvienSelect.value;
-                const vaoCaSang = tr.children[1].textContent.trim() || '-';
-                const raCaSang = tr.children[2].textContent.trim() || '-';
-                const vaoCaChieu = tr.children[3].textContent.trim() || '-';
-                const raCaChieu = tr.children[4].textContent.trim() || '-';
-                const vaoLamThem = tr.children[5].textContent.trim() || '-';
-                const raLamThem = tr.children[6].textContent.trim() || '-';
-                const ghiChu = tr.children[9].textContent.trim() || '';
+
+                const vaoCaSang = tr.children[1].textContent.trim();
+                const raCaSang = tr.children[2].textContent.trim();
+                const vaoCaTrua = tr.children[3].textContent.trim();
+                const raCaTrua = tr.children[4].textContent.trim();
+                const vaoCaChieu = tr.children[5].textContent.trim();
+                const raCaChieu = tr.children[6].textContent.trim();
+                const vaoLamThem = tr.children[7].textContent.trim();
+                const raLamThem = tr.children[8].textContent.trim();
+                const ghiChu = tr.children[11].textContent.trim();
+
+                // Lấy note-row
+                const noteRow = tr.nextElementSibling;
+
+                const noteVaoCaSang = noteRow.children[1].textContent.trim();
+                const noteRaCaSang = noteRow.children[2].textContent.trim();
+                const noteVaoCaTrua = noteRow.children[3].textContent.trim();
+                const noteRaCaTrua = noteRow.children[4].textContent.trim();
+                const noteVaoCaChieu = noteRow.children[5].textContent.trim();
+                const noteRaCaChieu = noteRow.children[6].textContent.trim();
+                const noteVaoLamThem = noteRow.children[7].textContent.trim();
+                const noteRaLamThem = noteRow.children[8].textContent.trim();
 
                 const { gioLam, gioLamThem } = calculateHours(tr);
-                updateTotals();
 
                 const updateData = {
-                    vaoCaSang, raCaSang, vaoCaChieu, raCaChieu,
-                    vaoLamThem, raLamThem, ghiChu,
+                    vaoCaSang, raCaSang,
+                    vaoCaTrua, raCaTrua,
+                    vaoCaChieu, raCaChieu,
+                    vaoLamThem, raLamThem,
+                    ghiChu,
+                    noteVaoCaSang, noteRaCaSang,
+                    noteVaoCaTrua, noteRaCaTrua,
+                    noteVaoCaChieu, noteRaCaChieu,
+                    noteVaoLamThem, noteRaLamThem,
                     gioLamTrongNgay: gioLam,
                     gioLamThem: gioLamThem
                 };
 
-                db.ref('chamcong/' + encodeEmail(email) + '/' + ngay).update(updateData)
-                    .catch(err => alert('❌ Lỗi lưu dữ liệu: ' + err));
+                db.ref("chamcong/" + encodeEmail(email) + "/" + ngay).update(updateData);
+                updateTotals();
+               
+                return;
+            }
+
+            // ============================================
+            // 🟩 2) NẾU LÀ DÒNG NOTE-ROW (KHÔNG có data-ngay)
+            // ============================================
+            if (tr && tr.classList.contains("note-row")) {
+                const mainRow = tr.previousElementSibling;
+                const ngay = mainRow.dataset.ngay;
+                const email = nhanvienSelect.value;
+
+                const noteVaoCaSang = tr.children[1].textContent.trim();
+                const noteRaCaSang = tr.children[2].textContent.trim();
+                const noteVaoCaTrua = tr.children[3].textContent.trim();
+                const noteRaCaTrua = tr.children[4].textContent.trim();
+                const noteVaoCaChieu = tr.children[5].textContent.trim();
+                const noteRaCaChieu = tr.children[6].textContent.trim();
+                const noteVaoLamThem = tr.children[7].textContent.trim();
+                const noteRaLamThem = tr.children[8].textContent.trim();
+
+                db.ref("chamcong/" + encodeEmail(email) + "/" + ngay).update({
+                    noteVaoCaSang,
+                    noteRaCaSang,
+                    noteVaoCaTrua,
+                    noteRaCaTrua,
+                    noteVaoCaChieu,
+                    noteRaCaChieu,
+                    noteVaoLamThem,
+                    noteRaLamThem
+                });
             }
         });
+
 
         // ================== Xóa dòng ==================
         tableBody.addEventListener('click', e => {
@@ -383,12 +487,29 @@
             const today = new Date();
             monthSelect.value = today.toISOString().substring(0, 7);
         });
+
+        function highlightNoteRows() {
+            const noteRows = document.querySelectorAll(".note-row");
+
+            noteRows.forEach(row => {
+                for (let i = 1; i <= 8; i++) {
+                    let cell = row.children[i];
+                    let text = cell.textContent.toLowerCase();
+
+                    if (text.includes("đi sớm")) {
+                        cell.style.background = "#C8F7C5"; // xanh nhạt
+                        cell.style.color = "green";
+                    } else if (text.trim() !== "") {
+                        cell.style.background = "#FFD2D2"; // đỏ nhạt
+                        cell.style.color = "red";
+                    } else {
+                        cell.style.background = ""; // reset nếu ô trống
+                        cell.style.color = "black";
+                    }
+                }
+            });
+        }
     </script>
 </body>
 </html>
-
-
-
-
-
 
