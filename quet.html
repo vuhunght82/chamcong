@@ -163,28 +163,36 @@ const db = firebase.database();
         });
     }
 
-    /* ================== XỬ LÝ MÃ QR ================== */
-    function handleQRCode(data) {
-        if (data !== VALID_QR) {
-            alert("❌ Mã QR không hợp lệ!");
-            startScanner();
-            return;
-        }
-
-        resultDiv.textContent = "Đang lấy GPS...";
-
-        navigator.geolocation.getCurrentPosition(
-            pos => {
-                alert("🎉 Quét OK! lan1\nLat: " + pos.coords.latitude + "\nLng: " + pos.coords.longitude);
-                startScanner();
-            },
-            err => {
-                alert("❌ Không lấy được GPS: " + err.message);
-                startScanner();
-            },
-            { enableHighAccuracy: true, timeout: 8000 }
-        );
+    
+   /* ================== XỬ LÝ MÃ QR ================== */
+function handleQRCode(data) {
+    if (data !== VALID_QR) {
+        alert("❌ Mã QR không hợp lệ!");
+        startScanner();
+        return;
     }
+
+    resultDiv.textContent = "Đang lấy GPS...";
+
+    navigator.geolocation.getCurrentPosition(
+        pos => {
+            const lat = pos.coords.latitude;
+            const lng = pos.coords.longitude;
+
+            console.log("GPS OK:", lat, lng);
+
+            // ⭐ GỌI HÀM LƯU CHẤM CÔNG
+            saveAttendance(lat, lng);
+
+            // ⭐ KHÔNG startScanner ngay lập tức → đợi lưu Firebase xong
+        },
+        err => {
+            alert("❌ Không lấy được GPS: " + err.message);
+            startScanner();
+        },
+        { enableHighAccuracy: true, timeout: 8000 }
+    );
+}
 
 
 
@@ -440,6 +448,7 @@ document.getElementById("logoutBtn").onclick = () => {
 
 </body>
 </html>
+
 
 
 
