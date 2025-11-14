@@ -195,15 +195,58 @@ function handleQRCode(text) {
     
 
     resultDiv.textContent = "Đang lấy GPS...";
+/ hàm lấy GPS
+async function requestLocationSafariFix() {
+    return new Promise((resolve, reject) => {
 
-    navigator.geolocation.getCurrentPosition(
-        pos => saveAttendance(pos.coords.latitude, pos.coords.longitude),
-        err => {
-            alert("❌ Không lấy được GPS!");
-            restartScan();
-        },
-        { enableHighAccuracy: true, timeout: 5000 }
-    );
+        // Safari yêu cầu user interaction → trì hoãn 200ms để tránh chặn
+        setTimeout(() => {
+
+            navigator.geolocation.getCurrentPosition(
+                pos => resolve(pos),
+                err => {
+                    console.log("GPS ERROR:", err);
+
+                    let msg = "❌ Safari đã chặn GPS.\n\n" +
+                              "Hãy vào Settings → Safari → Location → Allow\n" +
+                              "Và bật Precise Location.";
+
+                    if (err.code === 1) msg = "❌ Quyền GPS bị từ chối.\nBạn hãy cấp lại Location cho Safari.";
+                    if (err.code === 2) msg = "⚠️ Không lấy được vị trí.\nKiểm tra 4G/WiFi.";
+                    if (err.code === 3) msg = "⏳ Lấy GPS quá lâu.\nHãy ra ngoài trời để bắt tín hiệu.";
+
+                    alert(msg);
+                    reject(err);
+                },
+                {
+                    enableHighAccuracy: true,
+                    timeout: 12000,
+                    maximumAge: 0
+                }
+            );
+
+        }, 200);
+    });
+}
+
+
+
+    requestLocationSafariFix()
+    .then(pos => {
+        saveAttendance(pos.coords.latitude, pos.coords.longitude);
+    })
+    .catch(() => {
+        restartScan();
+    });
+
+
+
+
+
+
+
+
+    
 }
     // tắt camera khi ròi trang
 window.addEventListener("pagehide", () => {
@@ -268,8 +311,13 @@ function timeDiff(a, b) {
 function saveAttendance(lat, lng) {
 
     if (distance(lat, lng, COMPANY.lat, COMPANY.lng) > 100) {
+        
         alert("❌ Bạn quá xa công ty!");
-        return restartScan();
+        setTimeout(() => {
+                restartScan();
+                }, 1000); // đợi người dùng bấm OK xong
+        return;
+       
     }
 
     const emailKey = encodeEmail(userEmail);
@@ -425,6 +473,7 @@ startCamera();
 
 </body>
 </html>
+
 
 
 
