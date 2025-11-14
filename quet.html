@@ -76,10 +76,17 @@ button {
 <button id="logoutBtn">🚪 Đăng xuất</button>
 <button  id="Local" onclick="checkLocation()">Kiểm tra vị trí</button>
 <di>
-    <button  id="reset" onclick="startCamera()">⏳ Quét lại</button>
+    <button  id="reset">⏳ Quét lại</button>
 </di>
 <script>
-
+document.getElementById('reset').addEventListener('click', () => {
+    // nếu stream chưa có thì mở, nếu có rồi chỉ bật lại scan loop
+    if (!video.srcObject) startCamera();
+    else {
+        scanning = true;
+        restartScan();
+    }
+});
 
     function checkLocation() {
   if (!navigator.geolocation) {
@@ -188,62 +195,8 @@ function handleQRCode(text) {
         setTimeout(() => restartScan(), 800);
         return;
     }
-
-    resultDiv.textContent = "Đang lấy GPS...";
-
-    // 👉 CHỈ GỌI GPS Ở ĐÂY, SAU KHI QUÉT QR THÀNH CÔNG
-    requestLocationSafariFix()
-        .then(pos => {
-            saveAttendance(pos.coords.latitude, pos.coords.longitude);
-        })
-        .catch(() => {
-            restartScan();
-        });
-}
-
-  
-
-async function requestLocationSafariFix() {
-    return new Promise((resolve, reject) => {
-
-        // Safari yêu cầu user interaction → trì hoãn 200ms để tránh chặn
-        setTimeout(() => {
-
-            navigator.geolocation.getCurrentPosition(
-                pos => resolve(pos),
-                err => {
-                    console.log("GPS ERROR:", err);
-
-                    let msg = "❌ Safari đã chặn GPS.\n\n" +
-                              "Hãy vào Settings → Safari → Location → Allow\n" +
-                              "Và bật Precise Location.";
-
-                    if (err.code === 1) msg = "❌ Quyền GPS bị từ chối.\nBạn hãy cấp lại Location cho Safari.";
-                    if (err.code === 2) msg = "⚠️ Không lấy được vị trí.\nKiểm tra 4G/WiFi.";
-                    if (err.code === 3) msg = "⏳ Lấy GPS quá lâu.\nHãy ra ngoài trời để bắt tín hiệu.";
-
-                    alert(msg);
-                    reject(err);
-                },
-                {
-                    enableHighAccuracy: true,
-                    timeout: 12000,
-                    maximumAge: 0
-                }
-            );
-
-        }, 200);
-    });
-}
-
-
-
-   
-
-
-
-
     
+}
 
     // tắt camera khi ròi trang
 window.addEventListener("pagehide", () => {
@@ -487,6 +440,7 @@ startCamera();
 
 </body>
 </html>
+
 
 
 
