@@ -278,11 +278,16 @@ function saveAttendance(lat, lng) {
         let d = snap.val() || {};
 
         // Khởi tạo các trường
-        d.vaoCaSang ??= ""; d.raCaSang ??= "";
-        d.vaoCaTrua ??= ""; d.raCaTrua ??= "";
-        d.vaoCaChieu ??= ""; d.raCaChieu ??= "";
-        d.vaoLamThem ??= ""; d.raLamThem ??= "";
-        d.ghiChu ??= ""; // Khởi tạo ghi chú
+      // Khởi tạo các trường nếu chưa có (Sử dụng cú pháp tương thích cũ hơn)
+        d.vaoCaSang = d.vaoCaSang || "";
+        d.raCaSang = d.raCaSang || "";
+        d.vaoCaTrua = d.vaoCaTrua || "";
+        d.raCaTrua = d.raCaTrua || "";
+        d.vaoCaChieu = d.vaoCaChieu || "";
+        d.raCaChieu = d.raCaChieu || "";
+        d.vaoLamThem = d.vaoLamThem || "";
+        d.raLamThem = d.raLamThem || "";
+        d.ghiChu = d.ghiChu || "";
 
         // 2. LOGIC CHẤM CÔNG theo Khung Giờ
 
@@ -387,3 +392,4 @@ document.getElementById("logoutBtn").onclick = () => {
 
 </body>
 </html>
+
