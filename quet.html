@@ -383,7 +383,7 @@ else if (hour > 13 && hour <= 17.5)
         msg = "Vào ca chiều";
     
     }
-    else if(!d.raCaChieu)
+    else (!d.raCaChieu)
     {
      d.raCaChieu   = time;
         msg = "ra ca chiều";
@@ -465,6 +465,7 @@ document.getElementById("logoutBtn").onclick = () => {
 
 </body>
 </html>
+
 
 
 
