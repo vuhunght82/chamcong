@@ -192,7 +192,15 @@ function handleQRCode(text) {
         return;
         };
         
-        
+         requestLocationSafariFix()
+    .then(pos => {
+        saveAttendance(pos.coords.latitude, pos.coords.longitude);
+    })
+    .catch(() => {
+        restartScan();
+    });
+
+
 }
 
    
@@ -232,15 +240,7 @@ async function requestLocationSafariFix() {
 
 
 
-    requestLocationSafariFix()
-    .then(pos => {
-        saveAttendance(pos.coords.latitude, pos.coords.longitude);
-    })
-    .catch(() => {
-        restartScan();
-    });
-
-
+   
 
 
 
@@ -480,6 +480,7 @@ startCamera();
 
 </body>
 </html>
+
 
 
 
