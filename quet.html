@@ -287,17 +287,17 @@ function timeDiff(a, b) {
     return t2 - t1;
 }
 /* ===================== LƯU CHẤM CÔNG ===================== */
+/* ===================== LƯU CHẤM CÔNG (Đã Tối Ưu) ===================== */
 function saveAttendance(lat, lng) {
 
+    // 1. Kiểm tra khoảng cách
     if (distance(lat, lng, COMPANY.lat, COMPANY.lng) > 100) {
-        
-        alert("❌ Bạn quá xa công ty!");
+        alert("❌ Bạn quá xa công ty (Tối đa 100m)!");
         setTimeout(() => {
-                restartScan();
-                }, 1000); // đợi người dùng bấm OK xong
-        return;
-       
-  }
+            restartScan();
+        }, 1000);
+        return; // Dừng nếu quá xa
+    }
 
     const emailKey = encodeEmail(userEmail);
     const now = new Date();
@@ -306,10 +306,12 @@ function saveAttendance(lat, lng) {
     const hour = now.getHours() + now.getMinutes() / 60;
 
     const ref = db.ref("chamcong/" + emailKey + "/" + day);
+    let msg = "Hoàn thành chấm công."; // Giá trị mặc định
 
     ref.once("value").then((snap) => {
         let d = snap.val() || {};
 
+        // Khởi tạo các trường nếu chưa có
         d.vaoCaSang ??= "";
         d.raCaSang ??= "";
         d.vaoCaTrua ??= "";
@@ -319,127 +321,134 @@ function saveAttendance(lat, lng) {
         d.vaoLamThem ??= "";
         d.raLamThem ??= "";
 
-        let msg = "";
+        // 2. LOGIC CHẤM CÔNG theo Khung Giờ
 
-        if (hour >= 7.5 && hour <= 11.5)
-        {
-            if(!d.vaoCaSang)
-            {
+        // **A. CA SÁNG (Trước 7:30):**
+        if (hour < 7.5) { // < 7:30
+            if (!d.vaoCaSang) {
                 d.vaoCaSang = time;
-                msg="Vào ca sáng";
-               
+                msg = "Vào ca sáng (Đi sớm)";
+                d.noteVaoCaSang = "đi sớm";
+            } else if (!d.raCaSang) {
+                d.raCaSang = time;
+                msg = "Ra ca sáng sớm";
+                d.noteRaCaSang = "ra sớm";
+            } else {
+                msg = "Đã hoàn thành chấm công sáng.";
+            }
+        }
+        
+        // **B. CA SÁNG (7:30 - 11:30):**
+        else if (hour >= 7.5 && hour <= 11.5) { // 7:30 - 11:30
+            if (!d.vaoCaSang) {
+                d.vaoCaSang = time;
+                msg = "Vào ca sáng (Đi muộn)";
                 d.noteVaoCaSang = "đi muộn";
-            }
-            else{
-                 d.raCaSang = time;
-                msg="Về sớm!"
+            } else if (!d.raCaSang) {
+                d.raCaSang = time;
+                msg = "Ra ca sáng (Về sớm)!"; // Vẫn tính về sớm nếu ra trước 11:30
                 d.noteRaCaSang = "về sớm";
+            } else {
+                 msg = "Đã hoàn thành chấm công sáng.";
             }
-             
         }
-      else   if (hour < 7.5){
-        if(!d.vaoCaSang)
-        {
-            d.vaoCaSang = time;
-            msg="Sáng đi sớm";
-             d.noteVaoCaSang = "đi sớm";
-        }
-      }
+
+        // **C. CA TRƯA (11:30 - 13:00):**
+        else if (hour > 11.5 && hour <= 13.0) { // 11:30 - 13:00
             
-        // ======= CA TRƯA =======
-else if (hour >= 11.5 && hour <= 13.0) {
-
-    // Nếu chưa chấm ra sáng → auto chấm đúng 11:30
-    if (!d.raCaSang && d.vaoCaSang) {
-        d.raCaSang = "11:30";
-        msg=" làm trưa";
-        d.noteRaCaSang = "đúng giờ";
-    }
-
-    // Nếu chưa vào ca trưa → đây là lần quét VÀO TRƯA
-    if (!d.vaoCaTrua) {
-        d.vaoCaTrua = "11:30";   // chuẩn giờ
-        msg = "Vào ca trưa";
-    }
-    // Nếu đã vào nhưng chưa ra ca trưa → đây là lần quét RA TRƯA
-    else if (!d.raCaTrua) {
-        d.raCaTrua = time;
-        msg = "Ra ca trưa";
-
-        if (hour < 12) {
-            d.noteRaCaTrua = "ra sớm";
-        }
-    }
-}
-            
- // ca chiều
-else if (hour >= 13.0 && hour <= 17.5) 
-{ 
-
-    // Nếu chưa vào ca chiều → vào ca chiều
-    if (!d.vaoCaChieu) {
-    
-        d.vaoCaChieu = time;
-        msg = "Vào ca chiều";
-    
-    }
-    else if (!d.raCaChieu)
-    {
-     d.raCaChieu   = time;
-     //   msg = "ra ca chiều";
-
-    }
-    else{
-    msg = "quét ca chiều";
-    }
-}
-           
-else if (hour > 17.5)
-        {
-           if(!d.raCaChieu)
-           {
-               d.raCaChieu="17:30";
-           }
-            else if(!d.vaoLamThem){
-                    d.vaoLamThem = "17:30";
-                    msg="Vào tăng ca";
-               
+            // Auto chấm RA SÁNG nếu chưa có
+            if (!d.raCaSang && d.vaoCaSang) {
+                d.raCaSang = "11:30:00"; // Tự động ghi 11:30:00
+                d.noteRaCaSang = "đúng giờ";
             }
-            else
-            {
+
+            if (!d.vaoCaTrua) {
+                d.vaoCaTrua = time; // Ghi nhận giờ thực tế
+                msg = "Vào ca trưa";
+            } else if (!d.raCaTrua) {
+                d.raCaTrua = time;
+                msg = "Ra ca trưa";
+                if (timeDiff(d.vaoCaTrua, d.raCaTrua) < 0.5) { // Ví dụ: Giả sử nghỉ trưa < 30 phút là ra sớm
+                    d.noteRaCaTrua = "ra sớm";
+                }
+            } else {
+                 msg = "Đã hoàn thành chấm công trưa.";
+            }
+        }
+
+        // **D. CA CHIỀU (13:00 - 17:30):** ⭐ Đã sửa lỗi không rẽ nhánh ở đây
+        else if (hour > 13.0 && hour <= 17.5) { // 13:00 - 17:30 (17.5 = 17:30)
+            
+            // Auto chấm RA TRƯA nếu chưa có
+            if (!d.raCaTrua && d.vaoCaTrua) {
+                 d.raCaTrua = "13:00:00"; // Tự động ghi 13:00:00
+            }
+
+            if (!d.vaoCaChieu) {
+                d.vaoCaChieu = time;
+                msg = "Vào ca chiều";
+            } else if (!d.raCaChieu) {
+                d.raCaChieu = time;
+                msg = "Ra ca chiều";
+            } else {
+                 msg = "Đã hoàn thành chấm công chiều.";
+            }
+        }
+
+        // **E. TĂNG CA (Sau 17:30):**
+        else if (hour > 17.5) { // > 17:30
+            // Auto chấm RA CHIỀU nếu chưa có
+            if (!d.raCaChieu) {
+                d.raCaChieu = "17:30:00";
+                d.noteRaCaChieu = "đúng giờ";
+            }
+
+            if (!d.vaoLamThem) {
+                d.vaoLamThem = "17:30:00";
+                msg = "Vào tăng ca (Auto 17:30)";
+            } else if (!d.raLamThem) {
                 d.raLamThem = time;
-                msg="Vào tăng ca";
-                d.noteRaLamThem="tăng ca tối"
+                msg = "Ra tăng ca tối";
+                d.noteRaLamThem = "tăng ca tối";
+            } else {
+                 msg = "Đã hoàn thành chấm công tăng ca.";
             }
-
         }
 
-        // TÍNH GIỜ
-        let total = 0;
-total += timeDiff(d.vaoCaSang, d.raCaSang);
-total += timeDiff(d.vaoCaTrua, d.raCaTrua);
-total += timeDiff(d.vaoCaChieu, d.raCaChieu);
-d.gioLamTrongNgay = total.toFixed(2);
 
-let ot = timeDiff(d.vaoLamThem, d.raLamThem)+timeDiff(d.vaoCaTrua,d.raCaTrua);
-d.gioLamThem = ot.toFixed(2);
+        // 3. TÍNH GIỜ (Giữ nguyên logic tính toán)
+        let total = 0;
+        total += timeDiff(d.vaoCaSang, d.raCaSang);
+        total += timeDiff(d.vaoCaTrua, d.raCaTrua);
+        total += timeDiff(d.vaoCaChieu, d.raCaChieu);
+        d.gioLamTrongNgay = total.toFixed(2);
+
+        let ot = timeDiff(d.vaoLamThem, d.raLamThem) + timeDiff(d.vaoCaTrua, d.raCaTrua); // Chú ý: logic tính OT có thể cần xem xét lại nếu Ca Trưa không phải là OT
+        d.gioLamThem = ot.toFixed(2);
 
         d.diaDiemQuet = `${lat},${lng}`;
 
+
+        // 4. LƯU VÀ KHỞI ĐỘNG LẠI SCAN (Đảm bảo khối này LUÔN chạy)
         ref.set(d).then(() => {
-          scanning = false; // NGĂN CAMERA QUÉT TIẾP
+            scanning = false;
             alert(
                 "✔ Chấm công thành công!\n" +
                 "📅 Ngày: "+day+"\n"+
-                "⏰ "+time+"_"+msg+"\n"+
+                "⏰ "+time+" - "+msg+"\n"+ // Gán biến msg đã được thiết lập ở bước 2
                 "⏳ Giờ làm: "+d.gioLamTrongNgay+"h\n"+
                 "🌙 Tăng ca: "+d.gioLamThem+"h"
             );
 
+            // ⭐ Khởi động lại camera sau 1 giây
             setTimeout(() => {
                 restartScan();
-                }, 1000); // đợi người dùng bấm OK xong
-                });
+            }, 1000);
+        })
+        .catch(error => {
+            alert("❌ Lỗi lưu dữ liệu Firebase: " + error.message);
+            restartScan(); // Khởi động lại nếu lỗi lưu
+        });
     });
 }
 
@@ -467,6 +476,7 @@ document.getElementById("logoutBtn").onclick = () => {
 
 </body>
 </html>
+
 
 
 
