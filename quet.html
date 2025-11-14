@@ -71,13 +71,16 @@
         }
     </style>
 
-    <!-- jsQR -->
-    <!-- 🔥 LOAD QR-SCANNER KHÔNG IMPORT -->
-   
- <script src="https://cdn.jsdelivr.net/npm/qr-scanner@1.4.2/qr-scanner.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qr-scanner@1.4.2/qr-scanner.umd.min.js"></script>
 
+    <script>
+        if (typeof QrScanner !== 'undefined') {
+            QrScanner.WorkerPath = 'https://cdn.jsdelivr.net/npm/qr-scanner@1.4.2/qr-scanner-worker.min.js';
+        } else {
+            console.error("Lỗi: QrScanner không tải được.");
+        }
+    </script>
 
-    <!-- Firebase -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 
@@ -95,170 +98,40 @@
 
 <button id="viewBtn">📋 Xem chấm công</button>
 <button id="logoutBtn">🚪 Đăng xuất</button>
-<button  id="Local" onclick="checkLocation()">Kiểm tra vị trí</button>
-<di>
-    <button  id="reset">⏳ Quét lại</button>
-</di>
-    <script>
-document.addEventListener("DOMContentLoaded", () => {
+<button id="Local" onclick="checkLocation()">Kiểm tra vị trí</button>
+<div>
+    <button id="reset">⏳ Quét lại</button>
+</div>
 
-    const videoElem = document.getElementById("video");  // ❗ Sửa đúng ID
-
-    scanner = new QrScanner(
-        videoElem,
-        result => handleQRCode(result.data),
-        {
-            highlightScanRegion: true,
-            highlightCodeOutline: true
-        }
-    );
-
-    scanner.start().catch(err => {
-        console.error("Camera error:", err);
-    });
-
-});
-</script>
 <script>
-document.getElementById('reset').addEventListener('click', () => {
-    // nếu stream chưa có thì mở, nếu có rồi chỉ bật lại scan loop
-    if (!video.srcObject) startScanner();
-    else {
-        scanning = true;
-        restartScan();
-    }
-});
+/* ===================== CÁC HÀM CƠ BẢN VÀ BIẾN ===================== */
+// Khởi tạo biến toàn cục
+const VALID_QR = "CHECKIN_GLASS_COMPANY";
+const resultDiv = document.getElementById("result");
+const videoElem = document.getElementById('video');
+let scanner;
+let scanning = false;
 
-    function checkLocation() {
-  if (!navigator.geolocation) {
-    alert('Trình duyệt không hỗ trợ geolocation!');
-    return;
-  }
-  navigator.geolocation.getCurrentPosition(
-    pos => alert(`Vĩ độ: ${pos.coords.latitude}, Kinh độ: ${pos.coords.longitude}`),
-    err => alert(`Lỗi: ${err.code} - ${err.message}`),
-    { enableHighAccuracy: true, timeout: 10000 }
-  );
-}
-/* ===================== LOGIN ===================== */
+const COMPANY = { lat: 10.84964185816, lng: 106.58569113116 }; // Tọa độ công ty
+
 const userEmail = sessionStorage.getItem("userEmail");
 if (!userEmail) location.href = "index.html";
 
-    /* ============ BIẾN ============ */
-    const VALID_QR = "CHECKIN_GLASS_COMPANY";
-   
-    const resultDiv = document.getElementById("result");
-    const videoElem = document.getElementById('video');
-    let scanner;
-let scanning = false;
-
 /* ===================== FIREBASE ===================== */
 firebase.initializeApp({
-  apiKey: "AIzaSyAb5AZOBvEVY3a_9ioEKTW-wuVMXdnRZGQ",
-  authDomain: "sellglass-3ebe9.firebaseapp.com",
-  databaseURL: "https://sellglass-3ebe9-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "sellglass-3ebe9",
-  storageBucket: "sellglass-3ebe9.appspot.com",
-  messagingSenderId: "513741829035",
-  appId: "1:513741829035:web:1b2c59dcf1a0be329358ee"
+    apiKey: "AIzaSyAb5AZOBvEVY3a_9ioEKTW-wuVMXdnRZGQ",
+    authDomain: "sellglass-3ebe9.firebaseapp.com",
+    databaseURL: "https://sellglass-3ebe9-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "sellglass-3ebe9",
+    storageBucket: "sellglass-3ebe9.appspot.com",
+    messagingSenderId: "513741829035",
+    appId: "1:513741829035:web:1b2c59dcf1a0be329358ee"
 });
 const db = firebase.database();
-    /* ================== BẮT ĐẦU CAMERA ================== */
-    function startScanner() {
-        if (scanner) scanner.stop();
 
-        // Gọi scanner UMD
-        scanner = new QrScanner(
-            videoElem,
-            result => {
-                scanner.stop();
-                handleQRCode(result.data);
-            },
-            {
-                highlightScanRegion: true,
-                highlightCodeOutline: true
-            }
-        );
-
-        scanner.start().catch(err => {
-            resultDiv.textContent = "❌ Không mở được camera: " + err;
-        });
-    }
-
-    
-   /* ================== XỬ LÝ MÃ QR ================== */
-function handleQRCode(data) {
-    if (data !== VALID_QR) {
-        alert("❌ Mã QR không hợp lệ!");
-        startScanner();
-        return;
-    }
-
-    resultDiv.textContent = "Đang lấy GPS...";
-
-    navigator.geolocation.getCurrentPosition(
-        pos => {
-            const lat = pos.coords.latitude;
-            const lng = pos.coords.longitude;
-
-            console.log("GPS OK:", lat, lng);
-
-            // ⭐ GỌI HÀM LƯU CHẤM CÔNG
-            saveAttendance(lat, lng);
-
-            // ⭐ KHÔNG startScanner ngay lập tức → đợi lưu Firebase xong
-        },
-        err => {
-            alert("❌ Không lấy được GPS: " + err.message);
-            startScanner();
-        },
-        { enableHighAccuracy: true, timeout: 8000 }
-    );
-}
-
-
-
-
-/* ===================== QR CHECK ===================== */
-
-const COMPANY = { lat: 10.84964185816, lng: 106.58569113116 };
+/* ===================== HÀM HỖ TRỢ ===================== */
 
 function encodeEmail(e) { return e.replace(/\./g, ","); }
-
-
-
-    // tắt camera khi ròi trang
-window.addEventListener("pagehide", () => {
-    if (video.srcObject) {
-        video.srcObject.getTracks().forEach(track => track.stop());
-        video.srcObject = null;
-    }
-});
-
-// bật camera lại
-    document.addEventListener("visibilitychange", () => {
-    if (!document.hidden) {
-        // quay lại trang → mở lại camera
-        startScanner();
-    } else {
-        // rời trang → tắt camera
-        if (video.srcObject) {
-            video.srcObject.getTracks().forEach(t => t.stop());
-        }
-    }
-});
-
-
-
-
-
-    
-/* ===================== TÍNH GIỜ ===================== */
-function timeDiff(a, b) {
-    const pa = a.replace(/[^0-9:]/g, "").split(":").map(Number);
-    const pb = b.replace(/[^0-9:]/g, "").split(":").map(Number);
-    return (pb[0] + pb[1] / 60) - (pa[0] + pa[1] / 60);
-}
 
 function distance(a, b, c, d) {
     const R = 6371000;
@@ -267,10 +140,9 @@ function distance(a, b, c, d) {
     let s = Math.sin(x/2)**2 + Math.cos(a*Math.PI/180)*Math.cos(c*Math.PI/180)*Math.sin(y/2)**2;
     return R * 2 * Math.atan2(Math.sqrt(s), Math.sqrt(1 - s));
 }
+
 function timeDiff(a, b) {
     if (!a || !b) return 0;
-
-    // chỉ lấy HH:MM
     a = a.replace(/[^0-9:]/g, "");
     b = b.replace(/[^0-9:]/g, "");
 
@@ -286,177 +158,220 @@ function timeDiff(a, b) {
     const t2 = pb[0] + pb[1] / 60;
     return t2 - t1;
 }
-/* ===================== LƯU CHẤM CÔNG ===================== */
-/* ===================== LƯU CHẤM CÔNG (Đã Tối Ưu) ===================== */
+
+function checkLocation() {
+    if (!navigator.geolocation) {
+        alert('Trình duyệt không hỗ trợ geolocation!');
+        return;
+    }
+    navigator.geolocation.getCurrentPosition(
+        pos => alert(`Vĩ độ: ${pos.coords.latitude}, Kinh độ: ${pos.coords.longitude}`),
+        err => alert(`Lỗi: ${err.code} - ${err.message}`),
+        { enableHighAccuracy: true, timeout: 10000 }
+    );
+}
+
+/* ================== QUÉT & CAMERA ================== */
+
+function restartScan() {
+    resultDiv.textContent = "Đang quét...";
+    scanning = true;
+    // Gọi startScanner để đảm bảo camera được mở lại nếu cần
+    if (scanner) scanner.start(); 
+    else startScanner();
+}
+
+function startScanner() {
+    if (scanner) scanner.stop();
+
+    // Khởi tạo QrScanner (Đã khắc phục lỗi QrScanner is not defined)
+    scanner = new QrScanner(
+        videoElem,
+        result => {
+            scanner.stop(); // Dừng camera ngay khi quét thành công
+            handleQRCode(result.data);
+        },
+        {
+            highlightScanRegion: true,
+            highlightCodeOutline: true
+        }
+    );
+
+    scanner.start().catch(err => {
+        resultDiv.textContent = "❌ Không mở được camera: " + err;
+        console.error("Camera error:", err);
+    });
+}
+
+// Bắt đầu quét khi DOM tải xong
+document.addEventListener("DOMContentLoaded", startScanner);
+
+// Xử lý nút "Quét lại"
+document.getElementById('reset').addEventListener('click', () => {
+    restartScan();
+});
+
+// Xử lý khi rời trang/ẩn trang
+window.addEventListener("pagehide", () => {
+    if (videoElem.srcObject) {
+        videoElem.srcObject.getTracks().forEach(track => track.stop());
+        videoElem.srcObject = null;
+    }
+});
+document.addEventListener("visibilitychange", () => {
+    if (!document.hidden) {
+        startScanner(); // Quay lại trang → mở lại camera
+    } else {
+        if (videoElem.srcObject) { // Rời trang → tắt camera
+            videoElem.srcObject.getTracks().forEach(t => t.stop());
+        }
+    }
+});
+
+
+/* ================== XỬ LÝ MÃ QR & GPS ================== */
+function handleQRCode(data) {
+    if (data !== VALID_QR) {
+        alert("❌ Mã QR không hợp lệ!");
+        restartScan(); // Khởi động lại ngay nếu mã không hợp lệ
+        return;
+    }
+
+    resultDiv.textContent = "Đang lấy GPS...";
+
+    navigator.geolocation.getCurrentPosition(
+        pos => {
+            const lat = pos.coords.latitude;
+            const lng = pos.coords.longitude;
+            console.log("GPS OK:", lat, lng);
+            saveAttendance(lat, lng); // Gọi hàm lưu chấm công
+        },
+        err => {
+            alert("❌ Không lấy được GPS: " + err.message);
+            restartScan();
+        },
+        { enableHighAccuracy: true, timeout: 8000 }
+    );
+}
+
+
+/* ===================== LƯU CHẤM CÔNG (Đã Tối Ưu Logic) ===================== */
 function saveAttendance(lat, lng) {
 
     // 1. Kiểm tra khoảng cách
     if (distance(lat, lng, COMPANY.lat, COMPANY.lng) > 100) {
         alert("❌ Bạn quá xa công ty (Tối đa 100m)!");
-        setTimeout(() => {
-            restartScan();
-        }, 1000);
-        return; // Dừng nếu quá xa
+        setTimeout(restartScan, 1000);
+        return; 
     }
 
     const emailKey = encodeEmail(userEmail);
     const now = new Date();
     const day = now.toISOString().slice(0, 10);
-    const time = now.toLocaleTimeString();
+    const time = now.toLocaleTimeString('en-US', { hour12: false }); // Định dạng HH:MM:SS
     const hour = now.getHours() + now.getMinutes() / 60;
 
     const ref = db.ref("chamcong/" + emailKey + "/" + day);
-    let msg = "Hoàn thành chấm công."; // Giá trị mặc định
+    let msg = "Hoàn thành chấm công."; 
 
     ref.once("value").then((snap) => {
         let d = snap.val() || {};
 
-        // Khởi tạo các trường nếu chưa có
-        d.vaoCaSang ??= "";
-        d.raCaSang ??= "";
-        d.vaoCaTrua ??= "";
-        d.raCaTrua ??= "";
-        d.vaoCaChieu ??= "";
-        d.raCaChieu ??= "";
-        d.vaoLamThem ??= "";
-        d.raLamThem ??= "";
+        // Khởi tạo các trường
+        d.vaoCaSang ??= ""; d.raCaSang ??= "";
+        d.vaoCaTrua ??= ""; d.raCaTrua ??= "";
+        d.vaoCaChieu ??= ""; d.raCaChieu ??= "";
+        d.vaoLamThem ??= ""; d.raLamThem ??= "";
+        d.ghiChu ??= ""; // Khởi tạo ghi chú
 
         // 2. LOGIC CHẤM CÔNG theo Khung Giờ
 
         // **A. CA SÁNG (Trước 7:30):**
-        if (hour < 7.5) { // < 7:30
+        if (hour < 7.5) { 
             if (!d.vaoCaSang) {
-                d.vaoCaSang = time;
-                msg = "Vào ca sáng (Đi sớm)";
-                d.noteVaoCaSang = "đi sớm";
+                d.vaoCaSang = time; msg = "Vào ca sáng (Đi sớm)"; d.noteVaoCaSang = "đi sớm";
             } else if (!d.raCaSang) {
-                d.raCaSang = time;
-                msg = "Ra ca sáng sớm";
-                d.noteRaCaSang = "ra sớm";
-            } else {
-                msg = "Đã hoàn thành chấm công sáng.";
-            }
+                d.raCaSang = time; msg = "Ra ca sáng sớm"; d.noteRaCaSang = "ra sớm";
+            } else { msg = "Đã hoàn thành chấm công sáng."; }
         }
         
         // **B. CA SÁNG (7:30 - 11:30):**
-        else if (hour >= 7.5 && hour <= 11.5) { // 7:30 - 11:30
+        else if (hour >= 7.5 && hour <= 11.5) { 
             if (!d.vaoCaSang) {
-                d.vaoCaSang = time;
-                msg = "Vào ca sáng (Đi muộn)";
-                d.noteVaoCaSang = "đi muộn";
+                d.vaoCaSang = time; msg = "Vào ca sáng (Đi muộn)"; d.noteVaoCaSang = "đi muộn";
             } else if (!d.raCaSang) {
-                d.raCaSang = time;
-                msg = "Ra ca sáng (Về sớm)!"; // Vẫn tính về sớm nếu ra trước 11:30
-                d.noteRaCaSang = "về sớm";
-            } else {
-                 msg = "Đã hoàn thành chấm công sáng.";
-            }
+                d.raCaSang = time; msg = "Ra ca sáng (Về sớm)!"; d.noteRaCaSang = "về sớm";
+            } else { msg = "Đã hoàn thành chấm công sáng."; }
         }
 
         // **C. CA TRƯA (11:30 - 13:00):**
-        else if (hour > 11.5 && hour <= 13.0) { // 11:30 - 13:00
-            
-            // Auto chấm RA SÁNG nếu chưa có
-            if (!d.raCaSang && d.vaoCaSang) {
-                d.raCaSang = "11:30:00"; // Tự động ghi 11:30:00
-                d.noteRaCaSang = "đúng giờ";
-            }
+        else if (hour > 11.5 && hour <= 13.0) { 
+            if (!d.raCaSang && d.vaoCaSang) { d.raCaSang = "11:30:00"; d.noteRaCaSang = "đúng giờ"; }
 
             if (!d.vaoCaTrua) {
-                d.vaoCaTrua = time; // Ghi nhận giờ thực tế
-                msg = "Vào ca trưa";
+                d.vaoCaTrua = time; msg = "Vào ca trưa";
             } else if (!d.raCaTrua) {
-                d.raCaTrua = time;
-                msg = "Ra ca trưa";
-                if (timeDiff(d.vaoCaTrua, d.raCaTrua) < 0.5) { // Ví dụ: Giả sử nghỉ trưa < 30 phút là ra sớm
-                    d.noteRaCaTrua = "ra sớm";
-                }
-            } else {
-                 msg = "Đã hoàn thành chấm công trưa.";
-            }
+                d.raCaTrua = time; msg = "Ra ca trưa";
+                if (timeDiff(d.vaoCaTrua, d.raCaTrua) < 0.5) { d.noteRaCaTrua = "ra sớm"; }
+            } else { msg = "Đã hoàn thành chấm công trưa."; }
         }
 
-        // **D. CA CHIỀU (13:00 - 17:30):** ⭐ Đã sửa lỗi không rẽ nhánh ở đây
-        else if (hour > 13.0 && hour <= 17.5) { // 13:00 - 17:30 (17.5 = 17:30)
-            
-            // Auto chấm RA TRƯA nếu chưa có
-            if (!d.raCaTrua && d.vaoCaTrua) {
-                 d.raCaTrua = "13:00:00"; // Tự động ghi 13:00:00
-            }
+        // **D. CA CHIỀU (13:00 - 17:30):** else if (hour > 13.0 && hour <= 17.5) { 
+            if (!d.raCaTrua && d.vaoCaTrua) { d.raCaTrua = "13:00:00"; }
 
             if (!d.vaoCaChieu) {
-                d.vaoCaChieu = time;
-                msg = "Vào ca chiều";
+                d.vaoCaChieu = time; msg = "Vào ca chiều";
             } else if (!d.raCaChieu) {
-                d.raCaChieu = time;
-                msg = "Ra ca chiều";
-            } else {
-                 msg = "Đã hoàn thành chấm công chiều.";
-            }
+                d.raCaChieu = time; msg = "Ra ca chiều";
+            } else { msg = "Đã hoàn thành chấm công chiều."; }
         }
 
         // **E. TĂNG CA (Sau 17:30):**
-        else if (hour > 17.5) { // > 17:30
-            // Auto chấm RA CHIỀU nếu chưa có
-            if (!d.raCaChieu) {
-                d.raCaChieu = "17:30:00";
-                d.noteRaCaChieu = "đúng giờ";
-            }
+        else if (hour > 17.5) { 
+            d.ghiChu = "Làmthêm"; // Ghi chú làm thêm
+
+            if (!d.raCaChieu) { d.raCaChieu = "17:30:00"; d.noteRaCaChieu = "đúng giờ"; }
 
             if (!d.vaoLamThem) {
-                d.vaoLamThem = "17:30:00";
-                msg = "Vào tăng ca (Auto 17:30)";
+                d.vaoLamThem = "17:30:00"; msg = "Vào tăng ca (Auto 17:30)";
             } else if (!d.raLamThem) {
-                d.raLamThem = time;
-                msg = "Ra tăng ca tối";
-                d.noteRaLamThem = "tăng ca tối";
-            } else {
-                 msg = "Đã hoàn thành chấm công tăng ca.";
-            }
+                d.raLamThem = time; msg = "Ra tăng ca tối"; d.noteRaLamThem = "tăng ca tối";
+            } else { msg = "Đã hoàn thành chấm công tăng ca."; }
         }
 
 
-        // 3. TÍNH GIỜ (Giữ nguyên logic tính toán)
+        // 3. TÍNH GIỜ
         let total = 0;
         total += timeDiff(d.vaoCaSang, d.raCaSang);
         total += timeDiff(d.vaoCaTrua, d.raCaTrua);
         total += timeDiff(d.vaoCaChieu, d.raCaChieu);
         d.gioLamTrongNgay = total.toFixed(2);
 
-        let ot = timeDiff(d.vaoLamThem, d.raLamThem) + timeDiff(d.vaoCaTrua, d.raCaTrua); // Chú ý: logic tính OT có thể cần xem xét lại nếu Ca Trưa không phải là OT
+        // Tính OT (Chỉ tính giờ làm thêm thực tế, bỏ ca trưa nếu không cần thiết)
+        let ot = timeDiff(d.vaoLamThem, d.raLamThem); 
         d.gioLamThem = ot.toFixed(2);
 
         d.diaDiemQuet = `${lat},${lng}`;
 
 
-        // 4. LƯU VÀ KHỞI ĐỘNG LẠI SCAN (Đảm bảo khối này LUÔN chạy)
+        // 4. LƯU VÀ KHỞI ĐỘNG LẠI SCAN
         ref.set(d).then(() => {
             scanning = false;
             alert(
                 "✔ Chấm công thành công!\n" +
                 "📅 Ngày: "+day+"\n"+
-                "⏰ "+time+" - "+msg+"\n"+ // Gán biến msg đã được thiết lập ở bước 2
+                "⏰ "+time+" - "+msg+"\n"+
                 "⏳ Giờ làm: "+d.gioLamTrongNgay+"h\n"+
                 "🌙 Tăng ca: "+d.gioLamThem+"h"
             );
 
-            // ⭐ Khởi động lại camera sau 1 giây
-            setTimeout(() => {
-                restartScan();
-            }, 1000);
+            setTimeout(restartScan, 1000);
         })
         .catch(error => {
             alert("❌ Lỗi lưu dữ liệu Firebase: " + error.message);
-            restartScan(); // Khởi động lại nếu lỗi lưu
+            restartScan();
         });
     });
-}
-
-/* ===================== RESTART SCAN ===================== */
-function restartScan() {
-    resultDiv.textContent = "Đang quét...";
-    scanning = true;
-    scanLoop();
 }
 
 /* ===================== BUTTONS ===================== */
@@ -468,81 +383,7 @@ document.getElementById("logoutBtn").onclick = () => {
     location.href = "index.html";
 };
 
-/* ===================== AUTO START ===================== */
-    /* ================== AUTO MỞ CAMERA ================== */
-   document.addEventListener("DOMContentLoaded", startScanner);
-
 </script>
 
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
