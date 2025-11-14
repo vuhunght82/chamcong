@@ -338,8 +338,7 @@ function saveAttendance(lat, lng) {
             } else if (!d.raCaChieu) {
                 d.raCaChieu = time; msg = "Ra ca chiều";
             } else { msg = "Đã hoàn thành chấm công chiều."; }
-        }
-                           }
+        
 
         // **E. TĂNG CA (Sau 17:30):**
         else if (hour > 17.5) { 
@@ -356,6 +355,7 @@ function saveAttendance(lat, lng) {
                 d.raLamThem = time; msg = "Ra tăng ca tối"; d.noteRaLamThem = "tăng ca tối";
             } else { msg = "Đã hoàn thành chấm công tăng ca."; }
         }
+    });
 
 
         // 3. TÍNH GIỜ
@@ -405,4 +405,5 @@ document.getElementById("logoutBtn").onclick = () => {
 
 </body>
 </html>
+
 
