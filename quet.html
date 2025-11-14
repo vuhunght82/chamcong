@@ -182,26 +182,25 @@ const COMPANY = { lat: 10.84964185816, lng: 106.58569113116 };
 function encodeEmail(e) { return e.replace(/\./g, ","); }
 
 function handleQRCode(text) {
-     resultDiv.textContent = "Đang lấy GPS...";
     if (text !== VALID_QR) {
         scanning = false;
         alert("❌ Mã QR không đúng!");
-       setTimeout(() => {
-                restartScan();
-                }, 1000); // đợi người dùng bấm OK xong
+        setTimeout(() => restartScan(), 800);
         return;
-        };
-        
-         requestLocationSafariFix()
-    .then(pos => {
-        saveAttendance(pos.coords.latitude, pos.coords.longitude);
-    })
-    .catch(() => {
-        restartScan();
-    });
+    }
 
+    resultDiv.textContent = "Đang lấy GPS...";
 
+    // 👉 CHỈ GỌI GPS Ở ĐÂY, SAU KHI QUÉT QR THÀNH CÔNG
+    requestLocationSafariFix()
+        .then(pos => {
+            saveAttendance(pos.coords.latitude, pos.coords.longitude);
+        })
+        .catch(() => {
+            restartScan();
+        });
 }
+
 
    
 // hàm lấy GPS
@@ -480,6 +479,7 @@ startCamera();
 
 </body>
 </html>
+
 
 
 
