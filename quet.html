@@ -374,31 +374,31 @@ else if (hour >= 11.5 && hour <= 13) {
             
 
        else if (hour > 13 && hour <= 17.5) {
-        if (!d.vaoCaChieu)
-        {
-            d.vaoCaChieu = time;
-            msg = "Vào ca chiều";
-            d.noteVaoCaChieu="chiều đi muộn ";
-        }
-            else if(!d.raCaSang)
-            {
-                d.raCaSang="11:30";
-                d.vaoCaTrua="11:30";
-                d.raCaTrua="13:00";
-                d.vaoCaChieu = time;
-                msg = "Vào ca chiều ddddđ";
-                
-            }
-            else  {
-                    d.raCaChieu = time;
-                    msg = "Ra ca chiều";
-            
-                    // 👉 Ghi chú ca chiều (ra sớm)
-            if (hour < 17.5) {
-                            d.noteRaCaChieu = "Về sớm";
-                            }
-            }
+
+    // Nếu chưa vào ca chiều → vào ca chiều
+    if (!d.vaoCaChieu) {
+        d.vaoCaChieu = time;
+        msg = "Vào ca chiều";
+
+        if (hour > 13) d.noteVaoCaChieu = "chiều đi muộn";
     }
+
+    // Nếu chưa chấm ra ca sáng → tự động chốt sáng + trưa
+    else if (!d.raCaSang) {    // ⭐ đúng tên biến
+        d.raCaSang = "11:30";
+        d.vaoCaTrua = "11:30";
+        d.raCaTrua = "13:00";
+    }
+
+    // Nếu đã vào chiều → đây là lần ra ca chiều
+    else {
+        d.raCaChieu = time;
+        msg = "Ra ca chiều";
+
+        if (hour < 17.5) d.noteRaCaChieu = "về sớm";
+    }
+}
+           
            
         else if (hour > 17.5)
         {
@@ -473,6 +473,7 @@ document.getElementById("logoutBtn").onclick = () => {
 
 </body>
 </html>
+
 
 
 
