@@ -133,13 +133,19 @@ async function startCamera() {
         video.srcObject = stream;
 
         video.onloadedmetadata = () => {
-            canvas.width = video.clientWidth+"px";
-            canvas.height = video.clientHeight+"px";
-            scanning = true;
-            resultDiv.textContent = "Đang quét...";
-            scanLoop();
-        };
 
+    canvas.width  = video.videoWidth;
+    canvas.height = video.videoHeight;
+
+    canvas.style.width  = video.clientWidth + "px";
+    canvas.style.height = video.clientHeight + "px";
+
+    setTimeout(() => {
+        scanning = true;
+        resultDiv.textContent = "Đang quét...";
+        scanLoop();
+    }, 200); // cho Safari load camera
+};
     } catch (err) {
         resultDiv.textContent = "❌ Không thể mở camera!";
     }
@@ -451,6 +457,7 @@ startCamera();
 
 </body>
 </html>
+
 
 
 
