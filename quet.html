@@ -261,10 +261,27 @@ function saveAttendance(lat, lng) {
         let msg = "";
 
         if (hour >= 7.5 && hour <= 11.5)
-            !d.vaoCaSang ? (d.vaoCaSang = time, msg="Vào ca sáng") : (d.raCaSang = time, msg="Ra ca sáng");
-
+        {
+            if(!d.vaoCaSang)
+            {
+                d.vaoCaSang = time;
+                msg="Vào ca sáng";
+                d.noteVaoCaSang = "đi muộn";
+            }
+             
+        }
+      else   if (hour < 7.5){
+        if(!d.vaoCaSang)
+        {
+            d.vaoCaSang = time;
+            msg="Vào ca sáng";
+             d.noteVaoCaSang = "đi sớm";
+        }
+      }
+            
         else if (hour >= 11.5 && hour < 13)
             !d.vaoCaTrua ? (d.vaoCaTrua = time, msg="Vào ca trưa") : (d.raCaTrua = time, msg="Ra ca trưa");
+            
 
        else if (hour >= 13 && hour <= 17.5) {
     if (!d.vaoCaChieu) {
@@ -336,6 +353,7 @@ startCamera();
 
 </body>
 </html>
+
 
 
 
