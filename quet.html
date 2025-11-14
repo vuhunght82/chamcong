@@ -203,7 +203,32 @@ function handleQRCode(text) {
         { enableHighAccuracy: true, timeout: 5000 }
     );
 }
+    // tắt camera khi ròi trang
+window.addEventListener("pagehide", () => {
+    if (video.srcObject) {
+        video.srcObject.getTracks().forEach(track => track.stop());
+        video.srcObject = null;
+    }
+});
 
+// bật camera lại
+    document.addEventListener("visibilitychange", () => {
+    if (!document.hidden) {
+        // quay lại trang → mở lại camera
+        startCamera();
+    } else {
+        // rời trang → tắt camera
+        if (video.srcObject) {
+            video.srcObject.getTracks().forEach(t => t.stop());
+        }
+    }
+});
+
+
+
+
+
+    
 /* ===================== TÍNH GIỜ ===================== */
 function timeDiff(a, b) {
     const pa = a.replace(/[^0-9:]/g, "").split(":").map(Number);
