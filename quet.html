@@ -339,6 +339,7 @@ function saveAttendance(lat, lng) {
                 d.raCaChieu = time; msg = "Ra ca chiều";
             } else { msg = "Đã hoàn thành chấm công chiều."; }
         }
+                           }
 
         // **E. TĂNG CA (Sau 17:30):**
         else if (hour > 17.5) { 
@@ -404,3 +405,4 @@ document.getElementById("logoutBtn").onclick = () => {
 
 </body>
 </html>
+
