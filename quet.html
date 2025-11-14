@@ -74,6 +74,7 @@
     <script src="https://cdn.jsdelivr.net/npm/qr-scanner@1.4.2/qr-scanner.umd.min.js"></script>
 
     <script>
+        // Phải thiết lập WorkerPath ngay sau khi thư viện chính được tải.
         if (typeof QrScanner !== 'undefined') {
             QrScanner.WorkerPath = 'https://cdn.jsdelivr.net/npm/qr-scanner@1.4.2/qr-scanner-worker.min.js';
         } else {
@@ -104,18 +105,19 @@
 </div>
 
 <script>
-/* ===================== CÁC HÀM CƠ BẢN VÀ BIẾN ===================== */
+/* ===================== CÁC HÀM CƠ BẢN VÀ BIẾN (GLOBAL SCOPE) ===================== */
+
 // Khởi tạo biến toàn cục
 const VALID_QR = "CHECKIN_GLASS_COMPANY";
 const resultDiv = document.getElementById("result");
 const videoElem = document.getElementById('video');
 let scanner;
 let scanning = false;
-
 const COMPANY = { lat: 10.84964185816, lng: 106.58569113116 }; // Tọa độ công ty
 
 const userEmail = sessionStorage.getItem("userEmail");
 if (!userEmail) location.href = "index.html";
+
 
 /* ===================== FIREBASE ===================== */
 firebase.initializeApp({
@@ -129,7 +131,8 @@ firebase.initializeApp({
 });
 const db = firebase.database();
 
-/* ===================== HÀM HỖ TRỢ ===================== */
+
+/* ===================== HÀM HỖ TRỢ CHUNG ===================== */
 
 function encodeEmail(e) { return e.replace(/\./g, ","); }
 
@@ -141,6 +144,7 @@ function distance(a, b, c, d) {
     return R * 2 * Math.atan2(Math.sqrt(s), Math.sqrt(1 - s));
 }
 
+// Hàm timeDiff tối ưu và an toàn
 function timeDiff(a, b) {
     if (!a || !b) return 0;
     a = a.replace(/[^0-9:]/g, "");
@@ -159,6 +163,7 @@ function timeDiff(a, b) {
     return t2 - t1;
 }
 
+// Khắc phục lỗi checkLocation is not defined: Hàm này phải nằm ở global scope
 function checkLocation() {
     if (!navigator.geolocation) {
         alert('Trình duyệt không hỗ trợ geolocation!');
@@ -176,19 +181,22 @@ function checkLocation() {
 function restartScan() {
     resultDiv.textContent = "Đang quét...";
     scanning = true;
-    // Gọi startScanner để đảm bảo camera được mở lại nếu cần
-    if (scanner) scanner.start(); 
+    // Gọi start() để mở lại luồng camera
+    if (scanner) scanner.start().catch(err => {
+         console.error("Lỗi khởi động lại camera:", err);
+         startScanner();
+    });
     else startScanner();
 }
 
 function startScanner() {
     if (scanner) scanner.stop();
 
-    // Khởi tạo QrScanner (Đã khắc phục lỗi QrScanner is not defined)
+    // Khởi tạo QrScanner
     scanner = new QrScanner(
         videoElem,
         result => {
-            scanner.stop(); // Dừng camera ngay khi quét thành công
+            scanner.stop(); 
             handleQRCode(result.data);
         },
         {
@@ -220,9 +228,9 @@ window.addEventListener("pagehide", () => {
 });
 document.addEventListener("visibilitychange", () => {
     if (!document.hidden) {
-        startScanner(); // Quay lại trang → mở lại camera
+        startScanner(); 
     } else {
-        if (videoElem.srcObject) { // Rời trang → tắt camera
+        if (videoElem.srcObject) { 
             videoElem.srcObject.getTracks().forEach(t => t.stop());
         }
     }
@@ -233,7 +241,7 @@ document.addEventListener("visibilitychange", () => {
 function handleQRCode(data) {
     if (data !== VALID_QR) {
         alert("❌ Mã QR không hợp lệ!");
-        restartScan(); // Khởi động lại ngay nếu mã không hợp lệ
+        restartScan(); 
         return;
     }
 
@@ -244,7 +252,7 @@ function handleQRCode(data) {
             const lat = pos.coords.latitude;
             const lng = pos.coords.longitude;
             console.log("GPS OK:", lat, lng);
-            saveAttendance(lat, lng); // Gọi hàm lưu chấm công
+            saveAttendance(lat, lng); 
         },
         err => {
             alert("❌ Không lấy được GPS: " + err.message);
@@ -255,7 +263,7 @@ function handleQRCode(data) {
 }
 
 
-/* ===================== LƯU CHẤM CÔNG (Đã Tối Ưu Logic) ===================== */
+/* ===================== LƯU CHẤM CÔNG (Đã Tối Ưu Logic & Khắc phục cú pháp) ===================== */
 function saveAttendance(lat, lng) {
 
     // 1. Kiểm tra khoảng cách
@@ -277,9 +285,9 @@ function saveAttendance(lat, lng) {
     ref.once("value").then((snap) => {
         let d = snap.val() || {};
 
-        // Khởi tạo các trường
-      // Khởi tạo các trường nếu chưa có (Sử dụng cú pháp tương thích cũ hơn)
-        d.vaoCaSang = d.vaoCaSang || "";
+        // 🎯 Khắc phục Lỗi Cú pháp (SyntaxError: missing ) do ??=) 
+        // Thay thế ??= bằng cú pháp || để tương thích với mọi trình duyệt
+        d.vaoCaSang = d.vaoCaSang || ""; 
         d.raCaSang = d.raCaSang || "";
         d.vaoCaTrua = d.vaoCaTrua || "";
         d.raCaTrua = d.raCaTrua || "";
@@ -288,6 +296,7 @@ function saveAttendance(lat, lng) {
         d.vaoLamThem = d.vaoLamThem || "";
         d.raLamThem = d.raLamThem || "";
         d.ghiChu = d.ghiChu || "";
+
 
         // 2. LOGIC CHẤM CÔNG theo Khung Giờ
 
@@ -333,13 +342,16 @@ function saveAttendance(lat, lng) {
 
         // **E. TĂNG CA (Sau 17:30):**
         else if (hour > 17.5) { 
-            d.ghiChu = "Làmthêm"; // Ghi chú làm thêm
+            d.ghiChu = "Làmthêm"; 
 
             if (!d.raCaChieu) { d.raCaChieu = "17:30:00"; d.noteRaCaChieu = "đúng giờ"; }
 
+            // Lần quét đầu tiên sau 17:30 sẽ tự động gán vaoLamThem là 17:30:00
             if (!d.vaoLamThem) {
                 d.vaoLamThem = "17:30:00"; msg = "Vào tăng ca (Auto 17:30)";
-            } else if (!d.raLamThem) {
+            } 
+            // Lần quét thứ hai (Quét ra)
+            else if (!d.raLamThem) {
                 d.raLamThem = time; msg = "Ra tăng ca tối"; d.noteRaLamThem = "tăng ca tối";
             } else { msg = "Đã hoàn thành chấm công tăng ca."; }
         }
@@ -352,7 +364,7 @@ function saveAttendance(lat, lng) {
         total += timeDiff(d.vaoCaChieu, d.raCaChieu);
         d.gioLamTrongNgay = total.toFixed(2);
 
-        // Tính OT (Chỉ tính giờ làm thêm thực tế, bỏ ca trưa nếu không cần thiết)
+        // Tính OT (Chỉ tính giờ làm thêm thực tế)
         let ot = timeDiff(d.vaoLamThem, d.raLamThem); 
         d.gioLamThem = ot.toFixed(2);
 
@@ -392,4 +404,3 @@ document.getElementById("logoutBtn").onclick = () => {
 
 </body>
 </html>
-
