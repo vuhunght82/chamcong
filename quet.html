@@ -74,7 +74,6 @@
     <script src="https://cdn.jsdelivr.net/npm/qr-scanner@1.4.2/qr-scanner.umd.min.js"></script>
 
     <script>
-        // Phải thiết lập WorkerPath ngay sau khi thư viện chính được tải.
         if (typeof QrScanner !== 'undefined') {
             QrScanner.WorkerPath = 'https://cdn.jsdelivr.net/npm/qr-scanner@1.4.2/qr-scanner-worker.min.js';
         } else {
@@ -107,13 +106,12 @@
 <script>
 /* ===================== CÁC HÀM CƠ BẢN VÀ BIẾN (GLOBAL SCOPE) ===================== */
 
-// Khởi tạo biến toàn cục
 const VALID_QR = "CHECKIN_GLASS_COMPANY";
 const resultDiv = document.getElementById("result");
 const videoElem = document.getElementById('video');
 let scanner;
 let scanning = false;
-const COMPANY = { lat: 10.84964185816, lng: 106.58569113116 }; // Tọa độ công ty
+const COMPANY = { lat: 10.84964185816, lng: 106.58569113116 };
 
 const userEmail = sessionStorage.getItem("userEmail");
 if (!userEmail) location.href = "index.html";
@@ -144,7 +142,6 @@ function distance(a, b, c, d) {
     return R * 2 * Math.atan2(Math.sqrt(s), Math.sqrt(1 - s));
 }
 
-// Hàm timeDiff tối ưu và an toàn
 function timeDiff(a, b) {
     if (!a || !b) return 0;
     a = a.replace(/[^0-9:]/g, "");
@@ -163,7 +160,6 @@ function timeDiff(a, b) {
     return t2 - t1;
 }
 
-// Khắc phục lỗi checkLocation is not defined: Hàm này phải nằm ở global scope
 function checkLocation() {
     if (!navigator.geolocation) {
         alert('Trình duyệt không hỗ trợ geolocation!');
@@ -181,7 +177,6 @@ function checkLocation() {
 function restartScan() {
     resultDiv.textContent = "Đang quét...";
     scanning = true;
-    // Gọi start() để mở lại luồng camera
     if (scanner) scanner.start().catch(err => {
          console.error("Lỗi khởi động lại camera:", err);
          startScanner();
@@ -192,7 +187,6 @@ function restartScan() {
 function startScanner() {
     if (scanner) scanner.stop();
 
-    // Khởi tạo QrScanner
     scanner = new QrScanner(
         videoElem,
         result => {
@@ -211,15 +205,12 @@ function startScanner() {
     });
 }
 
-// Bắt đầu quét khi DOM tải xong
 document.addEventListener("DOMContentLoaded", startScanner);
 
-// Xử lý nút "Quét lại"
 document.getElementById('reset').addEventListener('click', () => {
     restartScan();
 });
 
-// Xử lý khi rời trang/ẩn trang
 window.addEventListener("pagehide", () => {
     if (videoElem.srcObject) {
         videoElem.srcObject.getTracks().forEach(track => track.stop());
@@ -263,7 +254,7 @@ function handleQRCode(data) {
 }
 
 
-/* ===================== LƯU CHẤM CÔNG (Đã Tối Ưu Logic & Khắc phục cú pháp) ===================== */
+/* ===================== LƯU CHẤM CÔNG (Đã Sửa Lỗi Cú Pháp) ===================== */
 function saveAttendance(lat, lng) {
 
     // 1. Kiểm tra khoảng cách
@@ -276,7 +267,7 @@ function saveAttendance(lat, lng) {
     const emailKey = encodeEmail(userEmail);
     const now = new Date();
     const day = now.toISOString().slice(0, 10);
-    const time = now.toLocaleTimeString('en-US', { hour12: false }); // Định dạng HH:MM:SS
+    const time = now.toLocaleTimeString('en-US', { hour12: false });
     const hour = now.getHours() + now.getMinutes() / 60;
 
     const ref = db.ref("chamcong/" + emailKey + "/" + day);
@@ -329,7 +320,8 @@ function saveAttendance(lat, lng) {
             } else { msg = "Đã hoàn thành chấm công trưa."; }
         }
 
-        // **D. CA CHIỀU (13:00 - 17:30):** else if (hour > 13.0 && hour <= 17.5) { // Khắc phục lỗi 'else' bất ngờ bằng cách tách chú thích
+        // **D. CA CHIỀU (13:00 - 17:30):**
+        else if (hour > 13.0 && hour <= 17.5) { // Dòng điều kiện này đã được tách khỏi chú thích
             if (!d.raCaTrua && d.vaoCaTrua) { d.raCaTrua = "13:00:00"; }
 
             if (!d.vaoCaChieu) {
@@ -345,11 +337,9 @@ function saveAttendance(lat, lng) {
 
             if (!d.raCaChieu) { d.raCaChieu = "17:30:00"; d.noteRaCaChieu = "đúng giờ"; }
 
-            // Lần quét đầu tiên sau 17:30 sẽ tự động gán vaoLamThem là 17:30:00
             if (!d.vaoLamThem) {
                 d.vaoLamThem = "17:30:00"; msg = "Vào tăng ca (Auto 17:30)";
             } 
-            // Lần quét thứ hai (Quét ra)
             else if (!d.raLamThem) {
                 d.raLamThem = time; msg = "Ra tăng ca tối"; d.noteRaLamThem = "tăng ca tối";
             } else { msg = "Đã hoàn thành chấm công tăng ca."; }
@@ -363,7 +353,6 @@ function saveAttendance(lat, lng) {
         total += timeDiff(d.vaoCaChieu, d.raCaChieu);
         d.gioLamTrongNgay = total.toFixed(2);
 
-        // Tính OT (Chỉ tính giờ làm thêm thực tế)
         let ot = timeDiff(d.vaoLamThem, d.raLamThem); 
         d.gioLamThem = ot.toFixed(2);
 
