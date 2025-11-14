@@ -378,51 +378,10 @@ else if (hour > 13 && hour <= 17.5)
 
     // Nếu chưa vào ca chiều → vào ca chiều
     if (!d.vaoCaChieu) {
+    
         d.vaoCaChieu = time;
         msg = "Vào ca chiều";
-    }
-        else if (hour >= 13 && hour <= 17.5) {
-
-            // ① Nếu chưa vào ca chiều → vào ca chiều
-            if (!d.vaoCaChieu) {
-                d.vaoCaChieu = time;
-                msg = "Vào ca chiều";
-        
-                if (hour > 13)
-                    d.noteVaoCaChieu = "chiều đi muộn";
-        
-                
-            }
-        
-            // ② Đã vào chiều nhưng chưa chấm ra sáng → auto chốt sáng + trưa
-            if (!d.raCaSang) {
-        
-                d.raCaSang  = "11:30";
-                d.vaoCaTrua = "11:30";
-                d.raCaTrua  = "13:00";
-        
-                d.noteRaCaSang = "tự chốt sáng";
-                d.noteCaTrua    = "tự chốt trưa";
-        
-                msg = "Tự động chốt ca sáng + ca trưa";
-        
-                // Không return để tiếp tục xuống bước ③ xử lý ra chiều nếu cần
-            }
-        
-            // ③ Nếu đã vào chiều nhưng chưa ra → ra ca chiều
-            if (!d.raCaChieu) {
-                d.raCaChieu = time;
-                msg = "Ra ca chiều";
-        
-                if (hour < 17.5)
-                    d.noteRaCaChieu = "về sớm";
-        
-                
-            }
-        
-            // ④ Nếu đã chấm đủ → không làm gì
-          //  msg = "Đã chấm đủ ca chiều";
-            
+    
     }
 }
            
@@ -499,6 +458,7 @@ document.getElementById("logoutBtn").onclick = () => {
 
 </body>
 </html>
+
 
 
 
