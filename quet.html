@@ -201,9 +201,8 @@ function handleQRCode(text) {
         });
 }
 
+  
 
-   
-// hàm lấy GPS
 async function requestLocationSafariFix() {
     return new Promise((resolve, reject) => {
 
@@ -369,7 +368,7 @@ function saveAttendance(lat, lng) {
             if(!d.raCaSang)
             {
                  d.raCaSang="11:30";
-                d.noteraCaSang="đúng giờ"
+                d.noteRaCaSang="đúng giờ"
             }
            else if(!d.vaoCaTrua)
             {
@@ -479,6 +478,7 @@ startCamera();
 
 </body>
 </html>
+
 
 
 
