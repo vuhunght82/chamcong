@@ -79,6 +79,9 @@ button {
     <button  id="reset">⏳ Quét lại</button>
 </di>
 <script>
+// 🔥 BẮT BUỘC: Khai báo worker trước khi dùng
+QrScanner.WORKER_PATH = "qr-worker/qr-scanner-worker.min.js";
+    
 document.getElementById('reset').addEventListener('click', () => {
     // nếu stream chưa có thì mở, nếu có rồi chỉ bật lại scan loop
     if (!video.srcObject) startCamera();
@@ -108,7 +111,8 @@ const video = document.getElementById("video");
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
 const resultDiv = document.getElementById("result");
-    let scanner;
+let scanner;
+const videoElem = document.getElementById('qr-video');
 let scanning = false;
 
 /* ===================== FIREBASE ===================== */
@@ -125,25 +129,26 @@ const db = firebase.database();
 
 /* ===================== START CAMERA ===================== */
     function startScanner() {
-        if (scanner) scanner.stop();
+    if (scanner) scanner.stop();
 
-        // Gọi scanner UMD
-        scanner = new QrScanner(
-            videoElem,
-            result => {
-                scanner.stop();
-                handleQRCode(result.data);
-            },
-            {
-                highlightScanRegion: true,
-                highlightCodeOutline: true
-            }
-        );
+    scanner = new QrScanner(
+        videoElem,
+        result => {
+            console.log("QR:", result.data);
+            alert("QR quét được: " + result.data);
+            scanner.stop();
+        },
+        {
+            highlightScanRegion: true,
+            highlightCodeOutline: true
+        }
+    );
 
-        scanner.start().catch(err => {
-            resultDiv.textContent = "❌ Không mở được camera: " + err;
-        });
-    }
+    scanner.start().catch(err => {
+        console.error("Camera error:", err);
+        alert("Không mở được camera: " + err);
+    });
+}
 /* ===================== SCAN LOOP ===================== */
     function handleQRCode(data) {
         if (data !== VALID_QR) {
@@ -420,6 +425,7 @@ document.getElementById("logoutBtn").onclick = () => {
 
 </body>
 </html>
+
 
 
 
