@@ -71,7 +71,9 @@ function checkLocation() {
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 
 <!-- QR Scanner -->
-<script>
+<script type="module">
+
+import QrScanner from 'https://cdn.jsdelivr.net/npm/qr-scanner@1.4.2/qr-scanner.min.js';
 
 
 // FIX QUAN TRỌNG: NẾU KHÔNG CÓ DÒNG NÀY SẼ KHÔNG QUÉT ĐƯỢC
@@ -341,6 +343,7 @@ function deg2rad(deg){ return deg*Math.PI/180; }
 </script>
 </body>
 </html>
+
 
 
 
