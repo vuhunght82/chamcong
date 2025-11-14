@@ -391,7 +391,7 @@ else if (hour > 13 && hour <= 17.5)
                 if (hour > 13)
                     d.noteVaoCaChieu = "chiều đi muộn";
         
-                return ref.set(d).then(done);
+                
             }
         
             // ② Đã vào chiều nhưng chưa chấm ra sáng → auto chốt sáng + trưa
@@ -417,7 +417,7 @@ else if (hour > 13 && hour <= 17.5)
                 if (hour < 17.5)
                     d.noteRaCaChieu = "về sớm";
         
-                return ref.set(d).then(done);
+                
             }
         
             // ④ Nếu đã chấm đủ → không làm gì
@@ -499,6 +499,7 @@ document.getElementById("logoutBtn").onclick = () => {
 
 </body>
 </html>
+
 
 
 
