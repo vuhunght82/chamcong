@@ -180,8 +180,7 @@
             if (isNaN(h) || isNaN(m)) return 0;
             return h + m / 60;
         }
- backBtn.addEventListener('click', () => {
-            window.location.href = 'quet.html';
+
         // ================== Tính giờ cho 1 dòng ==================
         function calculateHours(tr) {
             const vaoSang = parseHour(tr.children[1].textContent.trim());
@@ -201,7 +200,9 @@
 
             return { gioLam, gioLamThem };
         }
-
+backBtn.addEventListener('click', () => {
+            window.location.href = 'quet.html';
+        });
         // ================== Cập nhật tổng cộng ==================
         function updateTotals() {
             let tongGio = 0;
@@ -421,6 +422,7 @@
     </script>
 </body>
 </html>
+
 
 
 
