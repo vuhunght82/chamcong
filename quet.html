@@ -370,6 +370,7 @@ function saveAttendance(lat, lng) {
             if(!d.raCaSang)
             {
                  d.raCaSang="11:30";
+                d.noteraCaSang="đúng giờ"
             }
            else if(!d.vaoCaTrua)
             {
@@ -377,7 +378,7 @@ function saveAttendance(lat, lng) {
              d.vaoCaTrua = "11:30";   
              d.raCaTrua = time;
              msg="Vào ca trưa"
-            d.noteVaoCaTrua="vào ca trưa";
+            d.noteVaoCaTrua="ca trưa";
             }
             
         }
@@ -389,7 +390,14 @@ function saveAttendance(lat, lng) {
             msg = "Vào ca chiều";
             d.noteVaoCaChieu="chiều đi muộn ";
         }
-        else  {
+            else if(!d.RaCaSang)
+            {
+                d.raCaSang="11:30";
+                d.vaoCaTrua="11:30";
+                d.raCaTrua="13:00";
+                
+            }
+            else  {
                     d.raCaChieu = time;
                     msg = "Ra ca chiều";
             
@@ -398,7 +406,7 @@ function saveAttendance(lat, lng) {
                             d.noteRaCaChieu = "Về sớm";
                             }
             }
-}
+    }
            
         else if (hour > 17.5)
         {
@@ -408,7 +416,7 @@ function saveAttendance(lat, lng) {
            }
             else if(!d.vaoLamThem){
                     d.vaoLamThem = "17:30";
-                msg="Vào tăng ca";
+                    msg="Vào tăng ca";
                
             }
             else
@@ -437,7 +445,7 @@ d.gioLamThem = ot.toFixed(2);
             alert(
                 "✔ Chấm công thành công!\n" +
                 "📅 Ngày: "+day+"\n"+
-                "⏰ "+time+"\n"+
+                "⏰ "+time+"_"+msg+"\n"+
                 "⏳ Giờ làm: "+d.gioLamTrongNgay+"h\n"+
                 "🌙 Tăng ca: "+d.gioLamThem+"h"
             );
@@ -472,6 +480,7 @@ startCamera();
 
 </body>
 </html>
+
 
 
 
