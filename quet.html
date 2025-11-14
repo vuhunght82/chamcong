@@ -75,6 +75,26 @@
     <!-- 🔥 LOAD QR-SCANNER KHÔNG IMPORT -->
     <script src="https://cdn.jsdelivr.net/npm/qr-scanner@1.4.2/qr-scanner.umd.min.js"></script>
 
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+
+    const videoElem = document.getElementById("video");  // ❗ Sửa đúng ID
+
+    scanner = new QrScanner(
+        videoElem,
+        result => handleQRCode(result.data),
+        {
+            highlightScanRegion: true,
+            highlightCodeOutline: true
+        }
+    );
+
+    scanner.start().catch(err => {
+        console.error("Camera error:", err);
+    });
+
+});
+</script>
 
     <!-- Firebase -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
