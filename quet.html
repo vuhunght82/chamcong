@@ -197,16 +197,11 @@ function handleQRCode(text) {
         return;
     }
      resultDiv.textContent = "Đang lấy GPS...";
-
+setTimeout(() => {
     requestLocationSafariFix()
-        .then(pos => {
-            console.log("GPS OK:", pos.coords);
-            saveAttendance(pos.coords.latitude, pos.coords.longitude);
-        })
-        .catch(err => {
-            console.log("GPS ERROR", err);
-            restartScan();
-        });
+        .then(pos => saveAttendance(pos.coords.latitude, pos.coords.longitude))
+        .catch(() => restartScan());
+}, 200);
     
 }
 
@@ -452,6 +447,7 @@ startCamera();
 
 </body>
 </html>
+
 
 
 
