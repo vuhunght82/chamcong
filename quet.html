@@ -285,8 +285,7 @@ function saveAttendance(lat, lng) {
     ref.once("value").then((snap) => {
         let d = snap.val() || {};
 
-        // 🎯 Khắc phục Lỗi Cú pháp (SyntaxError: missing ) do ??=) 
-        // Thay thế ??= bằng cú pháp || để tương thích với mọi trình duyệt
+        // Khắc phục Lỗi Cú pháp (SyntaxError do ??=): Chuyển sang cú pháp ||
         d.vaoCaSang = d.vaoCaSang || ""; 
         d.raCaSang = d.raCaSang || "";
         d.vaoCaTrua = d.vaoCaTrua || "";
@@ -330,7 +329,7 @@ function saveAttendance(lat, lng) {
             } else { msg = "Đã hoàn thành chấm công trưa."; }
         }
 
-        // **D. CA CHIỀU (13:00 - 17:30):** else if (hour > 13.0 && hour <= 17.5) { 
+        // **D. CA CHIỀU (13:00 - 17:30):** else if (hour > 13.0 && hour <= 17.5) { // Khắc phục lỗi 'else' bất ngờ bằng cách tách chú thích
             if (!d.raCaTrua && d.vaoCaTrua) { d.raCaTrua = "13:00:00"; }
 
             if (!d.vaoCaChieu) {
@@ -338,7 +337,7 @@ function saveAttendance(lat, lng) {
             } else if (!d.raCaChieu) {
                 d.raCaChieu = time; msg = "Ra ca chiều";
             } else { msg = "Đã hoàn thành chấm công chiều."; }
-        
+        }
 
         // **E. TĂNG CA (Sau 17:30):**
         else if (hour > 17.5) { 
@@ -355,7 +354,6 @@ function saveAttendance(lat, lng) {
                 d.raLamThem = time; msg = "Ra tăng ca tối"; d.noteRaLamThem = "tăng ca tối";
             } else { msg = "Đã hoàn thành chấm công tăng ca."; }
         }
-    });
 
 
         // 3. TÍNH GIỜ
@@ -405,5 +403,3 @@ document.getElementById("logoutBtn").onclick = () => {
 
 </body>
 </html>
-
-
