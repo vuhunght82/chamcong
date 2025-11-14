@@ -373,7 +373,7 @@ else if (hour >= 11.5 && hour <= 13) {
 }
             
  // ca chiều
-else if (hour > 13 && hour <= 17.5) 
+ if (hour >= 13 && hour <= 17.5) 
 { 
 
     // Nếu chưa vào ca chiều → vào ca chiều
@@ -465,6 +465,7 @@ document.getElementById("logoutBtn").onclick = () => {
 
 </body>
 </html>
+
 
 
 
