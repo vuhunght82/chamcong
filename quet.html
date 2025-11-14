@@ -347,7 +347,7 @@ function saveAttendance(lat, lng) {
       }
             
         // ======= CA TRƯA =======
-else if (hour >= 11.5 && hour <= 13) {
+else if (hour >= 11.5 && hour <= 13.0) {
 
     // Nếu chưa chấm ra sáng → auto chấm đúng 11:30
     if (!d.raCaSang && d.vaoCaSang) {
@@ -373,7 +373,7 @@ else if (hour >= 11.5 && hour <= 13) {
 }
             
  // ca chiều
- if (hour >= 13.0 && hour <= 17.5) 
+else if (hour >= 13.0 && hour <= 17.5) 
 { 
 
     // Nếu chưa vào ca chiều → vào ca chiều
@@ -465,6 +465,7 @@ document.getElementById("logoutBtn").onclick = () => {
 
 </body>
 </html>
+
 
 
 
