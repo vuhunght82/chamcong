@@ -374,7 +374,8 @@ else if (hour >= 11.5 && hour <= 13) {
             
 
        else if (hour > 13 && hour <= 17.5) {
-        if (!d.vaoCaChieu) {
+        if (!d.vaoCaChieu)
+        {
             d.vaoCaChieu = time;
             msg = "Vào ca chiều";
             d.noteVaoCaChieu="chiều đi muộn ";
@@ -384,6 +385,7 @@ else if (hour >= 11.5 && hour <= 13) {
                 d.raCaSang="11:30";
                 d.vaoCaTrua="11:30";
                 d.raCaTrua="13:00";
+                msg = "Vào ca chiều ddddđ";
                 
             }
             else  {
@@ -470,6 +472,7 @@ document.getElementById("logoutBtn").onclick = () => {
 
 </body>
 </html>
+
 
 
 
