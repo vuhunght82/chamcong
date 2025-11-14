@@ -136,7 +136,8 @@ async function startCamera() {
     setTimeout(() => {
         canvas.width  = video.videoWidth;
         canvas.height = video.videoHeight;
-
+canvas.style.width  = video.clientWidth + "px";
+canvas.style.height = video.clientHeight + "px";
         scanning = true;
         scanLoop();
     }, 250);  // Safari cần delay
@@ -447,6 +448,7 @@ startCamera();
 
 </body>
 </html>
+
 
 
 
