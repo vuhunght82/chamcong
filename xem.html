@@ -235,7 +235,11 @@
         function getMonthFromDateStr(dateStr) {
             return dateStr.substring(0, 7);
         }
-
+        function formatDateDisplay(isoDate) {
+            if (!isoDate) return "";
+            const [y, m, d] = isoDate.split("-");
+            return `${d}/${m}/${y}`;
+        }
         // ================== Load dữ liệu chấm công ==================
         function loadChamCong(month) {
             
@@ -258,7 +262,8 @@
                         const gioLam = parseFloat(info.gioLamTrongNgay || 0);
                         const gioLamThem = parseFloat(info.gioLamThem || 0);
                         rows.push({
-                            Ngay: ngay,
+                            Ngay: formatDateDisplay(ngay),
+                            NgayKey: ngay,   // thêm dòng này để lưu ngược về Firebase
                             vaoCaSang: info.vaoCaSang || '-',
                             noteVaoCaSang: info.noteVaoCaSang || '-',
 
@@ -300,7 +305,7 @@
                 rows.forEach((r) => {
                     tableBody.insertAdjacentHTML('beforeend', `
            <!-- Dòng chính -->
-        <tr data-ngay="${r.Ngay}" class="main-row">
+        <tr data-ngay="${r.NgayKey}" class="main-row">
           <td  >${r.Ngay}</td>
           <td>${r.vaoCaSang}</td>
           <td>${r.raCaSang}</td>
@@ -319,7 +324,7 @@
 
         <!-- Dòng ghi chú thêm -->
         <tr class="note-row" style="background-color: #f4e191;">
-    <td style="font-size:12px">trạng thái</td>
+    <td style="font-size:12px;color:green;">Trạng thái</td>
     <td>${r.noteVaoCaSang}</td>
     <td >${r.noteRaCaSang}</td>
     <td>${r.noteVaoCaTrua}</td>
@@ -340,6 +345,7 @@
                 });
 
                 updateTotals(); // tính tổng sau khi hiển thị
+                highlightNoteRows();
             });
         }
 
@@ -384,8 +390,29 @@
             monthSelect.value = today.toISOString().substring(0, 7);
             loadChamCong();
         });
+
+        function highlightNoteRows() {
+            const noteRows = document.querySelectorAll(".note-row");
+
+            noteRows.forEach(row => {
+                for (let i = 1; i <= 8; i++) {
+                    let cell = row.children[i];
+                    let text = cell.textContent.toLowerCase();
+
+                    if (text.includes("đi sớm")) {
+                        cell.style.background = "#C8F7C5"; // xanh nhạt
+                        cell.style.color = "green";
+                    } else if (text.trim() !== "") {
+                        cell.style.background = "#FFD2D2"; // đỏ nhạt
+                        cell.style.color = "red";
+                    } else {
+                        cell.style.background = ""; // reset nếu ô trống
+                        cell.style.color = "black";
+                    }
+                }
+            });
+        }
     </script>
 </body>
 </html>
-
 
