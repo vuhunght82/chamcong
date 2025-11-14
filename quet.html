@@ -266,7 +266,7 @@ function timeDiff(a, b) {
 }
 /* ===================== LƯU CHẤM CÔNG ===================== */
 function saveAttendance(lat, lng) {
-
+console.log("SAVE:", hour, time);
     if (distance(lat, lng, COMPANY.lat, COMPANY.lng) > 100) {
         
         alert("❌ Bạn quá xa công ty!");
@@ -448,6 +448,7 @@ document.getElementById("logoutBtn").onclick = () => {
 
 </body>
 </html>
+
 
 
 
