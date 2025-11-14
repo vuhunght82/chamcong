@@ -366,7 +366,7 @@ function saveAttendance(lat, lng) {
         }
       }
             
-        else if (hour >= 11.5 && hour < 13){
+        else if (hour > 11.5 && hour < 13){
             if(!d.raCaSang)
             {
                  d.raCaSang="11:30";
@@ -377,8 +377,8 @@ function saveAttendance(lat, lng) {
             
              d.vaoCaTrua = "11:30";   
              d.raCaTrua = time;
-             msg="Vào ca trưa"
-            d.noteVaoCaTrua="ca trưa";
+             msg="tăng ca trưa"
+            d.noteVaoCaTrua="tăng ca trưa";
             }
             
         }
@@ -480,6 +480,7 @@ startCamera();
 
 </body>
 </html>
+
 
 
 
