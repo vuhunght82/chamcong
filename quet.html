@@ -50,6 +50,7 @@ button {
 #logoutBtn { background: #ff3333; }
 #viewBtn { background: #005ae0; }
     #Local { background: green; }
+    #reset { background: ##ff0033;; }
 </style>
 
 <!-- jsQR -->
@@ -74,7 +75,7 @@ button {
 <button id="viewBtn">📋 Xem chấm công</button>
 <button id="logoutBtn">🚪 Đăng xuất</button>
 <button  id="Local" onclick="checkLocation()">Kiểm tra vị trí</button>
-
+<button  id="reset" onclick="restartScan()">⏳ Quét lại</button>
 <script>
 
 
@@ -180,8 +181,13 @@ function encodeEmail(e) { return e.replace(/\./g, ","); }
 
 function handleQRCode(text) {
     if (text !== VALID_QR) {
+        scanning = false;
         alert("❌ Mã QR không đúng!");
-        restartScan();
+       setTimeout(() => {
+                restartScan();
+                }, 1000); // đợi người dùng bấm OK xong
+                });
+        
         return;
     }
 
@@ -325,7 +331,7 @@ d.gioLamThem = ot.toFixed(2);
 
             setTimeout(() => {
                 restartScan();
-                }, 1500); // đợi người dùng bấm OK xong
+                }, 1000); // đợi người dùng bấm OK xong
                 });
     });
 }
@@ -353,6 +359,7 @@ startCamera();
 
 </body>
 </html>
+
 
 
 
