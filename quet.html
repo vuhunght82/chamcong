@@ -133,18 +133,13 @@ async function startCamera() {
         video.srcObject = stream;
 
         video.onloadedmetadata = () => {
-
-    canvas.width  = video.videoWidth;
-    canvas.height = video.videoHeight;
-
-    canvas.style.width  = video.clientWidth + "px";
-    canvas.style.height = video.clientHeight + "px";
-
     setTimeout(() => {
+        canvas.width  = video.videoWidth;
+        canvas.height = video.videoHeight;
+
         scanning = true;
-        resultDiv.textContent = "Đang quét...";
         scanLoop();
-    }, 200); // cho Safari load camera
+    }, 250);  // Safari cần delay
 };
     } catch (err) {
         resultDiv.textContent = "❌ Không thể mở camera!";
@@ -457,6 +452,7 @@ startCamera();
 
 </body>
 </html>
+
 
 
 
