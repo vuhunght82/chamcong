@@ -74,18 +74,7 @@
     <!-- jsQR -->
     <!-- 🔥 LOAD QR-SCANNER KHÔNG IMPORT -->
    
-<script src="https://cdn.jsdelivr.net/npm/qr-scanner@1.4.2/qr-scanner.umd.min.js"></script>
-
-    <script>
-        // Thiết lập đường dẫn đầy đủ cho tệp Worker (Khắc phục lỗi Worker Path)
-        // Dòng này phải chạy TRƯỚC khi gọi new QrScanner(...)
-        if (typeof QrScanner !== 'undefined') {
-            QrScanner.WorkerPath = 'https://cdn.jsdelivr.net/npm/qr-scanner@1.4.2/qr-scanner-worker.min.js';
-        } else {
-            // Đây là lỗi nghiêm trọng nếu thư viện chính không tải được
-            console.error("Lỗi: Không tìm thấy QrScanner. Vui lòng kiểm tra đường dẫn CDN.");
-        }
-    </script>
+ <script src="https://cdn.jsdelivr.net/npm/qr-scanner@1.4.2/qr-scanner.umd.min.js"></script>
 
 
     <!-- Firebase -->
@@ -487,6 +476,7 @@ document.getElementById("logoutBtn").onclick = () => {
 
 </body>
 </html>
+
 
 
 
