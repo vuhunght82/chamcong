@@ -133,8 +133,8 @@ async function startCamera() {
         video.srcObject = stream;
 
         video.onloadedmetadata = () => {
-            canvas.width = video.clientWidth;
-canvas.height = video.clientHeight;
+            canvas.width = video.clientWidth+"px";
+            canvas.height = video.clientHeight+"px";
             scanning = true;
             resultDiv.textContent = "Đang quét...";
             scanLoop();
@@ -195,6 +195,17 @@ function handleQRCode(text) {
         setTimeout(() => restartScan(), 800);
         return;
     }
+     resultDiv.textContent = "Đang lấy GPS...";
+
+    requestLocationSafariFix()
+        .then(pos => {
+            console.log("GPS OK:", pos.coords);
+            saveAttendance(pos.coords.latitude, pos.coords.longitude);
+        })
+        .catch(err => {
+            console.log("GPS ERROR", err);
+            restartScan();
+        });
     
 }
 
@@ -440,6 +451,7 @@ startCamera();
 
 </body>
 </html>
+
 
 
 
