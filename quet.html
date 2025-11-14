@@ -81,7 +81,7 @@ button {
 </di>
 <script>
 // 🔥 BẮT BUỘC: Khai báo worker trước khi dùng
-
+ QrScanner.WORKER_PATH = "https://cdn.jsdelivr.net/npm/qr-scanner@1.4.2/qr-scanner-worker.min.js";
     
 document.getElementById('reset').addEventListener('click', () => {
     // nếu stream chưa có thì mở, nếu có rồi chỉ bật lại scan loop
@@ -430,6 +430,7 @@ document.getElementById("logoutBtn").onclick = () => {
 
 </body>
 </html>
+
 
 
 
