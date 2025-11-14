@@ -368,7 +368,7 @@
             const ngay = tr.dataset.ngay;
 
             db.ref("chamcong/" + encodeEmail(currentUser) + "/" + ngay).update({
-                ghiChu: td.textContent.trim()
+                ghiChu: td.textContent
             });
         });
 
@@ -415,4 +415,5 @@
     </script>
 </body>
 </html>
+
 
