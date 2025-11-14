@@ -85,6 +85,10 @@
             font-weight: bold;
             color: #333;
         }
+        #backBtn
+        {
+            background: green;
+        }
     </style>
 </head>
 <body>
@@ -98,6 +102,7 @@
         <input type="month" id="monthSelect">
 
         <button id="reloadBtn" onclick="loadChamCong()">🔄 Tải lại</button>
+        <button id="backBtn" onclick="">🔄 Quay lại</button>
        
     </div>
 
@@ -175,7 +180,8 @@
             if (isNaN(h) || isNaN(m)) return 0;
             return h + m / 60;
         }
-
+ backBtn.addEventListener('click', () => {
+            window.location.href = 'quet.html';
         // ================== Tính giờ cho 1 dòng ==================
         function calculateHours(tr) {
             const vaoSang = parseHour(tr.children[1].textContent.trim());
@@ -415,5 +421,6 @@
     </script>
 </body>
 </html>
+
 
 
