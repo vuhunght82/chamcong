@@ -101,7 +101,7 @@
 <script>
 document.getElementById('reset').addEventListener('click', () => {
     // nếu stream chưa có thì mở, nếu có rồi chỉ bật lại scan loop
-    if (!video.srcObject) startCamera();
+    if (!video.srcObject) startScanner();
     else {
         scanning = true;
         restartScan();
@@ -127,7 +127,7 @@ if (!userEmail) location.href = "index.html";
     const VALID_QR = "CHECKIN_GLASS_COMPANY";
    
     const resultDiv = document.getElementById("result");
-    const videoElem = document.getElementById('qr-video');
+    const videoElem = document.getElementById('video');
     let scanner;
 let scanning = false;
 
@@ -218,7 +218,7 @@ window.addEventListener("pagehide", () => {
     document.addEventListener("visibilitychange", () => {
     if (!document.hidden) {
         // quay lại trang → mở lại camera
-        startCamera();
+        startScanner();
     } else {
         // rời trang → tắt camera
         if (video.srcObject) {
@@ -352,7 +352,7 @@ else if (hour >= 11.5 && hour <= 13) {
 }
             
 
-       else if (hour >= 13 && hour <= 17.5) {
+       else if (hour > 13 && hour <= 17.5) {
         if (!d.vaoCaChieu) {
             d.vaoCaChieu = time;
             msg = "Vào ca chiều";
