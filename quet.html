@@ -339,18 +339,19 @@ function saveAttendance(lat, lng) {
             }
         }
 
-       else if (hour >= 13 && hour <= 17.5) {
+       else if (hour > 13 && hour <= 17.5) {
          if(d.vaoCaTrua && !d.raCaTrua)
              {
                   d.raCaTrua=d.vaoCaTrua;
                   d.vaoCaTrua="11:30";
-                 msg=d.vaoCaTrua;
+                 d.noteraCaTrua="ca trưa"
              }
            
          else if (!d.vaoCaChieu) {
              d.vaoCaChieu = time;
              msg = "Vào ca chiều";
              d.noteVaoCaChieu="chiều đi muộn ";
+        
          }
              
             // SỬA LỖI 5: Lỗi chính tả 'RaCaSang' -> 'raCaSang'
@@ -442,6 +443,7 @@ document.getElementById("logoutBtn").onclick = () => {
 
 </body>
 </html>
+
 
 
 
