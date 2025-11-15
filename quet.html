@@ -379,14 +379,15 @@ function saveAttendance(lat, lng) {
             
        else if (hour > 17.5)
        {
-          if(!d.raCaChieu)
+          if( d.vaoCaChieu && !d.raCaChieu)
           {
              d.raCaChieu="17:30";
+              d.vaoLamThem = "17:30";
+             d.raLamThem = time;
+            d.noteRaLamThem="tăng ca tối"
           }
            else if(!d.vaoLamThem){
-                   d.vaoLamThem = "17:30";
-                   d.raLamThem = time;
-                   d.noteRaLamThem="tăng ca tối"
+                  
            }
            
 
@@ -442,6 +443,7 @@ document.getElementById("logoutBtn").onclick = () => {
 
 </body>
 </html>
+
 
 
 
