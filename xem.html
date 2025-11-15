@@ -273,30 +273,30 @@ backBtn.addEventListener('click', () => {
                         rows.push({
                             Ngay: formatDateDisplay(ngay),
                             NgayKey: ngay,   // thêm dòng này để lưu ngược về Firebase
-                            vaoCaSang: info.vaoCaSang || '-',
-                            noteVaoCaSang: info.noteVaoCaSang || '-',
+                            vaoCaSang: info.vaoCaSang || '',
+                            noteVaoCaSang: info.noteVaoCaSang || '',
 
-                            raCaSang: info.raCaSang || '-',
-                            noteRaCaSang: info.noteRaCaSang || '-',
+                            raCaSang: info.raCaSang || '',
+                            noteRaCaSang: info.noteRaCaSang || '',
 
-                            vaoCaTrua: info.vaoCaTrua || '-',
+                            vaoCaTrua: info.vaoCaTrua || '',
                             noteVaoCaTrua: info.noteVaoCaTrua || '',
-                            raCaTrua: info.raCaTrua || '-',
-                            noteRaCaTrua:info.noteRaCaTrua || '-',
+                            raCaTrua: info.raCaTrua || '',
+                            noteRaCaTrua:info.noteRaCaTrua || '',
 
-                            vaoCaChieu: info.vaoCaChieu || '-',
-                            noteVaoCaChieu: info.noteVaoCaChieu || '-',
+                            vaoCaChieu: info.vaoCaChieu || '',
+                            noteVaoCaChieu: info.noteVaoCaChieu || '',
                            
-                            raCaChieu: info.raCaChieu || '-',
-                            noteRaCaChieu: info.noteRaCaChieu || '-',
+                            raCaChieu: info.raCaChieu || '',
+                            noteRaCaChieu: info.noteRaCaChieu || '',
 
-                            vaoLamThem: info.vaoLamThem || '-',
-                            noteVaoLamThem: info.noteVaoLamThem||'-',
-                            raLamThem: info.raLamThem || '-',
-                            noteRaLamThem: info.noteRaLamThem||'-',
+                            vaoLamThem: info.vaoLamThem || '',
+                            noteVaoLamThem: info.noteVaoLamThem||'',
+                            raLamThem: info.raLamThem || '',
+                            noteRaLamThem: info.noteRaLamThem||'',
                             gioLam: gioLam,
                             gioLamThem: gioLamThem,
-                            ghiChu: info.ghiChu || '-'
+                            ghiChu: info.ghiChu || ''
                         });
                     }
                 }
@@ -424,6 +424,7 @@ backBtn.addEventListener('click', () => {
     </script>
 </body>
 </html>
+
 
 
 
