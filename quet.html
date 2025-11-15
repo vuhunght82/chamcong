@@ -367,7 +367,11 @@ function saveAttendance(lat, lng) {
                        {
                          d.vaoCaChieu = time;
                          msg = "Vào ca chiều";
-                         d.noteVaoCaChieu="chiều đi muộn ";
+                         if(d.vaoCaChieu>13)
+                         {
+                            msg = "Đi muộn";
+                           d.noteVaoCaChieu="đi muộn ";
+                         }
                     
                          }
        
@@ -481,6 +485,7 @@ document.getElementById("logoutBtn").onclick = () => {
 
 </body>
 </html>
+
 
 
 
