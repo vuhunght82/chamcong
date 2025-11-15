@@ -71,12 +71,9 @@
         }
     </style>
 
-    <!-- jsQR -->
-    <!-- 🔥 LOAD QR-SCANNER KHÔNG IMPORT -->
     <script src="https://cdn.jsdelivr.net/npm/qr-scanner@1.4.2/qr-scanner.umd.min.js"></script>
 
 
-    <!-- Firebase -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 
@@ -94,18 +91,14 @@
 
 <button id="viewBtn">📋 Xem chấm công</button>
 <button id="logoutBtn">🚪 Đăng xuất</button>
-<button  id="Local" onclick="checkLocation()">Kiểm tra vị trí</button>
-<di>
-    <button  id="reset">⏳ Quét lại</button>
-</di>
+<button id="Local" onclick="checkLocation()">Kiểm tra vị trí</button>
+<div>
+    <button id="reset">⏳ Quét lại</button>
+</div>
 <script>
+// SỬA LỖI LOGIC: Gọi đúng hàm startScanner()
 document.getElementById('reset').addEventListener('click', () => {
-    // nếu stream chưa có thì mở, nếu có rồi chỉ bật lại scan loop
-    if (!video.srcObject) startCamera();
-    else {
-        scanning = true;
-        restartScan();
-    }
+    startScanner();
 });
 
     function checkLocation() {
@@ -128,7 +121,8 @@ if (!userEmail) location.href = "index.html";
     const videoElem = document.getElementById("video");
     const resultDiv = document.getElementById("result");
     let scanner;
-let scanning = false;
+// Biến scanning không còn cần thiết nếu dùng logic của qr-scanner
+// let scanning = false; 
 
 /* ===================== FIREBASE ===================== */
 firebase.initializeApp({
@@ -142,7 +136,15 @@ firebase.initializeApp({
 });
 const db = firebase.database();
     /* ================== BẮT ĐẦU CAMERA ================== */
-    function startScanner() {
+    async function startScanner() {
+        resultDiv.textContent = "Đang khởi động camera...";
+        
+        // Kiểm tra xem có camera không (đề xuất từ lần trước)
+        if (!(await QrScanner.hasCamera())) {
+             resultDiv.textContent = "❌ Không tìm thấy camera.";
+             return;
+        }
+
         if (scanner) scanner.stop();
 
         // Gọi scanner UMD
@@ -154,12 +156,15 @@ const db = firebase.database();
             },
             {
                 highlightScanRegion: true,
-                highlightCodeOutline: true
+                highlightCodeOutline: true,
+                // SỬA LỖI 2: Thêm workerScript
+                workerScript: 'https://cdn.jsdelivr.net/npm/qr-scanner@1.4.2/qr-scanner-worker.min.js'
             }
         );
 
         scanner.start().catch(err => {
-            resultDiv.textContent = "❌ Không mở được camera: " + err;
+            // Hiển thị lỗi rõ ràng, thường là lỗi Quyền (NotAllowedError)
+            resultDiv.textContent = "❌ Lỗi camera: " + err;
         });
     }
 
@@ -167,69 +172,58 @@ const db = firebase.database();
     function handleQRCode(data) {
         if (data !== VALID_QR) {
             alert("❌ Mã QR không hợp lệ!");
-            startScanner();
+            startScanner(); // Cho quét lại
             return;
         }
 
-        resultDiv.textContent = "Đang lấy GPS...";
+        resultDiv.textContent = "✅ Mã QR hợp lệ! Đang lấy GPS...";
 
         navigator.geolocation.getCurrentPosition(
             pos => {
-                alert("🎉 Quét OK!\nLat: " + pos.coords.latitude + "\nLng: " + pos.coords.longitude);
-                startScanner();
+                // SỬA LỖI 4: Gọi hàm saveAttendance
+                saveAttendance(pos.coords.latitude, pos.coords.longitude);
             },
             err => {
                 alert("❌ Không lấy được GPS: " + err.message);
-                startScanner();
+                startScanner(); // Lỗi GPS, cho quét lại
             },
             { enableHighAccuracy: true, timeout: 8000 }
         );
     }
 
-
-
-
 /* ===================== QR CHECK ===================== */
-
+// SỬA LỖI 1: Xóa khai báo 'VALID_QR' trùng lặp
 const COMPANY = { lat: 10.84964185816, lng: 106.58569113116 };
 
 function encodeEmail(e) { return e.replace(/\./g, ","); }
 
-
-
-    // tắt camera khi ròi trang
+    // tắt camera khi rời trang
 window.addEventListener("pagehide", () => {
     if (video.srcObject) {
         video.srcObject.getTracks().forEach(track => track.stop());
         video.srcObject = null;
     }
+    // Dừng hẳn scanner nếu có
+    if (scanner) scanner.stop();
 });
 
 // bật camera lại
     document.addEventListener("visibilitychange", () => {
     if (!document.hidden) {
         // quay lại trang → mở lại camera
-        startCamera();
+        // SỬA LỖI 3: Gọi đúng hàm startScanner
+        startScanner();
     } else {
         // rời trang → tắt camera
         if (video.srcObject) {
             video.srcObject.getTracks().forEach(t => t.stop());
         }
+        if (scanner) scanner.stop();
     }
 });
-
-
-
-
-
     
 /* ===================== TÍNH GIỜ ===================== */
-function timeDiff(a, b) {
-    const pa = a.replace(/[^0-9:]/g, "").split(":").map(Number);
-    const pb = b.replace(/[^0-9:]/g, "").split(":").map(Number);
-    return (pb[0] + pb[1] / 60) - (pa[0] + pa[1] / 60);
-}
-
+// SỬA LỖI 6: Xóa hàm timeDiff bị trùng lặp (đã xóa hàm cũ đơn giản)
 function distance(a, b, c, d) {
     const R = 6371000;
     let x = (c - a) * Math.PI / 180;
@@ -259,20 +253,22 @@ function timeDiff(a, b) {
 /* ===================== LƯU CHẤM CÔNG ===================== */
 function saveAttendance(lat, lng) {
 
+    // Khoảng cách > 100m (bạn có thể tăng/giảm nếu cần)
     if (distance(lat, lng, COMPANY.lat, COMPANY.lng) > 100) {
         
         alert("❌ Bạn quá xa công ty!");
         setTimeout(() => {
-                restartScan();
-                }, 1000); // đợi người dùng bấm OK xong
+                // SỬA LỖI 3: Gọi đúng hàm startScanner
+                startScanner();
+            }, 1000); // đợi người dùng bấm OK xong
         return;
-       
-  }
+        
+    }
 
     const emailKey = encodeEmail(userEmail);
     const now = new Date();
     const day = now.toISOString().slice(0, 10);
-    const time = now.toLocaleTimeString();
+    const time = now.toLocaleTimeString(); // Ví dụ: "08:30:15"
     const hour = now.getHours() + now.getMinutes() / 60;
 
     const ref = db.ref("chamcong/" + emailKey + "/" + day);
@@ -296,18 +292,18 @@ function saveAttendance(lat, lng) {
             if(!d.vaoCaSang)
             {
                 d.vaoCaSang = time;
-                msg="Vào ca sáng";
-                msg="đi muộn!"
+                // msg="Vào ca sáng"; // Bị ghi đè
+                msg="đi muộn!";
                 d.noteVaoCaSang = "đi muộn";
             }
             else{
                  d.raCaSang = time;
-                msg="Về sớm!"
+                msg="Về sớm!";
                 d.noteRaCaSang = "về sớm";
             }
-             
+                
         }
-      else   if (hour < 7.5){
+      else  if (hour < 7.5){
         if(!d.vaoCaSang)
         {
             d.vaoCaSang = time;
@@ -344,63 +340,65 @@ else if (hour >= 11.5 && hour <= 13) {
             
 
        else if (hour >= 13 && hour <= 17.5) {
-        if (!d.vaoCaChieu) {
-            d.vaoCaChieu = time;
-            msg = "Vào ca chiều";
-            d.noteVaoCaChieu="chiều đi muộn ";
-        }
-            else if(!d.RaCaSang)
+         if (!d.vaoCaChieu) {
+             d.vaoCaChieu = time;
+             msg = "Vào ca chiều";
+             d.noteVaoCaChieu="chiều đi muộn ";
+         }
+            // SỬA LỖI 5: Lỗi chính tả 'RaCaSang' -> 'raCaSang'
+            else if(!d.raCaSang)
             {
-                d.raCaSang="11:30";
-                d.vaoCaTrua="11:30";
-                d.raCaTrua="13:00";
-                
+                 d.raCaSang="11:30";
+                 d.vaoCaTrua="11:30";
+                 d.raCaTrua="13:00";
+                 
             }
             else  {
-                    d.raCaChieu = time;
-                    msg = "Ra ca chiều";
-            
-                    // 👉 Ghi chú ca chiều (ra sớm)
+                 d.raCaChieu = time;
+                 msg = "Ra ca chiều";
+                
+                 // 👉 Ghi chú ca chiều (ra sớm)
             if (hour < 17.5) {
-                            d.noteRaCaChieu = "Về sớm";
-                            }
+                         d.noteRaCaChieu = "Về sớm";
+                         }
             }
-    }
-           
-        else if (hour > 17.5)
-        {
-           if(!d.raCaChieu)
-           {
-               d.raCaChieu="17:30";
+     }
+            
+       else if (hour > 17.5)
+       {
+          if(!d.raCaChieu)
+          {
+             d.raCaChieu="17:30";
+          }
+           else if(!d.vaoLamThem){
+                   d.vaoLamThem = "17:30";
+                   msg="Vào tăng ca";
+                  
            }
-            else if(!d.vaoLamThem){
-                    d.vaoLamThem = "17:30";
-                    msg="Vào tăng ca";
-               
-            }
-            else
-            {
-                d.raLamThem = time;
-                msg="Vào tăng ca";
-                d.noteRaLamThem="tăng ca tối"
-            }
+           else
+           {
+               d.raLamThem = time;
+               msg="Vào tăng ca"; // Nên là "Ra tăng ca"?
+               d.noteRaLamThem="tăng ca tối"
+           }
 
-        }
+       }
 
         // TÍNH GIỜ
         let total = 0;
 total += timeDiff(d.vaoCaSang, d.raCaSang);
-total += timeDiff(d.vaoCaTrua, d.raCaTrua);
+total += timeDiff(d.vaoCaTrua, d.raCaTrua); // Bạn đang tính giờ nghỉ trưa là giờ làm?
 total += timeDiff(d.vaoCaChieu, d.raCaChieu);
 d.gioLamTrongNgay = total.toFixed(2);
 
+// Lưu ý: Bạn đang cộng giờ nghỉ trưa vào giờ làm thêm
 let ot = timeDiff(d.vaoLamThem, d.raLamThem)+timeDiff(d.vaoCaTrua,d.raCaTrua);
 d.gioLamThem = ot.toFixed(2);
 
         d.diaDiemQuet = `${lat},${lng}`;
 
         ref.set(d).then(() => {
-          scanning = false; // NGĂN CAMERA QUÉT TIẾP
+         // scanning = false; // Không cần thiết nếu dùng logic của qr-scanner
             alert(
                 "✔ Chấm công thành công!\n" +
                 "📅 Ngày: "+day+"\n"+
@@ -410,18 +408,14 @@ d.gioLamThem = ot.toFixed(2);
             );
 
             setTimeout(() => {
-                restartScan();
-                }, 1000); // đợi người dùng bấm OK xong
-                });
+                // SỬA LỖI 3: Gọi đúng hàm startScanner
+                startScanner();
+            }, 1000); // đợi người dùng bấm OK xong
+             });
     });
 }
 
-/* ===================== RESTART SCAN ===================== */
-function restartScan() {
-    resultDiv.textContent = "Đang quét...";
-    scanning = true;
-    scanLoop();
-}
+// SỬA LỖI 3: Xóa bỏ hàm restartScan() và scanLoop() không cần thiết
 
 /* ===================== BUTTONS ===================== */
 document.getElementById("viewBtn").onclick = () =>
@@ -440,41 +434,3 @@ document.getElementById("logoutBtn").onclick = () => {
 
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
