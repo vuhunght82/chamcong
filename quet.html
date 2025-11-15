@@ -313,8 +313,8 @@ function saveAttendance(lat, lng) {
       }
             
         // ======= CA TRƯA =======
-// C. CA TRƯA (11:30 - 13:00)
-        else if (hour > 11.5 && hour <= 13.0) { 
+// C. CA TRƯA (11:30 - 13:45)
+        else if (hour > 11.5 && hour <= 12.95) { 
             // 1. Auto Ra Ca Sáng nếu chưa có
             if (!d.raCaSang && d.vaoCaSang) {
                 d.raCaSang = "11:30:00"; 
@@ -343,7 +343,7 @@ function saveAttendance(lat, lng) {
             }
         }
 // vào ca chiều
-       else if (hour > 13.03 && hour <= 17.5) 
+       else if (hour > 12.95 && hour <= 17.5) 
        {
        
                      if(d.vaoCaTrua && !d.raCaTrua)
@@ -481,6 +481,7 @@ document.getElementById("logoutBtn").onclick = () => {
 
 </body>
 </html>
+
 
 
 
