@@ -342,53 +342,59 @@ function saveAttendance(lat, lng) {
                 msg = "Đã hoàn thành chấm công trưa.";
             }
         }
-
-       else if (hour > 13.03 && hour <= 17.5) {
-         if(d.vaoCaTrua && !d.raCaTrua)
-             {
-                  d.raCaTrua=d.vaoCaTrua;
-                  d.vaoCaTrua="11:30";
-                 d.noteraCaTrua="ca trưa"
-             }
-        else if (!d.raCaSang&&!d.vaoCaTrua&&!d.raCaTrua) {
-             d.raCaSang = "11:30";
-            d.vaoCaTrua="11:30";
-            d.raCaTrua="13:00";
-            msg = "làm xuyên trưa";
-            d.vaoCaChieu = time;
-            d.noteVaoCaTrua="làm xuyên trưa";
-        
-         }
+// vào ca chiều
+       else if (hour > 13.03 && hour <= 17.5) 
+       {
+       
+                     if(d.vaoCaTrua && !d.raCaTrua)
+                         {
+                              d.raCaTrua=d.vaoCaTrua;
+                              d.vaoCaTrua="11:30";
+                             d.noteraCaTrua="ca trưa"
+                         }
+                    else if (!d.raCaSang&&!d.vaoCaTrua&&!d.raCaTrua)
+                        {
+                         d.raCaSang = "11:30";
+                        d.vaoCaTrua="11:30";
+                        d.raCaTrua="13:00";
+                        msg = "làm xuyên trưa";
+                        d.vaoCaChieu = time;
+                        d.noteVaoCaTrua="làm xuyên trưa";
+                    
+                     }
              
-         else  (!d.vaoCaChieu) {
-             d.vaoCaChieu = time;
-             msg = "Vào ca chiều";
-             d.noteVaoCaChieu="chiều đi muộn ";
-        
-         }
-       }
-             
+                     else if(!d.vaoCaChieu) 
+                       {
+                         d.vaoCaChieu = time;
+                         msg = "Vào ca chiều";
+                         d.noteVaoCaChieu="chiều đi muộn ";
+                    
+                         }
+       
+       
              
             // SỬA LỖI 5: Lỗi chính tả 'RaCaSang' -> 'raCaSang'
-            else if(!d.raCaSang)
-            {
-                 d.raCaSang="11:30";
-                 d.vaoCaTrua="11:30";
-                 d.raCaTrua="13:00";
-                
-                 
-            }
-            else  {
-                 d.raCaChieu = time;
-                 msg = "Ra ca chiều";
-                
-                 // 👉 Ghi chú ca chiều (ra sớm)
-            if (hour < 17.5) {
-                         d.noteRaCaChieu = "Về sớm";
-                         }
-            }
-     }
-            
+                  else if (!d.raCaSang)
+                    {
+                         d.raCaSang="11:30";
+                         d.vaoCaTrua="11:30";
+                         d.raCaTrua="13:00";
+                        
+                         
+                    }
+                    else  {
+                         d.raCaChieu = time;
+                         msg = "Ra ca chiều";
+                        
+                         // 👉 Ghi chú ca chiều (ra sớm)
+                    if (hour < 17.5) {
+                                 d.noteRaCaChieu = "Về sớm";
+                                 }
+                    }
+    
+    }
+    
+                              
        else if (hour > 17.5)
        {
           if( d.vaoCaChieu && !d.raCaChieu)
@@ -423,6 +429,7 @@ function saveAttendance(lat, lng) {
            
 
        }
+    
 
         // TÍNH GIỜ
         let total = 0;
@@ -474,6 +481,7 @@ document.getElementById("logoutBtn").onclick = () => {
 
 </body>
 </html>
+
 
 
 
