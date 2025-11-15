@@ -384,14 +384,16 @@ function saveAttendance(lat, lng) {
              d.raCaChieu="17:30";
               d.vaoLamThem = "17:30";
              d.raLamThem = time;
-            d.noteRaLamThem="tăng ca tối"
-            msg = "tăng ca tối- vào ghi chú để bổ sung";
+             msg = "tăng ca tối - vào ghi chú để bổ sung";
+             d.noteRaLamThem="tăng ca tối"
+            
               
           }
            else{
                   d.vaoLamThem = "17:30";
                   d.raLamThem = time;
-               msg = "tăng ca tối";
+               msg = "tăng ca tối ";
+               d.noteRaLamThem="tăng ca tối"
            }
            
 
@@ -447,6 +449,7 @@ document.getElementById("logoutBtn").onclick = () => {
 
 </body>
 </html>
+
 
 
 
