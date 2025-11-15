@@ -321,7 +321,7 @@
                     tableBody.insertAdjacentHTML('beforeend', `
            <!-- Dòng chính -->
         <tr data-ngay="${r.Ngay}" class="main-row">
-          <td contenteditable="true" >${r.Ngay}(${getThuTrongTuan(r.Ngay)})</td>
+          <td contenteditable="true" >${r.Ngay}<br>${getThuTrongTuan(r.Ngay)}</td>
           <td contenteditable="true">${r.vaoCaSang}</td>
           <td contenteditable="true">${r.raCaSang}</td>
            <td contenteditable="true" style="background-color: #ffcc33;">${r.vaoCaTrua}</td>
@@ -529,6 +529,7 @@
     </script>
 </body>
 </html>
+
 
 
 
