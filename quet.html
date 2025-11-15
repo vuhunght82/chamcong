@@ -324,17 +324,21 @@ function saveAttendance(lat, lng) {
             // 2. Logic Vào/Ra Ca Trưa
             if (!d.vaoCaTrua) {
                 // Lần quét đầu tiên trong khung giờ này là VÀO TRƯA
-                d.vaoCaTrua = time; // Lưu giờ thực tế (ví dụ: 11:34:00)
-                msg = "Vào ca trưa";
-            }
-            else if (!d.raCaTrua) {
-                // Lần quét thứ hai là RA TRƯA
+                d.vaoCaTrua = "11:30"; // Lưu giờ thực tế (ví dụ: 11:34:00)
                 d.raCaTrua = time;
-                msg = "Ra ca trưa";
-                if (timeDiff(d.vaoCaTrua, d.raCaTrua) < 0.5) { 
-                    d.noteRaCaTrua = "nghỉ trưa quá ít";
-                }
-            } else {
+                d.noteVaoCaTrua="tăng ca trưa";
+                
+                msg = "tăng ca trưa";
+            }
+          //  else if (!d.raCaTrua) {
+                // Lần quét thứ hai là RA TRƯA
+           //     d.raCaTrua = time;
+           //     msg = "Ra ca trưa";
+           //     if (timeDiff(d.vaoCaTrua, d.raCaTrua) < 0.5) { 
+            //        d.noteRaCaTrua = "nghỉ trưa quá ít";
+            //    }
+          //  } 
+            else {
                 msg = "Đã hoàn thành chấm công trưa.";
             }
         }
@@ -443,6 +447,7 @@ document.getElementById("logoutBtn").onclick = () => {
 
 </body>
 </html>
+
 
 
 
