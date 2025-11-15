@@ -313,31 +313,33 @@ function saveAttendance(lat, lng) {
       }
             
         // ======= CA TRƯA =======
-else if (hour >= 11.5 && hour <= 13) {
-
-    // Nếu chưa chấm ra sáng → auto chấm đúng 11:30
+// D. CA TRƯA (11:30 - 13:00)
+else if (hour > 11.5 && hour <= 13.0) { 
+    // 1. AUTO CHẤM RA SÁNG nếu chưa có
     if (!d.raCaSang && d.vaoCaSang) {
-        d.raCaSang = "11:30";
-        msg=" làm trưa";
-        d.noteRaCaSang = "đúng giờ";
+        d.raCaSang = "11:30:00"; // Auto ra 11:30:00
+        d.noteRaCaSang = "đúng giờ auto";
     }
-
-    // Nếu chưa vào ca trưa → đây là lần quét VÀO TRƯA
+    
+    // 2. LOGIC VÀO/RA CA TRƯA
     if (!d.vaoCaTrua) {
-        d.vaoCaTrua = "11:30";   // chuẩn giờ
+        // Lần quét đầu tiên trong khung giờ này là VÀO TRƯA (Sử dụng giờ thực tế)
+        d.vaoCaTrua = time; // Gán giờ thực tế (11:34)
         msg = "Vào ca trưa";
     }
-    // Nếu đã vào nhưng chưa ra ca trưa → đây là lần quét RA TRƯA
+    // Lần quét tiếp theo sẽ là RA TRƯA
     else if (!d.raCaTrua) {
-        d.raCaTrua = time;
+        d.raCaTrua = time; // Gán giờ thực tế (Nếu quét lúc 12:45)
         msg = "Ra ca trưa";
 
-        if (hour < 12) {
-            d.noteRaCaTrua = "ra sớm";
+        // Logic kiểm tra giờ ra sớm/muộn
+        if (timeDiff(d.vaoCaTrua, d.raCaTrua) < 0.5) { // < 30 phút nghỉ trưa
+            d.noteRaCaTrua = "nghỉ trưa quá ít";
         }
+    } else {
+        msg = "Đã hoàn thành chấm công trưa.";
     }
 }
-            
 
        else if (hour >= 13 && hour <= 17.5) {
          if (!d.vaoCaChieu) {
@@ -434,3 +436,4 @@ document.getElementById("logoutBtn").onclick = () => {
 
 </body>
 </html>
+
