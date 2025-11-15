@@ -314,7 +314,7 @@ function saveAttendance(lat, lng) {
             
         // ======= CA TRƯA =======
 // C. CA TRƯA (11:30 - 13:45)
-        else if (hour > 11.5 && hour <= 12.95) { 
+        else if (hour > 11.5 && hour <= 12.8) { 
             // 1. Auto Ra Ca Sáng nếu chưa có
             if (!d.raCaSang && d.vaoCaSang) {
                 d.raCaSang = "11:30:00"; 
@@ -486,6 +486,7 @@ document.getElementById("logoutBtn").onclick = () => {
 
 </body>
 </html>
+
 
 
 
