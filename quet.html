@@ -254,7 +254,7 @@ function timeDiff(a, b) {
 function saveAttendance(lat, lng) {
 
     // Khoảng cách > 100m (bạn có thể tăng/giảm nếu cần)
-    if (distance(lat, lng, COMPANY.lat, COMPANY.lng) > 100) {
+    if (distance(lat, lng, COMPANY.lat, COMPANY.lng) > 50) {
         
         alert("❌ Bạn quá xa công ty!");
         setTimeout(() => {
@@ -489,6 +489,7 @@ document.getElementById("logoutBtn").onclick = () => {
 
 </body>
 </html>
+
 
 
 
