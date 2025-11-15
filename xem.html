@@ -421,26 +421,26 @@ backBtn.addEventListener('click', () => {
                 }
             });
         }
-         // thứ trong tuần
         function getThuTrongTuan(dateStr) {
-            const date = new Date(dateStr);
-            const thu = date.getDay(); // 0=CN, 1=Thứ 2, ...
+    // Trường hợp YYYY-MM-DD (Firebase lưu dạng này)
+    if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+        const date = new Date(dateStr);
+        return ["Chủ Nhật","Thứ Hai","Thứ Ba","Thứ Tư","Thứ Năm","Thứ Sáu","Thứ Bảy"][date.getDay()];
+    }
 
-            const tenThu = [
-                "Chủ Nhật",
-                "Thứ Hai",
-                "Thứ Ba",
-                "Thứ Tư",
-                "Thứ Năm",
-                "Thứ Sáu",
-                "Thứ Bảy"
-            ];
+    // Trường hợp dd/mm/yyyy (bạn đang dùng trên bảng)
+    if (/^\d{2}\/\d{2}\/\d{4}$/.test(dateStr)) {
+        const [d, m, y] = dateStr.split('/');
+        const date = new Date(`${y}-${m}-${d}`);
+        return ["Chủ Nhật","Thứ Hai","Thứ Ba","Thứ Tư","Thứ Năm","Thứ Sáu","Thứ Bảy"][date.getDay()];
+    }
 
-            return tenThu[thu];
-        }
+    return "Không rõ";
+}
     </script>
 </body>
 </html>
+
 
 
 
