@@ -340,7 +340,7 @@ function saveAttendance(lat, lng) {
         }
 
        else if (hour >= 13 && hour <= 17.5) {
-         if(!d.raCaTrua)
+         if(d.vaoCaTrua && !d.raCaTrua)
              {
                   d.raCaTrua=d.vaoCaTrua;
                  d.vaoCaTrua="11:30";
@@ -441,6 +441,7 @@ document.getElementById("logoutBtn").onclick = () => {
 
 </body>
 </html>
+
 
 
 
