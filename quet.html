@@ -388,8 +388,10 @@ function saveAttendance(lat, lng) {
             msg = "tăng ca tối- vào ghi chú để bổ sung";
               
           }
-           else if(!d.vaoLamThem){
-                  
+           else if(d.vaoCaChieu && d.raCaChieu){
+                  d.vaoLamThem = "17:30";
+                  d.raLamThem = time;
+               msg = "tăng ca tối";
            }
            
 
@@ -445,6 +447,7 @@ document.getElementById("logoutBtn").onclick = () => {
 
 </body>
 </html>
+
 
 
 
