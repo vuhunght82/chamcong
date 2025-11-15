@@ -343,7 +343,8 @@ function saveAttendance(lat, lng) {
          if(d.vaoCaTrua && !d.raCaTrua)
              {
                   d.raCaTrua=d.vaoCaTrua;
-                 d.vaoCaTrua="11:30";
+                  d.vaoCaTrua="11:30";
+                 msg=d.vaoCaTrua;
              }
            
          else if (!d.vaoCaChieu) {
@@ -441,6 +442,7 @@ document.getElementById("logoutBtn").onclick = () => {
 
 </body>
 </html>
+
 
 
 
