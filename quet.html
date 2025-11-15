@@ -343,7 +343,7 @@ function saveAttendance(lat, lng) {
             }
         }
 // vào ca chiều
-       else if (hour >= 12.9 && hour <= 17.7) 
+       else if (hour >13 && hour <= 17.8) 
        {
        
                      if(d.vaoCaTrua && !d.raCaTrua)
@@ -367,12 +367,7 @@ function saveAttendance(lat, lng) {
                        {
                          d.vaoCaChieu = time;
                          msg = "Vào ca chiều";
-                         if(d.vaoCaChieu>13)
-                         {
-                            msg = "Đi muộn";
-                           d.noteVaoCaChieu="đi muộn ";
-                         }
-                    
+                        
                          }
        
        
@@ -397,9 +392,17 @@ function saveAttendance(lat, lng) {
                     }
     
     }
-    
+    else if(hour>=12.8 && hour<13)
+    {
+        
+                         d.vaoCaChieu = time;
+                         msg = "đi sớm chiều";
+                        d.noteVaoCaChieu="đi sớm";
+                      
+                         
+    }
                               
-       else if (hour > 17.5)
+       else if (hour > 17.6)
        {
           if( d.vaoCaChieu && !d.raCaChieu)
           {
@@ -485,6 +488,7 @@ document.getElementById("logoutBtn").onclick = () => {
 
 </body>
 </html>
+
 
 
 
