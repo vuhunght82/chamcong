@@ -343,7 +343,7 @@ function saveAttendance(lat, lng) {
             }
         }
 
-       else if (hour > 13 && hour <= 17.5) {
+       else if (hour > 13.03 && hour <= 17.5) {
          if(d.vaoCaTrua && !d.raCaTrua)
              {
                   d.raCaTrua=d.vaoCaTrua;
@@ -385,15 +385,10 @@ function saveAttendance(lat, lng) {
           }
            else if(!d.vaoLamThem){
                    d.vaoLamThem = "17:30";
-                   msg="Vào tăng ca";
-                  
+                   d.raLamThem = time;
+                   d.noteRaLamThem="tăng ca tối"
            }
-           else
-           {
-               d.raLamThem = time;
-               msg="Vào tăng ca"; // Nên là "Ra tăng ca"?
-               d.noteRaLamThem="tăng ca tối"
-           }
+           
 
        }
 
@@ -447,6 +442,7 @@ document.getElementById("logoutBtn").onclick = () => {
 
 </body>
 </html>
+
 
 
 
