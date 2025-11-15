@@ -389,7 +389,19 @@ function saveAttendance(lat, lng) {
             
               
           }
-           else{
+              else if(d.vaoCaSang&&!d.vaoCaTrua&&!d.vaoCaChieu)
+              {
+                 
+                  d.raCaSang="11:30";
+                 d.vaoCaTrua="11:30";
+                 d.raCaTrua="13:00";
+                  d.vaoCaChieu="13:00";
+                  d.raCaChieu="1730";
+                  d.vaoLamThem="17:30";
+                  d.raLamThem=time;
+                  d.noteRaLamThem="làm xuyên ngày";
+              }
+           else {
                   d.vaoLamThem = "17:30";
                   d.raLamThem = time;
                msg = "tăng ca tối ";
@@ -449,6 +461,7 @@ document.getElementById("logoutBtn").onclick = () => {
 
 </body>
 </html>
+
 
 
 
