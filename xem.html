@@ -94,7 +94,9 @@
 <body>
 
     <h1>👨‍💼 xem bảng chấm công</h1>
+ <div><label for="nhanvien">Nhân viên: <span id="nhanvienSpan"></span></label></div>
 
+    
     <div>
         
 
@@ -170,7 +172,7 @@
         if (!loginEmail) location.href = "index.html";
 
         const currentUser = loginEmail;  // email dùng để load dữ liệu
-
+document.getElementById("nhanvienSpan").textContent = loginEmail;
              
 
         // ================== Hàm parse giờ hh:mm -> số giờ ==================
@@ -422,6 +424,7 @@ backBtn.addEventListener('click', () => {
     </script>
 </body>
 </html>
+
 
 
 
