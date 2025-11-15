@@ -107,7 +107,7 @@
     <table id="chamcongTable">
         <thead>
             <tr>
-                <th>Ngày</th>
+                <th style="width:160px;">Ngày</th>
                 <th>Vào sáng</th>
                 <th>Ra sáng</th>
                 <th>Vào trưa</th>
@@ -321,7 +321,7 @@
                     tableBody.insertAdjacentHTML('beforeend', `
            <!-- Dòng chính -->
         <tr data-ngay="${r.Ngay}" class="main-row">
-          <td contenteditable="true" >${r.Ngay}</td>
+          <td contenteditable="true" >${r.Ngay}(${getThuTrongTuan(r.Ngay)})</td>
           <td contenteditable="true">${r.vaoCaSang}</td>
           <td contenteditable="true">${r.raCaSang}</td>
            <td contenteditable="true" style="background-color: #ffcc33;">${r.vaoCaTrua}</td>
@@ -509,9 +509,27 @@
                 }
             });
         }
+         // thứ trong tuần
+        function getThuTrongTuan(dateStr) {
+            const date = new Date(dateStr);
+            const thu = date.getDay(); // 0=CN, 1=Thứ 2, ...
+
+            const tenThu = [
+                "Chủ Nhật",
+                "Thứ Hai",
+                "Thứ Ba",
+                "Thứ Tư",
+                "Thứ Năm",
+                "Thứ Sáu",
+                "Thứ Bảy"
+            ];
+
+            return tenThu[thu];
+        }
     </script>
 </body>
 </html>
+
 
 
 
