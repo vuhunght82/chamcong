@@ -350,13 +350,22 @@ function saveAttendance(lat, lng) {
                   d.vaoCaTrua="11:30";
                  d.noteraCaTrua="ca trưa"
              }
-           
-         else if (!d.vaoCaChieu) {
+        else if (!d.raCaSang&&!d.vaoCaTrua&&!d.raCaTrua) {
+             d.raCaSang = "11:30";
+            d.vaoCaTrua="11:30";
+            d.raCaTrua="13:00";
+             msg = "làm xuyên trưa";
+             d.noteVaoCaTrua="làm xuyên trưa";
+        
+         }
+             
+         else  (!d.vaoCaChieu) {
              d.vaoCaChieu = time;
              msg = "Vào ca chiều";
              d.noteVaoCaChieu="chiều đi muộn ";
         
          }
+             
              
             // SỬA LỖI 5: Lỗi chính tả 'RaCaSang' -> 'raCaSang'
             else if(!d.raCaSang)
@@ -364,6 +373,7 @@ function saveAttendance(lat, lng) {
                  d.raCaSang="11:30";
                  d.vaoCaTrua="11:30";
                  d.raCaTrua="13:00";
+                
                  
             }
             else  {
@@ -399,6 +409,7 @@ function saveAttendance(lat, lng) {
                   d.raCaChieu="17:30";
                   d.vaoLamThem="17:30";
                   d.raLamThem=time;
+                   msg = "Làm xuyên ngày ";
                   d.noteRaLamThem="làm xuyên ngày";
               }
            else {
@@ -461,6 +472,7 @@ document.getElementById("logoutBtn").onclick = () => {
 
 </body>
 </html>
+
 
 
 
