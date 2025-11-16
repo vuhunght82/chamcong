@@ -106,9 +106,9 @@ document.getElementById('reset').addEventListener('click', () => {
     alert('Trình duyệt không hỗ trợ geolocation!');
     return;
   }
-        const khoangcach=distance(lat, lng, COMPANY.lat, COMPANY.lng);
+        
   navigator.geolocation.getCurrentPosition(
-    pos => alert(`Vĩ độ: ${pos.coords.latitude}, Kinh độ: ${pos.coords.longitude}`+khoangcach),
+    pos => alert(`Vĩ độ: ${pos.coords.latitude}, Kinh độ: ${pos.coords.longitude}`),
     err => alert(`Lỗi: ${err.code} - ${err.message}`),
     { enableHighAccuracy: true, timeout: 10000 }
   );
@@ -490,6 +490,7 @@ document.getElementById("logoutBtn").onclick = () => {
 
 </body>
 </html>
+
 
 
 
