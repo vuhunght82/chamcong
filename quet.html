@@ -265,6 +265,33 @@ function timeDiff(a, b) {
     const t2 = pb[0] + pb[1] / 60;
     return t2 - t1;
 }
+
+        // Hàm checkLocation() đã được sửa lỗi logic và chuyển ra toàn cục
+function checkLocation() {
+    if (!navigator.geolocation) {
+        alert('Trình duyệt không hỗ trợ geolocation!');
+        return;
+    }
+
+    // Lấy vị trí hiện tại
+    navigator.geolocation.getCurrentPosition(
+        pos => {
+            const lat = pos.coords.latitude;
+            const lng = pos.coords.longitude;
+            
+            // THAY ĐỔI: Tính khoảng cách sau khi đã có tọa độ
+            // Sử dụng các biến COMPANY_LOCATION và hàm getDistanceFromLatLonInMeters đã được định nghĩa ở phạm vi toàn cục
+            const khoangcach =distance(lat, lng, COMPANY.lat, COMPANY.lng);
+            
+            // THAY ĐỔI: Hiển thị thông báo chi tiết
+            alert(`✅ Vị trí hiện tại:
+Vĩ độ: ${lat}, Kinh độ: ${lng}
+Khoảng cách đến công ty: ${khoangcach.toFixed(2)} mét.`); // Hiển thị khoảng cách với 2 số thập phân
+        },
+        err => alert(`❌ Lỗi lấy vị trí: ${err.code} - ${err.message}`),
+        { enableHighAccuracy: true, timeout: 10000 }
+    );
+}
 /* ===================== LƯU CHẤM CÔNG ===================== */
 function saveAttendance(lat, lng) {
 
@@ -504,6 +531,7 @@ document.getElementById("logoutBtn").onclick = () => {
 
 </body>
 </html>
+
 
 
 
