@@ -116,7 +116,7 @@ function checkLocation() {
             
             // THAY ĐỔI: Tính khoảng cách sau khi đã có tọa độ
             // Sử dụng các biến COMPANY_LOCATION và hàm getDistanceFromLatLonInMeters đã được định nghĩa ở phạm vi toàn cục
-            const khoangcach =distance(lat, lng, COMPANY_LOCATION.lat, COMPANY_LOCATION.lng);
+            const khoangcach =distance(lat, lng, COMPANY.lat, COMPANY.lng);
             
             // THAY ĐỔI: Hiển thị thông báo chi tiết
             alert(`✅ Vị trí hiện tại:
@@ -504,6 +504,7 @@ document.getElementById("logoutBtn").onclick = () => {
 
 </body>
 </html>
+
 
 
 
