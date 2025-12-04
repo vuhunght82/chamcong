@@ -397,7 +397,7 @@ backBtn.addEventListener('click', () => {
             
             const today = new Date();
             monthSelect.value = today.toISOString().substring(0, 7);
-            loadChamCong();
+            loadChamCong(monthSelect.value);
         });
 
         function highlightNoteRows() {
@@ -440,6 +440,7 @@ backBtn.addEventListener('click', () => {
     </script>
 </body>
 </html>
+
 
 
 
