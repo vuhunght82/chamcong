@@ -161,7 +161,9 @@
         <button id="modeAttendBtn" class="btn-attend">✅ Chế độ Chấm Công</button>
         <button id="modeMapBtn" class="btn-map">🗺️ Quét Vị Trí (Chỉ đường)</button>
     </div>
-
+    <div class="btn-group">
+        <button id="openMapBtn" class="btn-map" style="display:none; background-color: #4285F4; color: white;">🗺️ Mở Google Maps</button>
+    </div>
     <div class="btn-group">
         <button id="viewBtn" class="btn-view">📋 Xem lịch sử</button>
         <button id="checkLocation" class="btn-view" style="background:#6f42c1">📍 Check GPS</button>
@@ -191,7 +193,7 @@
         const COMPANY_LOCATION = { lat: 10.849641858164617, lng: 106.58569113116769 };
         const VALID_QR_CHECKIN = "CHECKIN_GLASS_COMPANY";
         const SECURITY_PREFIX_MAP = "SECURE_MAP|"; // Tiền tố bí mật cho map
-
+        let currentMapUrl = "";
         let currentMode = 'ATTENDANCE'; // 'ATTENDANCE' hoặc 'MAP'
         let scanner;
         const userEmail = sessionStorage.getItem('userEmail');
@@ -264,28 +266,52 @@
         // ================== Xử lý Logic Bản Đồ Bảo Mật ==================
         function handleSecureMap(qrContent) {
             try {
-                // Bước 1: Thử giải mã Base64 (Nếu Zalo quét, nó chỉ thấy chuỗi mã hóa và dừng lại)
+                // Bước 1: Giải mã Base64
                 let decodedString = atob(qrContent);
 
-                // Bước 2: Kiểm tra tiền tố bí mật "SECURE_MAP|"
+                // Bước 2: Kiểm tra tiền tố bí mật
                 if (decodedString.startsWith(SECURITY_PREFIX_MAP)) {
-                    // Cắt bỏ tiền tố để lấy tọa độ: "10.123,106.456"
+                    // Lấy tọa độ: "10.123,106.456"
                     const coords = decodedString.replace(SECURITY_PREFIX_MAP, '');
 
-                    showSuccess(`✅ Đã xác thực mã vị trí bảo mật!\nĐang mở bản đồ tới: ${coords}`);
+                    // Tạo link Google Maps
+                    // Dùng 'google.navigation:q=' để ưu tiên mở App trên mobile
+                    // Dùng 'https://www.google.com/maps/dir/?api=1&destination=' cho web
+                    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
-                    // Mở Google Maps chỉ đường
-                    setTimeout(() => {
-                        const mapUrl = `https://www.google.com/maps/dir/?api=1&destination=${coords}`;
-                        window.open(mapUrl, '_blank');
-                        restartBtn.style.display = 'inline-block';
-                    }, 1500);
+                    if (isMobile) {
+                        // Link scheme để mở app
+                        currentMapUrl = `google.navigation:q=${coords}`;
+                    } else {
+                        // Link web chuẩn
+                        currentMapUrl = `https://www.google.com/maps/dir/?api=1&destination=${coords}`;
+                    }
+
+                    // Hiển thị thông báo và Nút
+                    showSuccess(`✅ Đã xác thực vị trí: ${coords}\nNhấn nút bên dưới để mở bản đồ.`);
+
+                    // Hiện nút mở map
+                    const mapBtn = document.getElementById('openMapBtn');
+                    mapBtn.style.display = 'inline-block';
+                    mapBtn.onclick = () => {
+                        window.open(currentMapUrl, '_blank');
+
+                        // Fallback: Nếu trên mobile mà không mở được app (do chưa cài),
+                        // thì 500ms sau tự mở link web
+                        if (isMobile) {
+                            setTimeout(() => {
+                                window.open(`https://www.google.com/maps/dir/?api=1&destination=${coords}`, '_blank');
+                            }, 500);
+                        }
+                    };
+
+                    restartBtn.style.display = 'inline-block';
+
                 } else {
-                    throw new Error("Mã QR không đúng định dạng bảo mật của công ty.");
+                    throw new Error("Mã QR sai định dạng bảo mật.");
                 }
             } catch (e) {
-                // Nếu không giải mã được Base64 hoặc sai định dạng
-                showError(`⛔ CẢNH BÁO BẢO MẬT:\nMã QR này không hợp lệ hoặc không được cấp quyền truy cập vị trí.`);
+                showError(`⛔ Lỗi: Mã QR không hợp lệ hoặc không phải mã vị trí nội bộ.`);
                 restartBtn.style.display = 'inline-block';
             }
         }
