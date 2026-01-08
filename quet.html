@@ -293,7 +293,7 @@
                 if (currentHour < 11.5) {
                     if (!data.vaoCaSang) {
                         data.vaoCaSang = currentTime;
-                        let status = currentHour < 7.5 ? 'Đúng giờ' : `Đi muộn (${currentTime})`;
+                        let status = currentHour < 7.5 ? 'đi sớm' : `Đi muộn (${currentTime})`;
                         data.noteVaoCaSang = appendNote(data.noteVaoCaSang, status);
                         msgScreen = '✅ Vào ca sáng: ' + status;
                     } else {
@@ -427,6 +427,7 @@
     </script>
 </body>
 </html>
+
 
 
 
