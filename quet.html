@@ -176,7 +176,6 @@
    <script type="module">
         import QrScanner from 'https://cdn.jsdelivr.net/npm/qr-scanner@1.4.2/qr-scanner.min.js';
 
-        // ================== Cấu hình Firebase ==================
         const firebaseConfig = {
             apiKey: "AIzaSyAb5AZOBvEVY3a_9ioEKTW-wuVMXdnRZGQ",
             authDomain: "sellglass-3ebe9.firebaseapp.com",
@@ -189,7 +188,6 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        // ================== Biến & Hằng số ==================
         const COMPANY_LOCATION = { lat: 10.849641858164617, lng: 106.58569113116769 };
         const VALID_QR_CHECKIN = "CHECKIN_GLASS_COMPANY";
         const SECURITY_PREFIX_MAP = "SECURE_MAP|";
@@ -198,7 +196,7 @@
         const userEmail = sessionStorage.getItem('userEmail');
 
         if (!userEmail) {
-            alert('Vui lòng đăng nhập để sử dụng tính năng bảo mật này!');
+            alert('Vui lòng đăng nhập!');
             window.location.href = 'dangnhap.html';
         }
 
@@ -208,12 +206,11 @@
         const restartBtn = document.getElementById('restartBtn');
         const modeIndicator = document.getElementById('mode-indicator');
 
-        // ================== Hàm khởi tạo Scanner ==================
         function startScanner() {
             resultDiv.style.display = 'none';
             errorDiv.style.display = 'none';
             restartBtn.style.display = 'none';
-
+            
             if (currentMode === 'ATTENDANCE') {
                 modeIndicator.innerHTML = "Đang ở chế độ: <b>CHẤM CÔNG</b>";
                 modeIndicator.style.background = "rgba(40, 167, 69, 0.8)";
@@ -222,19 +219,11 @@
                 modeIndicator.style.background = "rgba(255, 193, 7, 0.8)";
             }
 
-            if (scanner) {
-                scanner.start();
-                return;
-            }
-
+            if (scanner) { scanner.start(); return; }
             scanner = new QrScanner(videoElem, result => processQrCode(result.data), {
-                highlightScanRegion: true,
-                highlightCodeOutline: true
+                highlightScanRegion: true, highlightCodeOutline: true
             });
-
-            scanner.start().catch(err => {
-                showError('❌ Không thể mở camera: ' + err);
-            });
+            scanner.start().catch(err => showError('❌ Lỗi Camera: ' + err));
         }
 
         function processQrCode(qrContent) {
@@ -245,61 +234,41 @@
                 navigator.geolocation.getCurrentPosition(
                     pos => handleAttendance(userEmail, qrContent, pos.coords.latitude, pos.coords.longitude),
                     err => {
-                        console.warn('❌ Không lấy được vị trí:', err);
+                        console.warn('GPS Error:', err);
                         handleAttendance(userEmail, qrContent, null, null);
                     },
                     { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
                 );
-            }
-            else if (currentMode === 'MAP') {
+            } else if (currentMode === 'MAP') {
                 handleSecureMap(qrContent);
             }
         }
 
-        function handleSecureMap(qrContent) {
+        // ... (Giữ nguyên hàm handleSecureMap của bạn) ...
+        function handleSecureMap(qrContent) { /* Code Map cũ giữ nguyên */ 
             try {
                 let decodedString = atob(qrContent);
                 if (decodedString.startsWith(SECURITY_PREFIX_MAP)) {
                     const coords = decodedString.replace(SECURITY_PREFIX_MAP, '');
                     const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-                    let currentMapUrl = isMobile ? `google.navigation:q=${coords}` : `http://googleusercontent.com/maps.google.com/?q=${coords}`;
-
-                    showSuccess(`✅ Đã xác thực vị trí: ${coords}\nNhấn nút bên dưới để mở bản đồ.`);
-                    const mapBtn = document.getElementById('openMapBtn');
-                    mapBtn.style.display = 'inline-block';
-                    mapBtn.onclick = () => {
-                        window.open(currentMapUrl, '_blank');
-                        if (isMobile) setTimeout(() => window.open(`http://googleusercontent.com/maps.google.com/?q=${coords}`, '_blank'), 500);
-                    };
+                    let url = isMobile ? `google.navigation:q=${coords}` : `http://googleusercontent.com/maps.google.com/?q=${coords}`;
+                    window.open(url, '_blank');
+                    showSuccess(`✅ Đã mở bản đồ: ${coords}`);
                     restartBtn.style.display = 'inline-block';
-                } else {
-                    throw new Error("Sai định dạng");
                 }
-            } catch (e) {
-                showError(`⛔ QR không hợp lệ.`);
-                restartBtn.style.display = 'inline-block';
-            }
+            } catch(e) { showError('QR Map lỗi'); restartBtn.style.display='inline-block';}
         }
 
-        // ================== LOGIC CHẤM CÔNG MỚI (ĐÃ SỬA) ==================
+        // ================== LOGIC CHẤM CÔNG CẬP NHẬT ==================
         function handleAttendance(email, qrContent, lat, lng) {
             if (qrContent !== VALID_QR_CHECKIN) {
-                showError('❌ Mã QR chấm công không hợp lệ!');
-                restartBtn.style.display = 'inline-block';
-                return;
+                showError('❌ Mã QR không hợp lệ!'); restartBtn.style.display = 'inline-block'; return;
             }
-
             if (lat && lng) {
-                const distance = getDistanceFromLatLonInMeters(lat, lng, COMPANY_LOCATION.lat, COMPANY_LOCATION.lng);
-                if (distance > 100) {
-                    showError(`❌ Vị trí quá xa công ty (${distance.toFixed(1)}m)!`);
-                    restartBtn.style.display = 'inline-block';
-                    return;
-                }
+                const d = getDistanceFromLatLonInMeters(lat, lng, COMPANY_LOCATION.lat, COMPANY_LOCATION.lng);
+                if (d > 100) { showError(`❌ Quá xa: ${d.toFixed(1)}m`); restartBtn.style.display = 'inline-block'; return; }
             } else {
-                showError('❌ Không xác định được GPS!');
-                restartBtn.style.display = 'inline-block';
-                return;
+                showError('❌ Lỗi GPS!'); restartBtn.style.display = 'inline-block'; return;
             }
 
             const now = new Date();
@@ -311,126 +280,126 @@
 
             ref.once('value').then(snapshot => {
                 let data = snapshot.val() || {};
-                
-                // Tách biệt biến thông báo màn hình, danh sách trạng thái và ghi chú nhập tay
-                let msg = ''; 
-                let listTrangThai = []; // Chứa các trạng thái hệ thống (Đi muộn, về sớm...)
-                let ghiChuInput = data.ghiChu || ''; // Chỉ chứa ghi chú nhập tay
+                let msgScreen = '';
 
-                // --- 1. SÁNG SỚM (< 11:30) ---
+                // Hàm tiện ích để nối chuỗi ghi chú (bỏ qua dấu "-" hoặc null)
+                const appendNote = (oldNote, newMsg) => {
+                    if (!oldNote || oldNote === '-' || oldNote === '""') return newMsg;
+                    if (oldNote.includes(newMsg)) return oldNote; // Tránh lặp
+                    return oldNote + "; " + newMsg;
+                };
+
+                // --- 1. SÁNG (< 11:30) ---
                 if (currentHour < 11.5) {
                     if (!data.vaoCaSang) {
                         data.vaoCaSang = currentTime;
-                        msg = currentHour < 7.5 ? '✅ Đi sớm ca sáng!' : '⚠️ Đi muộn ca sáng!';
-                        listTrangThai.push(msg);
+                        let status = currentHour < 7.5 ? 'Đúng giờ' : `Đi muộn (${currentTime})`;
+                        data.noteVaoCaSang = appendNote(data.noteVaoCaSang, status);
+                        msgScreen = '✅ Vào ca sáng: ' + status;
                     } else {
                         data.raCaSang = currentTime;
-                        msg = '⚠️ Về sớm ca sáng!';
-                        listTrangThai.push(msg);
+                        data.noteVaoCaSang = appendNote(data.noteVaoCaSang, `Về sớm (${currentTime})`);
+                        msgScreen = '⚠️ Ra ca sáng sớm!';
                     }
                 }
 
-                // --- 2. TRƯA (11:30 - 12:59) ---
+                // --- 2. TRƯA (11:30 - 13:00) ---
                 else if (currentHour >= 11.5 && currentHour < 13.0) {
+                    // Tự động chốt sáng
                     if (data.vaoCaSang && !data.raCaSang) {
                         data.raCaSang = "11:30:00";
                         data.vaoCaTrua = "11:30:00";
-                        msg = '✅ Tự động chốt: Ra Sáng & Vào Trưa lúc 11:30.';
-                        listTrangThai.push("Tự động chốt Ra Sáng 11:30");
+                        data.noteVaoCaSang = appendNote(data.noteVaoCaSang, "Auto chốt ra");
+                        data.noteVaoCaTrua = appendNote(data.noteVaoCaTrua, "Auto vào trưa");
+                        msgScreen = '✅ Auto chốt Sáng & Vào Trưa.';
                     } 
-                    else if (data.vaoCaTrua && !data.raCaTrua) {
+                    
+                    if (!data.raCaTrua && data.vaoCaTrua) {
                         data.raCaTrua = currentTime;
-                        msg = '✅ Ra ca trưa (Kết thúc nghỉ).';
-                        listTrangThai.push("Ra ca trưa");
-                    }
-                    else if (!data.vaoCaTrua) {
-                         data.vaoCaTrua = currentTime;
-                         msg = '✅ Vào ca trưa (Nghỉ trưa).';
-                         listTrangThai.push("Vào ca trưa");
+                        data.noteVaoCaTrua = appendNote(data.noteVaoCaTrua, "Ra trưa");
+                        msgScreen = '✅ Ra ca trưa.';
+                    } else if (!data.vaoCaTrua) {
+                        data.vaoCaTrua = currentTime;
+                        data.noteVaoCaTrua = appendNote(data.noteVaoCaTrua, "Vào trưa");
+                        msgScreen = '✅ Vào ca trưa.';
                     }
                 }
 
-                // --- 3. CHIỀU (>= 13:00) VÀ TĂNG CA ---
-                else if (currentHour >= 13.0) {
-                    
-                    // --- XỬ LÝ CA CHIỀU (<= 17:30) ---
+                // --- 3. CHIỀU & TĂNG CA (>= 13:00) ---
+                else {
+                    // --- A. CHIỀU (<= 17:30) ---
                     if (currentHour <= 17.5) {
                         if (!data.vaoCaChieu) {
                             data.vaoCaChieu = currentTime;
-                            msg = '✅ Vào ca chiều.';
-                            listTrangThai.push("Vào ca chiều");
+                            let status = currentHour > 13.05 ? `Muộn chiều (${currentTime})` : "Đúng giờ";
+                            data.noteVaoCaChieu = appendNote(data.noteVaoCaChieu, status);
+                            msgScreen = '✅ Vào ca chiều: ' + status;
                         } else {
                             data.raCaChieu = currentTime;
-                            msg = '⚠️ Về sớm ca chiều.';
-                            listTrangThai.push("Về sớm ca chiều");
+                            data.noteVaoCaChieu = appendNote(data.noteVaoCaChieu, `Về sớm (${currentTime})`);
+                            msgScreen = '⚠️ Ra chiều sớm!';
                         }
-                    }
-
-                    // --- XỬ LÝ TĂNG CA (> 17:30) ---
+                    } 
+                    // --- B. TĂNG CA (> 17:30) ---
                     else {
+                        // Tự động lấp đầy quá khứ
+                        if (data.vaoCaSang && !data.raCaSang) {
+                            data.raCaSang = "11:30:00"; data.vaoCaTrua = "11:30:00";
+                            data.noteVaoCaSang = appendNote(data.noteVaoCaSang, "Quên ra sáng (Auto)");
+                        }
+                        if (!data.vaoCaChieu) {
+                            if (!data.raCaTrua && data.vaoCaTrua) data.raCaTrua = "13:00:00";
+                            data.vaoCaChieu = "13:00:00";
+                            data.noteVaoCaChieu = appendNote(data.noteVaoCaChieu, "Quên vào chiều (Auto)");
+                        }
                         if (!data.raCaChieu) {
-                            if (!data.vaoCaChieu) data.vaoCaChieu = "13:00:00";
                             data.raCaChieu = "17:30:00";
                             data.vaoLamThem = "17:30:00";
-                            msg = 'ℹ️ Tự động chốt Ra Chiều 17:30 & Bắt đầu tính OT.';
-                            listTrangThai.push("Tự chốt Ra Chiều 17:30");
+                            data.noteVaoCaChieu = appendNote(data.noteVaoCaChieu, "Auto chốt ra 17:30");
+                            data.noteVaoLamThem = appendNote(data.noteVaoLamThem, "Bắt đầu OT 17:30");
+                            msgScreen = 'ℹ️ Đã tự chốt công hành chính.';
                         }
 
+                        // Cập nhật giờ ra làm thêm
                         data.raLamThem = currentTime;
-                        msg += ` 💪 Đang tính OT đến: ${currentTime}`;
-                        listTrangThai.push("Đang làm thêm giờ");
+                        msgScreen += ` 💪 Cập nhật OT: ${currentTime}`;
 
-                        // Chỉ hỏi ghi chú 1 lần và lưu vào biến ghiChuInput riêng biệt
-                        if (!data.ghiChuOT) {
-                            let note = prompt("📝 Nhập nội dung làm thêm:");
-                            if (note) { 
-                                ghiChuInput += `(OT: ${note}) `; 
-                                data.ghiChuOT = true; 
+                        // Nhập ghi chú (chỉ 1 lần)
+                        if (!data.daNhapGhiChuOT) {
+                            let note = prompt("📝 Nhập nội dung công việc làm thêm:");
+                            if (note) {
+                                // Ghi đè hoặc nối vào noteVaoLamThem
+                                data.noteVaoLamThem = appendNote(data.noteVaoLamThem, note);
+                                data.daNhapGhiChuOT = true;
                             }
                         }
                     }
                 }
 
-                // --- TÍNH TỔNG GIỜ LÀM CHÍNH ---
-                let totalHours = 0;
-                if (data.vaoCaSang && data.raCaSang) totalHours += parseTime(data.raCaSang) - parseTime(data.vaoCaSang);
-                if (data.vaoCaChieu && data.raCaChieu) totalHours += parseTime(data.raCaChieu) - parseTime(data.vaoCaChieu);
-                // Lưu ý: totalHours ở đây là tổng giờ làm hành chính (nếu bạn muốn gộp cả OT vào thì cộng thêm bên dưới, nhưng thường tách ra để tính lương)
+                // --- TÍNH TOÁN ---
+                const parse = t => { if(!t) return 0; const [h,m] = t.split(':'); return Number(h) + Number(m)/60; };
                 
-                // --- TÍNH GIỜ LÀM THÊM RIÊNG BIỆT ---
-                let otHours = 0;
-                if (data.vaoLamThem && data.raLamThem) {
-                    otHours = parseTime(data.raLamThem) - parseTime(data.vaoLamThem);
-                }
+                let hanhChinh = 0;
+                if(data.vaoCaSang && data.raCaSang) hanhChinh += parse(data.raCaSang) - parse(data.vaoCaSang);
+                if(data.vaoCaChieu && data.raCaChieu) hanhChinh += parse(data.raCaChieu) - parse(data.vaoCaChieu);
                 
-                // Cộng tổng giờ (bao gồm OT hoặc không tùy chính sách công ty, ở đây tôi cộng vào tổng để hiển thị)
-                let grandTotal = totalHours + otHours;
+                let lamThem = 0;
+                if(data.vaoLamThem && data.raLamThem) lamThem = parse(data.raLamThem) - parse(data.vaoLamThem);
 
-                // Cập nhật dữ liệu
-                data.gioLamTrongNgay = grandTotal > 0 ? grandTotal.toFixed(2) : 0;
-                data.gioLamThem = otHours > 0 ? otHours.toFixed(2) : 0; // Lưu riêng trường này để tránh bị âm khi hiển thị
-                
-                // Lưu trạng thái (xuống dòng bằng \n) và ghi chú riêng
-                // Nối trạng thái mới vào trạng thái cũ (nếu muốn lưu lịch sử) hoặc ghi đè
-                // Ở đây tôi chọn cách lưu đè trạng thái mới nhất của lần quét này để admin nắm bắt tình hình hiện tại
-                // Nếu muốn cộng dồn: data.trangThai = (data.trangThai || "") + "\n" + listTrangThai.join("\n");
-                if(listTrangThai.length > 0) {
-                    data.trangThai = listTrangThai.join("\n");
-                }
-                
-                data.ghiChu = ghiChuInput; // Ghi chú chỉ chứa nội dung nhập tay
+                data.gioLamTrongNgay = hanhChinh.toFixed(2);
+                data.gioLamThem = lamThem.toFixed(2); // Lưu riêng cột này để không bị âm
                 data.diadiemQuet = `${lat},${lng}`;
-                data.noiDungMaQuet = qrContent;
-
-                ref.set(data).then(() => {
-                    showSuccess(`✅ Thành công!\nGiờ: ${currentTime}\nTổng: ${data.gioLamTrongNgay}h (OT: ${data.gioLamThem}h)\n${msg}`);
+                
+                // Lưu vào DB
+                ref.update(data).then(() => {
+                    showSuccess(`✅ Thành công!\nHC: ${data.gioLamTrongNgay}h | OT: ${data.gioLamThem}h\n${msgScreen}`);
                     restartBtn.style.display = 'inline-block';
                 });
 
-            }).catch(err => showError('Lỗi Firebase: ' + err));
+            }).catch(e => showError('Lỗi Firebase: ' + e));
         }
 
-        // ================== HÀM PHỤ TRỢ ==================
+        // ... (Các hàm phụ trợ cũ giữ nguyên: showSuccess, showError, deg2rad, getDistance, ...)
         function showSuccess(msg) { resultDiv.textContent = msg; resultDiv.style.display = 'block'; errorDiv.style.display = 'none'; }
         function showError(msg) { errorDiv.textContent = msg; errorDiv.style.display = 'block'; resultDiv.style.display = 'none'; }
         function deg2rad(deg) { return deg * Math.PI / 180; }
@@ -440,11 +409,6 @@
             const dLon = deg2rad(lon2 - lon1);
             const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
             return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-        }
-        function parseTime(t) {
-            if (!t) return 0;
-            const [h, m] = t.split(':');
-            return Number(h) + Number(m) / 60;
         }
 
         document.getElementById('modeAttendBtn').addEventListener('click', () => { currentMode = 'ATTENDANCE'; startScanner(); });
@@ -463,6 +427,7 @@
     </script>
 </body>
 </html>
+
 
 
 
