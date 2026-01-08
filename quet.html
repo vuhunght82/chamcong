@@ -173,7 +173,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 
-    <script type="module">
+   <script type="module">
         import QrScanner from 'https://cdn.jsdelivr.net/npm/qr-scanner@1.4.2/qr-scanner.min.js';
 
         // ================== Cấu hình Firebase ==================
@@ -197,13 +197,11 @@
         let scanner;
         const userEmail = sessionStorage.getItem('userEmail');
 
-        // Kiểm tra đăng nhập
         if (!userEmail) {
             alert('Vui lòng đăng nhập để sử dụng tính năng bảo mật này!');
             window.location.href = 'dangnhap.html';
         }
 
-        // Elements
         const videoElem = document.getElementById('qr-video');
         const resultDiv = document.getElementById('result');
         const errorDiv = document.getElementById('error');
@@ -258,7 +256,6 @@
             }
         }
 
-        // ================== Xử lý Logic Bản Đồ ==================
         function handleSecureMap(qrContent) {
             try {
                 let decodedString = atob(qrContent);
@@ -284,7 +281,7 @@
             }
         }
 
-        // ================== LOGIC CHẤM CÔNG MỚI ==================
+        // ================== LOGIC CHẤM CÔNG MỚI (ĐÃ SỬA) ==================
         function handleAttendance(email, qrContent, lat, lng) {
             if (qrContent !== VALID_QR_CHECKIN) {
                 showError('❌ Mã QR chấm công không hợp lệ!');
@@ -314,38 +311,42 @@
 
             ref.once('value').then(snapshot => {
                 let data = snapshot.val() || {};
-                let msg = '';
-                let ghichu = data.ghiChu || '';
+                
+                // Tách biệt biến thông báo màn hình, danh sách trạng thái và ghi chú nhập tay
+                let msg = ''; 
+                let listTrangThai = []; // Chứa các trạng thái hệ thống (Đi muộn, về sớm...)
+                let ghiChuInput = data.ghiChu || ''; // Chỉ chứa ghi chú nhập tay
 
                 // --- 1. SÁNG SỚM (< 11:30) ---
                 if (currentHour < 11.5) {
                     if (!data.vaoCaSang) {
                         data.vaoCaSang = currentTime;
                         msg = currentHour < 7.5 ? '✅ Đi sớm ca sáng!' : '⚠️ Đi muộn ca sáng!';
+                        listTrangThai.push(msg);
                     } else {
                         data.raCaSang = currentTime;
                         msg = '⚠️ Về sớm ca sáng!';
+                        listTrangThai.push(msg);
                     }
                 }
 
                 // --- 2. TRƯA (11:30 - 12:59) ---
                 else if (currentHour >= 11.5 && currentHour < 13.0) {
-                    // Nếu có vào sáng mà CHƯA ra sáng -> Tự động chốt Ra Sáng + Vào Trưa 11:30
                     if (data.vaoCaSang && !data.raCaSang) {
                         data.raCaSang = "11:30:00";
                         data.vaoCaTrua = "11:30:00";
-                        data.raCaTrua = currentTime;
                         msg = '✅ Tự động chốt: Ra Sáng & Vào Trưa lúc 11:30.';
+                        listTrangThai.push("Tự động chốt Ra Sáng 11:30");
                     } 
-                    // Nếu đã có Vào Trưa (do tự động ở trên hoặc quét trước đó) -> Quét tiếp là Ra Trưa
                     else if (data.vaoCaTrua && !data.raCaTrua) {
                         data.raCaTrua = currentTime;
                         msg = '✅ Ra ca trưa (Kết thúc nghỉ).';
+                        listTrangThai.push("Ra ca trưa");
                     }
-                    // Trường hợp lạ: Chưa có gì cả -> Coi như vào ca trưa
                     else if (!data.vaoCaTrua) {
                          data.vaoCaTrua = currentTime;
                          msg = '✅ Vào ca trưa (Nghỉ trưa).';
+                         listTrangThai.push("Vào ca trưa");
                     }
                 }
 
@@ -355,49 +356,74 @@
                     // --- XỬ LÝ CA CHIỀU (<= 17:30) ---
                     if (currentHour <= 17.5) {
                         if (!data.vaoCaChieu) {
-                            data.vaoCaChieu = currentTime; // Quét >= 13:00 là Vào Chiều
+                            data.vaoCaChieu = currentTime;
                             msg = '✅ Vào ca chiều.';
+                            listTrangThai.push("Vào ca chiều");
                         } else {
-                            data.raCaChieu = currentTime; // Về sớm chiều
+                            data.raCaChieu = currentTime;
                             msg = '⚠️ Về sớm ca chiều.';
+                            listTrangThai.push("Về sớm ca chiều");
                         }
                     }
 
                     // --- XỬ LÝ TĂNG CA (> 17:30) ---
                     else {
-                        // Nếu chưa ra chiều -> Tự động chốt Ra Chiều + Vào Làm Thêm 17:30
                         if (!data.raCaChieu) {
-                            if (!data.vaoCaChieu) data.vaoCaChieu = "13:00:00"; // Phòng hờ quên quét vào chiều
+                            if (!data.vaoCaChieu) data.vaoCaChieu = "13:00:00";
                             data.raCaChieu = "17:30:00";
                             data.vaoLamThem = "17:30:00";
                             msg = 'ℹ️ Tự động chốt Ra Chiều 17:30 & Bắt đầu tính OT.';
+                            listTrangThai.push("Tự chốt Ra Chiều 17:30");
                         }
 
-                        // Quét lần nữa là cập nhật Ra Làm Thêm
                         data.raLamThem = currentTime;
                         msg += ` 💪 Đang tính OT đến: ${currentTime}`;
+                        listTrangThai.push("Đang làm thêm giờ");
 
-                        // Hỏi ghi chú lần đầu OT
+                        // Chỉ hỏi ghi chú 1 lần và lưu vào biến ghiChuInput riêng biệt
                         if (!data.ghiChuOT) {
                             let note = prompt("📝 Nhập nội dung làm thêm:");
-                            if (note) { ghichu += `(OT: ${note}) `; data.ghiChuOT = true; }
+                            if (note) { 
+                                ghiChuInput += `(OT: ${note}) `; 
+                                data.ghiChuOT = true; 
+                            }
                         }
                     }
                 }
 
-                // --- TÍNH TỔNG GIỜ ---
+                // --- TÍNH TỔNG GIỜ LÀM CHÍNH ---
                 let totalHours = 0;
                 if (data.vaoCaSang && data.raCaSang) totalHours += parseTime(data.raCaSang) - parseTime(data.vaoCaSang);
                 if (data.vaoCaChieu && data.raCaChieu) totalHours += parseTime(data.raCaChieu) - parseTime(data.vaoCaChieu);
-                if (data.vaoLamThem && data.raLamThem) totalHours += parseTime(data.raLamThem) - parseTime(data.vaoLamThem);
+                // Lưu ý: totalHours ở đây là tổng giờ làm hành chính (nếu bạn muốn gộp cả OT vào thì cộng thêm bên dưới, nhưng thường tách ra để tính lương)
+                
+                // --- TÍNH GIỜ LÀM THÊM RIÊNG BIỆT ---
+                let otHours = 0;
+                if (data.vaoLamThem && data.raLamThem) {
+                    otHours = parseTime(data.raLamThem) - parseTime(data.vaoLamThem);
+                }
+                
+                // Cộng tổng giờ (bao gồm OT hoặc không tùy chính sách công ty, ở đây tôi cộng vào tổng để hiển thị)
+                let grandTotal = totalHours + otHours;
 
-                data.gioLamTrongNgay = totalHours > 0 ? totalHours.toFixed(2) : 0;
-                data.ghiChu = ghichu;
+                // Cập nhật dữ liệu
+                data.gioLamTrongNgay = grandTotal > 0 ? grandTotal.toFixed(2) : 0;
+                data.gioLamThem = otHours > 0 ? otHours.toFixed(2) : 0; // Lưu riêng trường này để tránh bị âm khi hiển thị
+                
+                // Lưu trạng thái (xuống dòng bằng \n) và ghi chú riêng
+                // Nối trạng thái mới vào trạng thái cũ (nếu muốn lưu lịch sử) hoặc ghi đè
+                // Ở đây tôi chọn cách lưu đè trạng thái mới nhất của lần quét này để admin nắm bắt tình hình hiện tại
+                // Nếu muốn cộng dồn: data.trangThai = (data.trangThai || "") + "\n" + listTrangThai.join("\n");
+                if(listTrangThai.length > 0) {
+                    data.trangThai = listTrangThai.join("\n");
+                }
+                
+                data.ghiChu = ghiChuInput; // Ghi chú chỉ chứa nội dung nhập tay
                 data.diadiemQuet = `${lat},${lng}`;
                 data.noiDungMaQuet = qrContent;
 
                 ref.set(data).then(() => {
-                    showSuccess(`✅ Thành công!\nGiờ: ${currentTime}\nTổng: ${data.gioLamTrongNgay}h\n${msg}`);
+                    showSuccess(`✅ Thành công!\nGiờ: ${currentTime}\nTổng: ${data.gioLamTrongNgay}h (OT: ${data.gioLamThem}h)\n${msg}`);
                     restartBtn.style.display = 'inline-block';
                 });
 
@@ -437,6 +463,7 @@
     </script>
 </body>
 </html>
+
 
 
 
