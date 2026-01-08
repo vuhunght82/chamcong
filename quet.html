@@ -353,32 +353,85 @@
                 let isOvertime = false;
                 let ghichucalam = data.ghiChu || '';
 
-                // -- Logic tính toán giờ (Rút gọn cho ngắn code, logic giữ nguyên) --
-                if (currentHour >= 7.5 && currentHour <= 11.5) { // Sáng
-                    if (!data.vaoCaSang) { data.vaoCaSang = currentTime; if (currentHour > 7.5) { msg += 'Đi muộn sáng. '; ghichucalam += 'Đi muộn sáng '; } }
-                    else { data.raCaSang = currentTime; if (currentHour < 11.5) { msg += 'Về sớm sáng. '; ghichucalam += 'Về sớm sáng '; } }
-                } else if (currentHour < 7.5) { // Sớm sáng
-                    data.vaoCaSang = currentTime; msg += 'Đi làm sớm. ';
-                } else if (currentHour >= 13 && currentHour <= 17.5) { // Chiều
-                    if (!data.vaoCaChieu) { data.vaoCaChieu = currentTime; if (currentHour > 13) { msg += 'Đi muộn chiều. '; ghichucalam += 'Đi muộn chiều '; } }
-                    else { data.raCaChieu = currentTime; if (currentHour < 17.5) { msg += 'Về sớm chiều. '; ghichucalam += 'Về sớm chiều '; } }
-                } else if ((currentHour > 11.5 && currentHour < 13) || currentHour > 17.5) { // OT
-                    isOvertime = true; msg += 'Làm thêm giờ. ';
-                    if (currentHour > 17.5) { data.vaoLamThem = '17:30'; data.raLamThem = currentTime; }
-                }
+                // --- Ca sáng ---
+      if (currentHour >= 7.5 && currentHour <= 11.5) {
+        if (!data.vaoCaSang) {
+          data.vaoCaSang = currentTime;
+          if (currentHour > 7.5) msg += '⚠ Đi muộn ca sáng! ';
+          ghichucalam+='Đi muộn ca sáng!';
+        } else {
+          data.raCaSang = currentTime;
+          if (currentHour < 11.5) msg += '⚠ Về sớm ca sáng! ';
+          ghichucalam+='Về sớm ca sáng!';
+        }
+      }
+      // đi sớm ca sáng
+        if (currentHour < 7.5) {
+           data.vaoCaSang = currentTime;
+          msg += '✅ Đi sớm ca sáng! ';
+          ghichucalam+='Đi sớm ca sáng!';
+        }
 
-                // Tính tổng giờ
-                let total = 0;
-                if (data.vaoCaSang && data.raCaSang) total += parseTime(data.raCaSang) - parseTime(data.vaoCaSang);
-                if (data.vaoCaChieu && data.raCaChieu) total += parseTime(data.raCaChieu) - parseTime(data.vaoCaChieu);
-                data.gioLamTrongNgay = total.toFixed(2);
-                data.diadiemQuet = `${lat},${lng}`;
-                data.ghiChu = ghichucalam;
+        
+      // --- Ca chiều ---
+      else if (currentHour >= 13 && currentHour <= 17.5) {
+        if (!data.vaoCaChieu) {
+          data.vaoCaChieu = currentTime;
+          if (currentHour > 13) msg += '⚠ Đi muộn ca chiều! ';
+          ghichucalam+='Đi muộn ca chiều!';
+        } else {
+          data.raCaChieu = currentTime;
+          if (currentHour < 17.5) msg += '⚠ Về sớm ca chiều! ';
+          ghichucalam+='Về sớm ca chiều!';
+        }
+      }
+      // --- Làm thêm / tự chốt ---
+      else if ((currentHour > 11.5 && currentHour < 13) || currentHour > 17.5) {
+        isOvertime = true;
+        msg += 'ℹ Giờ làm thêm!';
+        ghichucalam+='giờ làm thêm!';
 
-                if (isOvertime) {
-                    const note = prompt("📝 Nhập nội dung làm thêm giờ:");
-                    if (note) data.ghiChu += ' | OT: ' + note;
-                }
+        // Tự chốt ca sáng nếu chưa có ra
+        if (data.vaoCaSang && !data.raCaSang) {
+          data.raCaSang = '11:30';
+          msg += ' ⚠ Tự động chốt ra ca sáng 11:30.';
+        }
+
+        // Tự chốt ca chiều nếu chưa vào/ra và >17:30
+        if (!data.vaoCaChieu && !data.raCaChieu && currentHour > 17.5) {
+          data.vaoCaChieu = '13:00';
+          data.raCaChieu = '17:30';
+          msg += ' ⚠ Tự động tính ca chiều 13:00–17:30.';
+        }
+
+        // Ghi giờ làm thêm
+        if (currentHour > 17.5) {
+          data.vaoLamThem = '17:30';
+          data.raLamThem = currentTime;
+          msg += ` ℹ Giờ làm thêm từ 17:30 đến ${currentTime}.`;
+        }
+      }
+
+      // --- Tính tổng giờ làm ---
+      let totalHours = 0;
+      if (data.vaoCaSang && data.raCaSang) totalHours += parseTime(data.raCaSang) - parseTime(data.vaoCaSang);
+      if (data.vaoCaChieu && data.raCaChieu) totalHours += parseTime(data.raCaChieu) - parseTime(data.vaoCaChieu);
+      data.gioLamTrongNgay = totalHours.toFixed(2);
+
+      data.noiDungMaQuet = qrContent;
+      data.diadiemQuet = (lat && lng) ? `${lat},${lng}` : 'Chưa lấy GPS';
+
+      // Nhập ghi chú nếu làm thêm
+      if (isOvertime) {
+        const note = prompt("📝 Bạn có giờ làm thêm, vui lòng nhập ghi chú:");
+         if (note) ghiChu += note + ' ';
+       
+      }
+
+    
+
+  // Gán trực tiếp vào data trước khi set:
+  data.ghiChu = ghichucalam;
 
                 ref.set(data).then(() => {
                     showSuccess(`✅ Chấm công thành công!\nGiờ: ${currentTime}\nTổng: ${data.gioLamTrongNgay}h\n${msg}`);
@@ -449,3 +502,4 @@
     </script>
 </body>
 </html>
+
